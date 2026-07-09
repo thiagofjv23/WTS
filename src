@@ -1,0 +1,8 @@
+/src
+│
+├── core/
+│   └── events/
+│       ├── eventTypes.js     # Constantes com os nomes dos eventos
+│       └── eventBus.js       # O motor central de comunicação
+│
+└── main.js                   # Ponto de entrada do simulador
