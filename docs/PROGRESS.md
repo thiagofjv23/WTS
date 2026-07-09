@@ -146,3 +146,32 @@ como exige o fight_algorithm.md.
 
 **Próximo passo:** Passo 6 — Competition System (chaves/brackets por categoria,
 eliminação simples com byes por ranking) consumindo o Combat Framework.
+
+---
+
+## Passo 6 — Competition System (Brackets) ✅
+
+**Objetivo:** montar chaves por categoria e apurar resultados rodando o Combat
+Framework, seguindo taekwondo-ranking.md §6.
+
+**Entregue:**
+- `src/engine/brackets.js` — `nextPowerOfTwo`, `standardSeedOrder` (top seeds em
+  lados opostos), `buildBracket` (byes para os melhores ranqueados).
+- `src/entities/competition.js` — `createCompetition` + catálogo `G_RANKS`
+  (G-1..G-20 com pontos do campeão).
+- `src/engine/competitionSystem.js` — `simulateCategory` / `simulateCompetition`:
+  eliminação simples, colocação por rodada (campeão=1, vice=2, 2 bronzes,
+  QF=5, R16=9…), medalhas. Delega o resultado ao Combat Engine.
+- `tests/competition.test.mjs` — 11 testes.
+
+**Testado:** `npm test` → **62/62 passaram.**
+- Potência de dois e seeding; byes aos melhores; um campeão/um vice; dois
+  bronzes (padrão WT); campo não-potência (18) apura todos; atleta único;
+  favorito vence >70% dos torneios; determinismo; competição multi-categoria.
+
+**Adiado (TODO.md):** repescagem olímpica (dois bronzes por chaves separadas) e
+bloqueio de equipe/clube (sem entidade Club).
+
+**Próximo passo:** Passo 7 — Ranking System (aplicar pontos G-Rank por colocação
++ desempate) e o Simulation Director costurando o pipeline diário via Event Bus,
+para rodar um campeonato completo no console ponta a ponta.
