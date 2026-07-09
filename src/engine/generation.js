@@ -30,9 +30,19 @@ const HIDDEN_EXTRA = [
   "resistenciaPressao",
 ];
 
-/** Gera o mapa completo de atributos de um atleta. */
-function generateAttributes(random, tier, age) {
-  const base = TIER_BASE[tier] ?? TIER_BASE["3"];
+/** Média-base dos atributos combativos a partir da força (0..1). */
+export function baseFromStrength(strength) {
+  const s = Math.max(0, Math.min(1, strength));
+  return 52 + 30 * s; // 52 (mediano) .. 82 (elite)
+}
+
+/** Idade plausível com pico competitivo (~25 anos). */
+export function generateAge(random) {
+  return Math.round(Math.max(17, Math.min(34, random.gaussian(25, 4))));
+}
+
+/** Gera o mapa completo de atributos a partir de uma média-base. */
+function generateAttributes(random, base, age) {
   const attrs = {};
 
   // Atributos combativos: gaussiana em torno da média do tier.
@@ -80,7 +90,8 @@ export function generateAthlete(random, idGen, opts) {
   const tier = country.tier;
   const age = random.int(18, 32);
   const { forename, surname } = generateName(random, country.code);
-  const attributes = generateAttributes(random, tier, age);
+  const base = TIER_BASE[tier] ?? TIER_BASE["3"];
+  const attributes = generateAttributes(random, base, age);
 
   return createAthlete({
     id: idGen.next("ATH"),
@@ -115,4 +126,40 @@ export function generateAthletesForCountry(random, idGen, opts) {
     }
   }
   return athletes;
+}
+
+/**
+ * Cria um atleta a partir de um registro REAL do ranking (híbrido).
+ * Identidade e pontos vêm do arquivo; idade e atributos são gerados, com os
+ * atributos ancorados na força (posição no ranking). Ver DECISIONS.md.
+ *
+ * @param {RandomSystem} random
+ * @param {IdGenerator} idGen
+ * @param {object} opts
+ *   { entry, countryId, weightCategoryId, strength, gender, worldStartDate }
+ *   - entry: { name, ioc, memberNumber, rank, points }
+ *   - strength: 0..1 (1 = melhor ranqueado da categoria)
+ */
+export function generateRealAthlete(random, idGen, opts) {
+  const {
+    entry, countryId, weightCategoryId, strength, gender = "M", worldStartDate,
+  } = opts;
+  const age = generateAge(random);
+  const attributes = generateAttributes(random, baseFromStrength(strength), age);
+
+  const athlete = createAthlete({
+    id: idGen.next("ATH"),
+    forename: entry.name, // nome real completo em forename; surname vazio
+    surname: "",
+    countryId,
+    gender,
+    birthDate: birthDateFromAge(worldStartDate, age),
+    weightCategoryId,
+    attributes,
+  });
+  athlete.fullName = entry.name;
+  athlete.memberNumber = entry.memberNumber;
+  athlete.realRank = entry.rank;
+  athlete.ranking.points = Math.round(entry.points * 100) / 100;
+  return athlete;
 }

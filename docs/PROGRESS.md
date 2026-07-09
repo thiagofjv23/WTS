@@ -205,7 +205,35 @@ histórico, save persistido, data avançada. **Núcleo provado ponta a ponta.**
 
 ---
 
-## Estado do Núcleo: COMPLETO ✅
+## Passo 8 — Atletas REAIS (seed híbrido a partir do ranking oficial) ✅
+
+**Objetivo:** substituir o seed sintético por atletas reais do ranking oficial
+World Taekwondo, mantendo idade/atributos gerados (híbrido).
+
+**Entregue:**
+- `scripts/buildRoster.mjs` — parser próprio de .xlsx (sem dependências) que lê
+  o ranking oficial e gera o roster compacto. Colunas mapeadas por cabeçalho.
+- `src/database/realRoster.js` — **GERADO** (95 KB): TOP 256 por categoria
+  masculina (1.024 atletas, 176 países), nome/IOC/pontos reais.
+- `src/engine/generation.js` — `generateRealAthlete` (identidade real + idade e
+  atributos gerados), `baseFromStrength`, `generateAge`.
+- `src/database/realSeed.js` — `buildRealWorld(seed)`: países + atletas reais,
+  pontos reais, atributos ancorados na posição do ranking.
+- Entry list: `fieldSize` na competição + `selectEntrants` (chaves realistas).
+- `scripts/demoReal.mjs` — demo com atletas reais.
+- `tests/realSeed.test.mjs` — 12 testes.
+
+**Testado:** `npm test` → **83/83 passaram.** Inclui: identidade/pontos reais
+preservados; nº 1 do ranking = líder real; topo mais forte que a base;
+determinismo; entry list por ranking; idade/força na faixa.
+
+**Demo real** (`node scripts/demoReal.mjs`): líderes corretos (Zandi/IRI,
+Tubtimdang/THA, Fernandes/BRA, Alessio/ITA); Grand Prix G-2 com 124 lutas;
+Coreia liderando em profundidade de ranking — coerente com a realidade.
+
+---
+
+## Estado do Núcleo: COMPLETO ✅ (agora com dados reais)
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

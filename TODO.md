@@ -14,9 +14,27 @@ será retomado. Atualizado a cada passo do desenvolvimento.
 
 - 🟡 **Categorias femininas.** Iniciamos apenas com masculino (decisão do
   usuário). Após o núcleo testado, adicionar as 4 categorias olímpicas
-  femininas (-49, -57, -67, +67 kg) e a geração de atletas femininas.
-  Os arquivos de nomes já possuem entradas `gender: "F"` prontas para uso.
-  → Retomar em: `src/config/weightCategories.js`, `src/database/`, gerador de nomes.
+  femininas (-49, -57, -67, +67 kg). **O ranking oficial já traz as 4 abas
+  femininas** (sheets 5–8 do .xlsx) — basta estender `SHEETS` em
+  `scripts/buildRoster.mjs` e `MEN_CATEGORIES`→categorias femininas.
+  → Retomar em: `src/config/weightCategories.js`, `scripts/buildRoster.mjs`.
+
+- 🟡 **Data de nascimento real.** O ranking WT não traz idade; hoje geramos idade
+  plausível (prime ~25). Buscar datas de nascimento reais (outra fonte WT/perfis)
+  para carreiras/aposentadorias fiéis.
+
+- 🟡 **Roster completo (cauda longa).** Usamos o TOP 256 por categoria (~1.024
+  atletas) por causa do alvo mobile/localStorage. Incluir os ~3.092 atletas
+  masculinos (ou permitir escolher o limite) é opção futura — ajustar
+  `LIMIT_PER_CATEGORY` em `scripts/buildRoster.mjs`.
+
+- 🟢 **Normalização de nomes reais.** O título simples erra siglas (ex.:
+  "CJ NICKOLAS" → "Cj Nickolas"). Refinar regras (preservar siglas em maiúsculas,
+  partículas como "de"/"van"/"al-").
+
+- 🟢 **Mapa IOC→ISO-2.** Atletas reais usam código IOC (KOR, BRA...). Futuros
+  atletas GERADOS por país precisarão mapear IOC→ISO-2 para reaproveitar os
+  dicionários de nomes (`names.js`) e bandeiras.
 
 - 🟡 **Irã (IR) e demais países sem sobrenomes.** O arquivo
   `common-surnames-by-country.json` não contém Irã e vários outros países

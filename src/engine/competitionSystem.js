@@ -27,6 +27,15 @@ function medalForPlacement(placement) {
   return null;
 }
 
+/**
+ * Seleciona os inscritos de uma categoria: os melhores ranqueados até fieldSize.
+ * fieldSize null/0 = todos.
+ */
+export function selectEntrants(athletes, fieldSize) {
+  if (!fieldSize || athletes.length <= fieldSize) return athletes;
+  return seedByRanking(athletes).slice(0, fieldSize);
+}
+
 /** Ordena atletas por ranking (pontos desc; desempate por rating combativo). */
 function seedByRanking(athletes) {
   return [...athletes].sort((a, b) => {

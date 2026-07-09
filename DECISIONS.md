@@ -79,6 +79,33 @@ estendemos multiplicando por 0.7 — SUPOSIÇÃO a confirmar, pois o documento n
 especifica esses degraus. Decaimento de 4 anos (§5) e desempate avançado (§3)
 seguem adiados.
 
+## [2026-07-09] Seed — Base de atletas REAIS (híbrido) a partir do ranking oficial
+Contexto: usuário forneceu `12. Olympic_Kyorugi_Rankings_June_2026.xlsx` com o
+ranking oficial WT (8 abas = 8 categorias olímpicas; 4 masculinas no escopo).
+Colunas: Rank, Member Name, Member Number (traz código IOC), Country, pontos por
+evento e Total Points. Sem idade.
+
+Decisão (híbrido): identidade REAL (nome, país, categoria) + pontos REAIS de
+ranking do arquivo; idade e atributos GERADOS. Atributos ancorados na posição do
+ranking (favoritos reais nascem fortes no sim). Idade gerada (prime ~25) — data
+de nascimento real fica como melhoria (TODO). O nameGenerator deixa de ser usado
+para atletas do seed (só servirá a futuros atletas gerados).
+
+## [2026-07-09] Seed — Cap de atletas por categoria (mobile/localStorage)
+Contexto: o arquivo traz ~3.092 atletas masculinos (M-58:992, M-68:1028,
+M-80:659, M+80:413), com uma cauda longa de pontuadores mínimos (<1 pt).
+
+Decisão: no build do roster, limitar aos TOP N por categoria (padrão N=256,
+configurável), ~1.024 atletas — alinhado ao volume do seed_inicial.md e
+mantendo saves pequenos para o alvo mobile. A cauda longa (entrantes ocasionais)
+fica de fora do mundo jogável; incluir tudo é opção futura (TODO).
+
+## [2026-07-09] XLSX — Parser próprio sem dependências (build-time)
+Decisão: `scripts/buildRoster.mjs` descompacta o .xlsx (zip de XML) via parser
+regex próprio (sharedStrings + células), mapeia colunas por CABEÇALHO (não por
+letra, pois a posição varia entre abas) e gera `src/database/realRoster.js`
+compacto. O .xlsx (326 KB) nunca é lido em runtime — mesmo princípio dos nomes.
+
 ## [2026-07-09] Pipeline — Salvar após avançar a data (reordenação justificada)
 Contexto: SimulationPipeline lista Save (etapa 12) antes de Avançar a data
 (etapa 13). Salvar antes gera um snapshot com a data ainda "no dia jogado".

@@ -14,11 +14,20 @@ O motor já roda um campeonato inteiro ponta a ponta, sem interface:
 `calendário → competição → combate → consequências → ranking → histórico → save`.
 
 ```bash
-node scripts/demo.mjs          # roda um Aberto G-1 e imprime pódios + ranking
-node scripts/demo.mjs 12345    # com outra seed
-npm test                       # 71 testes
-npm run build:names            # regenera o dicionário de nomes compacto
+node scripts/demoReal.mjs      # Grand Prix com ATLETAS REAIS (ranking oficial WT)
+node scripts/demo.mjs          # Aberto G-1 com atletas sintéticos (gerados)
+npm test                       # 83 testes
+npm run build:roster           # regenera o roster real a partir do .xlsx oficial
+npm run build:names            # regenera o dicionário de nomes (atletas gerados)
 ```
+
+### Base de dados de atletas (híbrido)
+
+O mundo é semeado a partir do **ranking olímpico oficial da World Taekwondo**
+(`12. Olympic_Kyorugi_Rankings_June_2026.xlsx`): nome, país, categoria e pontos
+são **reais**; idade e atributos são **gerados** e ancorados na posição do
+ranking (favoritos reais nascem fortes). Escopo atual: TOP 256 das 4 categorias
+masculinas (~1.024 atletas). Ver `DECISIONS.md`.
 
 ## Arquitetura do código (`src/`)
 

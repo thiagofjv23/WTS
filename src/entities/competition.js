@@ -26,9 +26,11 @@ export const COMPETITION_STATUS = {
  * @param {string} data.date         ISO-8601
  * @param {string[]} data.categoryIds categorias disputadas
  * @param {string} [data.location]
+ * @param {number} [data.fieldSize]  máximo de inscritos por categoria (por
+ *   ranking); null = todos os atletas ativos da categoria.
  */
 export function createCompetition(data) {
-  const { id, name, gRank, date, categoryIds, location = null } = data;
+  const { id, name, gRank, date, categoryIds, location = null, fieldSize = 32 } = data;
   if (!id) throw new Error("Competition: id é obrigatório.");
   if (!G_RANKS[gRank]) throw new Error(`Competition: gRank inválido "${gRank}".`);
   if (!Array.isArray(categoryIds) || categoryIds.length === 0) {
@@ -41,6 +43,7 @@ export function createCompetition(data) {
     date,
     location,
     categoryIds,
+    fieldSize,
     status: COMPETITION_STATUS.SCHEDULED,
     results: {}, // categoryId → [{ athleteId, placement, medal }]
     schemaVersion: 1,

@@ -6,6 +6,7 @@
   "private": true,
   "scripts": {
     "test": "node tests/run.mjs",
-    "build:names": "node scripts/buildNames.mjs"
+    "build:names": "node scripts/buildNames.mjs",
+    "build:roster": "node scripts/buildRoster.mjs"
   }
 }
