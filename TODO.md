@@ -59,3 +59,7 @@ será retomado. Atualizado a cada passo do desenvolvimento.
 - 🟢 **Auditoria de aleatoriedade** (registro de randomValues por evento,
   `random_system.md`). Estrutura prevista, ativação adiada.
 - 🟢 **Modo Histórico do Random System** (recriar cenários conhecidos).
+- 🟢 **Pools de nomes pequenos.** Alguns países têm poucos nomes masculinos
+  (CN: 9, KR: 10), gerando repetição de primeiros nomes com muitos atletas.
+  Combos ainda dão centenas de nomes únicos por país, mas ao escalar o seed
+  vale ampliar os dicionários de origem ou combinar nome do meio.

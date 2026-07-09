@@ -33,3 +33,29 @@ Storage com backend plugável.
 
 **Próximo passo:** Passo 2 — geração de nomes (pré-processar os arquivos de
 nomes da main em um `names.js` compacto).
+
+---
+
+## Passo 2 — Geração de Nomes ✅
+
+**Objetivo:** gerar nomes de atletas por país consumindo o mínimo de
+processamento em runtime (pedido do usuário).
+
+**Entregue:**
+- `scripts/buildNames.mjs` — build que lê os dois arquivos de nomes da raiz
+  (~890 KB) e gera um dicionário compacto. Parametrizável por país e gênero.
+- `src/database/names.js` — **GERADO** (3.1 KB). Masculino, romanizado, países
+  KR/TR/BR/CN.
+- `src/services/nameGenerator.js` — `generateName(random, country)` faz apenas
+  dois sorteios O(1); `availableCountries`, `hasCountry`.
+- `tests/names.test.mjs` — 6 testes.
+
+**Testado:** `npm test` → **24/24 passaram.**
+- Dicionário cobre os 4 países do seed; geração determinística por seed;
+  variedade de nomes; erro claro para país sem dados.
+
+**Resultado de eficiência:** 890 KB de origem → **3.1 KB** consumidos em runtime;
+custo de parse ocorre só na build.
+
+**Próximo passo:** Passo 3 — entidades, atributos e categorias de peso
+(masculinas), com factories.
