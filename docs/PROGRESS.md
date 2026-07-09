@@ -86,3 +86,29 @@ DataArchitecture.md e athlete_attributes.md, só com dados (sem lógica).
 
 **Próximo passo:** Passo 4 — geração de atletas por tier + seed pequeno do
 mundo (4 países), montando um `WorldState` inicial consistente.
+
+---
+
+## Passo 4 — Geração de Atletas e Seed do Mundo ✅
+
+**Objetivo:** montar um mundo inicial pequeno, consistente e determinístico.
+
+**Entregue:**
+- `src/engine/generation.js` — geração de atributos por tier via gaussiana
+  (elite >90 rara), experiência ligada à idade, nome via nameGenerator.
+- `src/core/world.js` — contêiner `World` (WorldState + repositórios por ID),
+  `addAthlete`/`addCountry`, `athletesInCategory`, guarda estados de RNG/IDs.
+- `src/database/seedConfig.js` — 4 países (KR/TR/CN/BR), pesos históricos.
+- `src/database/seed.js` — `buildSeedWorld(seed)` → mundo serializável.
+- `tests/seed.test.mjs` — 9 testes.
+
+**Testado:** `npm test` → **44/44 passaram.**
+- Contagens corretas; determinismo (mesma seed → mundo idêntico byte a byte);
+  integridade referencial bidirecional país↔atleta; atributos válidos;
+  KR > BR em nº de atletas (peso histórico); serialização JSON round-trip.
+
+**Sanidade manual:** 72 atletas, nomes coerentes por país, atributos tier-1 na
+faixa ~60–85, idades 18–32.
+
+**Próximo passo:** Passo 5 — Combat Framework (uma luta completa entre dois
+atletas, emergente e determinística), isolada e testável.
