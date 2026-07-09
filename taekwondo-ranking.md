@@ -36,3 +36,9 @@ Os pontos conquistados possuem validade máxima de 4 anos e perdem valor a cada 
 * **37 a 48 meses (Ano 4):** Valem 25% da pontuação original.
 * **Mais de 48 meses (> 4 anos):** Valem 0% (Pontos são totalmente expirados).
 
+## 6. Lógica do Gerador de Chaves (Brackets)
+O sistema deve gerar chaves automáticas por categoria seguindo estas restrições:
+* **Mata-Mata:** Formato de eliminação simples.
+* **Potência de Dois:** O tamanho da chave deve se ajustar para o próximo número perfeito (4, 8, 16 ou 32).
+* **Distribuição de Byes:** Se o número de atletas não for perfeito, os competidores com maior ranking ganham a vantagem de passar direto (Bye) para a segunda fase.
+* **Bloqueio de Equipe:** Atletas com o mesmo campo "Academia/Clube" devem ser sorteados em lados opostos da árvore de lutas para evitar confronto inicial.
