@@ -1,0 +1,62 @@
+/**
+ * Componentes de UI reutilizáveis (cards, chips, badges).
+ * Apenas apresentação; recebem dados prontos do GameController.
+ */
+
+import { el } from "./dom.js";
+
+/** Cor por família de G-Rank (para o badge). */
+function gRankClass(gRank) {
+  const n = Number((gRank || "").replace("G-", "")) || 1;
+  if (n >= 10) return "g-elite";
+  if (n >= 6) return "g-major";
+  if (n >= 4) return "g-champ";
+  if (n >= 2) return "g-mid";
+  return "g-open";
+}
+
+export function gRankBadge(gRank) {
+  return el(`span.badge.${gRankClass(gRank)}`, gRank);
+}
+
+export function countryChip(ioc) {
+  return el("span.chip", ioc || "??");
+}
+
+export function medalIcon(medal) {
+  if (medal === "ouro") return "🥇";
+  if (medal === "prata") return "🥈";
+  if (medal === "bronze") return "🥉";
+  return "";
+}
+
+/** Título de seção com opcional lado direito. */
+export function sectionTitle(text, right) {
+  return el("div.section-title", el("h2", text), right || null);
+}
+
+/** Barra de atributo 0–100. */
+export function attrBar(label, value) {
+  return el(
+    "div.attr",
+    el("span.attr-label", label),
+    el("div.attr-track", el("div.attr-fill", { style: `width:${value}%` })),
+    el("span.attr-val", String(value))
+  );
+}
+
+/** Linha de ranking (usada na página de Ranking). */
+export function rankingRow(entry, onClick) {
+  return el(
+    "button.row.rank-row",
+    { onClick: () => onClick(entry.id) },
+    el("span.pos", `${entry.position}`),
+    el(
+      "span.row-main",
+      el("span.row-name", entry.favorite ? "★ " + entry.name : entry.name),
+      el("span.row-sub", entry.countryName)
+    ),
+    countryChip(entry.ioc),
+    el("span.pts", `${entry.points}`)
+  );
+}

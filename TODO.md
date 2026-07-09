@@ -112,6 +112,16 @@ será retomado. Atualizado a cada passo do desenvolvimento.
   (formatos próprios) e, nos anos certos, Mundial (G-8) e Olimpíadas (G-20) com
   repescagem (§7). Eventos exclusivamente femininos entram com o feminino.
 
+## Interface (próximos incrementos)
+
+- 🟢 **Aba de Favoritos e busca dedicada.** A busca (`searchAthletes`) e os
+  favoritos já existem no GameController; falta a tela.
+- 🟢 **Bandeiras dos países** (requer mapa IOC→ISO-2, já listado abaixo).
+- 🟢 **Gráficos de evolução de ranking, filtros e tela de Configurações.**
+- 🟢 **Avanço longo em blocos** com barra de progresso (hoje é síncrono; rápido,
+  mas várias temporadas de uma vez poderiam travar a UI momentaneamente).
+- 🟢 **Tela de detalhe de país e de competição** (reaproveitar os cards).
+
 ## Melhorias técnicas pendentes
 
 - 🟢 **Bloqueio de equipe/clube nas chaves** (`taekwondo-ranking.md` §6, último

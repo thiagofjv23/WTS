@@ -72,6 +72,7 @@ export function buildSeasonCalendar(world, idGen, opts = {}) {
       gRank: ev.gRank,
       date,
       categoryIds: ev.categoryIds,
+      location: ev.location ?? null,
       fieldSize,
     });
     scheduleCompetition(world, idGen, comp);

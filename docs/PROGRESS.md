@@ -325,7 +325,36 @@ campeões passam a rotacionar entre temporadas.
 
 ---
 
-## Estado do Núcleo: COMPLETO ✅ (dados reais, temporadas, participação realista)
+## Passo 12 — Interface (mobile-first) ✅
+
+**Objetivo:** interface para observar o mundo, seguindo as diretrizes (Mobile
+First, Vanilla JS/ES Modules, sem frameworks, UI sem lógica de simulação).
+
+**Entregue:**
+- `index.html` + `src/styles/main.css` (tema claro/escuro, mobile-first).
+- `src/app/gameController.js` — **fachada** de comandos/consultas; a UI nunca
+  toca no `world`/engine diretamente. Agenda temporadas automaticamente.
+- `src/ui/` — `app.js` (máquina de estados MENU→SIMULATION, barra superior com
+  controles de tempo, navegação inferior, router), `dom.js`, `components.js`,
+  e páginas: `ranking`, `calendar`, `news`, `countries`, `athlete` (modal).
+- `src/main.js` — bootstrap (Storage localStorage + GameController + App).
+- `docs/INTERFACE.md` — documento de arquitetura da UI.
+
+**Verificado no navegador** (Chromium/Playwright, viewport 390×844): menu →
+novo mundo → ranking (abas por categoria, atletas reais) → modal de atleta
+(atributos visíveis em barras, estatísticas, histórico; ocultos não expostos) →
+"Próximo evento" (simula e mostra pódios reais) → calendário, resultados e
+países. Sem erros de console (só um 404 de favicon). Temas claro e escuro ok.
+
+**Aderência às diretrizes:** separação absoluta UI×simulação (tudo via
+GameController), componentização, máquina de estados, persistência em
+localStorage, atributos ocultos preservados.
+
+`npm test` → **101/101** (motor intacto).
+
+---
+
+## Estado: núcleo + dados reais + temporadas + participação + INTERFACE ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

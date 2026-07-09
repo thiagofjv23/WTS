@@ -8,9 +8,24 @@ histórico. Vanilla JS (ES Modules), orientado a eventos, determinístico por se
 > `.md` na raiz) e agora a **implementação do núcleo** em `src/`. A implementação
 > segue fielmente esses documentos.
 
-## Estado atual (núcleo validado no console)
+## Interface (mobile-first)
 
-O motor já roda um campeonato inteiro ponta a ponta, sem interface:
+Há uma interface web (Vanilla JS, sem frameworks) para observar o mundo:
+ranking por categoria, calendário, resultados, quadro de países e ficha do
+atleta, com controles de avanço de tempo. A UI nunca contém lógica de simulação
+— fala apenas com o `GameController` (ver `docs/INTERFACE.md`).
+
+```bash
+npm run serve      # sobe um servidor estático na raiz (http://localhost:8080)
+# abra http://localhost:8080 no navegador (o estado é salvo em localStorage)
+```
+
+> ES Modules exigem HTTP (não abra via `file://`). Qualquer servidor estático
+> apontando para a raiz do repositório serve.
+
+## Estado atual (motor + interface)
+
+O motor roda temporadas inteiras ponta a ponta:
 `calendário → competição → combate → consequências → ranking → histórico → save`.
 
 ```bash
