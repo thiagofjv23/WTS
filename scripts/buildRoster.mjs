@@ -96,12 +96,46 @@ function iocFromMemberNumber(num) {
   return dash > 0 ? s.slice(0, dash) : s.slice(0, 3);
 }
 
+// Colunas que NÃO são eventos (identidade e totais).
+const NON_EVENT_HEADERS = new Set([
+  "Rank", "Member Name", "Member Number", "Country", "Total Points",
+  "Points From Previous Years in Ranking Cycle",
+]);
+
+// Pontos do campeão por G-Rank (taekwondo-ranking.md §1).
+const G_TIERS = [
+  { pts: 10, g: "G-1" },
+  { pts: 20, g: "G-2" },
+  { pts: 40, g: "G-4" },
+  { pts: 80, g: "G-8" },
+  { pts: 200, g: "G-20" },
+];
+
+/**
+ * Infere o G-Rank de um evento pelo maior valor de pontos observado.
+ * Regra robusta: menor tier cujo teto >= max observado (a regra de participação
+ * da WT só REDUZ os pontos, nunca os infla). Ver análise em DECISIONS.md.
+ */
+function inferGRank(maxPoints) {
+  for (const t of G_TIERS) if (maxPoints <= t.pts + 1e-6) return t.g;
+  return "G-20";
+}
+
+/** Limpa prefixos de disciplina do nome do evento para exibição. */
+function cleanEventName(name) {
+  return name
+    .replace(/^\((?:Kyorugi|Seniors?|Senior Kyorugi)\)\s*/i, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function build() {
   const dir = unzip();
   try {
     const strings = loadStrings(dir);
     const roster = {};
     const countries = {}; // ioc → name
+    const events = {}; // rawName → { maxPoints, categoryIds:Set }
     const report = [];
 
     for (const [sheetNo, categoryId] of Object.entries(SHEETS)) {
@@ -109,6 +143,25 @@ function build() {
       const h = headerMap(rows);
       const cRank = h["Rank"], cName = h["Member Name"], cNum = h["Member Number"];
       const cCountry = h["Country"], cTotal = h["Total Points"];
+
+      // Colunas de eventos desta aba + maior pontuação observada.
+      const eventCols = {};
+      for (const [col, name] of Object.entries(rows[1] || {})) {
+        const clean = (name || "").trim();
+        if (clean && !NON_EVENT_HEADERS.has(clean)) eventCols[col] = clean;
+      }
+      const dataRows = Object.keys(rows).map(Number).filter((r) => r > 1);
+      for (const [col, rawName] of Object.entries(eventCols)) {
+        let max = 0;
+        for (const rn of dataRows) {
+          const raw = rows[rn][col];
+          if (raw !== undefined && raw !== "") max = Math.max(max, parseFloat(raw) || 0);
+        }
+        if (max <= 0) continue;
+        const ev = (events[rawName] ||= { maxPoints: 0, categoryIds: new Set() });
+        ev.maxPoints = Math.max(ev.maxPoints, max);
+        ev.categoryIds.add(categoryId);
+      }
 
       const list = Object.keys(rows)
         .map(Number)
@@ -142,16 +195,28 @@ function build() {
  * idade e atributos são gerados no seed (ver DECISIONS.md).
  */
 `;
+    // Monta a lista de eventos com G-Rank inferido.
+    const eventList = Object.entries(events)
+      .map(([rawName, e]) => ({
+        name: cleanEventName(rawName),
+        gRank: inferGRank(e.maxPoints),
+        categoryIds: [...e.categoryIds].sort(),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
     const body =
       `export const REAL_COUNTRIES = ${JSON.stringify(countries, null, 0)};\n\n` +
-      `export const REAL_ROSTER = ${JSON.stringify(roster, null, 0)};\n`;
+      `export const REAL_ROSTER = ${JSON.stringify(roster, null, 0)};\n\n` +
+      `export const REAL_EVENTS = ${JSON.stringify(eventList, null, 0)};\n`;
     const target = join(root, "src", "database", "realRoster.js");
     writeFileSync(target, header + "\n" + body, "utf8");
 
     const total = Object.values(roster).reduce((s, l) => s + l.length, 0);
+    const byG = eventList.reduce((m, e) => ((m[e.gRank] = (m[e.gRank] || 0) + 1), m), {});
     console.log("realRoster.js gerado:");
     for (const line of report) console.log("  " + line);
     console.log(`  total: ${total} atletas, ${Object.keys(countries).length} países`);
+    console.log(`  eventos: ${eventList.length} (${JSON.stringify(byG)})`);
     const bytes = Buffer.byteLength(header + body, "utf8");
     console.log(`  arquivo: ${(bytes / 1024).toFixed(1)} KB`);
   } finally {

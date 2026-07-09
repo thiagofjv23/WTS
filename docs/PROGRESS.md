@@ -233,7 +233,34 @@ Coreia liderando em profundidade de ranking — coerente com a realidade.
 
 ---
 
-## Estado do Núcleo: COMPLETO ✅ (agora com dados reais)
+## Passo 9 — Calendário e Temporada REAIS ✅
+
+**Objetivo:** usar os eventos reais do ranking como base do calendário anual e
+simular uma temporada inteira.
+
+**Entregue:**
+- `scripts/buildRoster.mjs` — passou a extrair também os **eventos** das colunas
+  do ranking, inferindo o G-Rank pela pontuação máxima (regra: menor tier ≥ max,
+  robusta à redução por participação da WT).
+- `src/database/realRoster.js` — agora inclui `REAL_EVENTS`: **23 eventos reais**
+  (G-2:7, G-4:6, G-1:10) com G-Rank e categorias.
+- `src/engine/season.js` — `buildSeasonCalendar` cria/agenda as competições da
+  temporada (datas distribuídas; datas reais → TODO).
+- `SimulationDirector.advanceUntil(date)` — simula até o fim da temporada.
+- `scripts/demoSeason.mjs` — demo de temporada completa.
+- `tests/season.test.mjs` — 6 testes.
+
+**Testado:** `npm test` → **88/88 passaram.** Inclui: G-Rank inferido correto
+(Europeu=G-4, Turkiye=G-1); calendário em datas crescentes; temporada evolui o
+ranking; determinismo do ano inteiro.
+
+**Demo de temporada** (`node scripts/demoSeason.mjs`): 23 eventos, **2.790 lutas
+em 0,3 s**, ranking evoluindo com indicadores ▲▼, títulos e ganho de pontos.
+Fernandes (real nº 1 do -80) dominou com 10 títulos. Atletas e eventos 100% reais.
+
+---
+
+## Estado do Núcleo: COMPLETO ✅ (agora com dados reais e temporada)
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

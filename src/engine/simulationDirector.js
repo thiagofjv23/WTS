@@ -118,4 +118,18 @@ export class SimulationDirector {
     for (let i = 0; i < days; i++) summary.push(this.advanceDay());
     return summary;
   }
+
+  /**
+   * Avança até (e incluindo) a data alvo, processando um dia por vez.
+   * @param {string} targetDate  ISO-8601
+   * @returns {number} dias processados.
+   */
+  advanceUntil(targetDate) {
+    let processed = 0;
+    while (this.world.state.currentDate <= targetDate) {
+      this.advanceDay();
+      processed += 1;
+    }
+    return processed;
+  }
 }

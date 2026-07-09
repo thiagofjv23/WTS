@@ -23,6 +23,14 @@ será retomado. Atualizado a cada passo do desenvolvimento.
   plausível (prime ~25). Buscar datas de nascimento reais (outra fonte WT/perfis)
   para carreiras/aposentadorias fiéis.
 
+- 🟡 **Datas reais dos eventos.** O ranking traz nome/ano dos eventos, não as
+  datas exatas. Hoje distribuímos os 23 eventos uniformemente pela temporada.
+  Buscar o calendário oficial WT para datas fiéis (afeta ordem/pontos por época).
+
+- 🟢 **Eventos G-8 (Mundial) e G-20 (Olimpíadas).** Não aparecem nesta janela do
+  ciclo. Adicionar manualmente ao calendário nos anos corretos (e a repescagem
+  olímpica das §7). Também: filtrar eventos Junior num mundo de seniores.
+
 - 🟡 **Roster completo (cauda longa).** Usamos o TOP 256 por categoria (~1.024
   atletas) por causa do alvo mobile/localStorage. Incluir os ~3.092 atletas
   masculinos (ou permitir escolher o limite) é opção futura — ajustar
