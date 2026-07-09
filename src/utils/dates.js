@@ -14,6 +14,13 @@ export function yearOf(isoDate) {
   return Number(isoDate.slice(0, 4));
 }
 
+/** Dias decorridos de `fromISO` até `toISO` (pode ser negativo). */
+export function daysBetween(fromISO, toISO) {
+  const a = Date.UTC(...fromISO.split("-").map(Number).map((n, i) => (i === 1 ? n - 1 : n)));
+  const b = Date.UTC(...toISO.split("-").map(Number).map((n, i) => (i === 1 ? n - 1 : n)));
+  return Math.round((b - a) / 86400000);
+}
+
 /** Meses inteiros decorridos de `fromISO` até `toISO` (>= 0). */
 export function monthsBetween(fromISO, toISO) {
   const [fy, fm, fd] = fromISO.split("-").map(Number);

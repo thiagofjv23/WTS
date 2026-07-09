@@ -33,15 +33,25 @@ export function decayFactor(months) {
 }
 
 /**
- * Pontos de ranking efetivos de um atleta na data do mundo, somando o ledger
- * de resultados com o decaimento aplicado a cada um.
+ * Quantos resultados contam para o ranking (regra "melhores N resultados" da WT).
+ * Calibrado para totais de topo realistas (~200–350 pts). Ver DECISIONS.md/TODO.
  */
-export function effectivePoints(athlete, worldDate) {
+export const BEST_N = 5;
+
+/**
+ * Pontos de ranking efetivos de um atleta na data do mundo: aplica o decaimento
+ * a cada resultado do ledger e soma apenas os BEST_N maiores (regra best-N).
+ */
+export function effectivePoints(athlete, worldDate, bestN = BEST_N) {
   const ledger = athlete.pointsLedger || [];
-  let total = 0;
+  const decayed = [];
   for (const e of ledger) {
-    total += e.points * decayFactor(monthsBetween(e.date, worldDate));
+    const v = e.points * decayFactor(monthsBetween(e.date, worldDate));
+    if (v > 0) decayed.push(v);
   }
+  decayed.sort((a, b) => b - a);
+  let total = 0;
+  for (let i = 0; i < Math.min(bestN, decayed.length); i++) total += decayed[i];
   return round2(total);
 }
 

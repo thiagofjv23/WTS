@@ -86,23 +86,31 @@ será retomado. Atualizado a cada passo do desenvolvimento.
   camada abstrata com backend em memória/arquivo para testes em Node. O backend
   localStorage entra junto com a UI no navegador.
 
-## Realismo de temporada (identificados na simulação multi-temporada)
+## Realismo de temporada
 
-- 🟡 **Modelo de participação dos atletas.** Hoje os top-`fieldSize` de cada
-  categoria entram em TODOS os eventos → um top competindo em ~25 eventos/ano
-  (irreal; o normal são ~8–12). Modelar escolha de calendário por atleta
-  (viagem, foco, custo) via Athlete AI System.
+- ✅ **Modelo de participação dos atletas** — feito (participation.js): atletas
+  escolhem eventos por grau/ranking + fadiga. Sugestão #1 e #4 do documento de
+  diretrizes.
+- ✅ **Regra "melhores N resultados contam"** — feito (ranking.js, BEST_N=5).
+- ✅ **Calendário completo** — importado de "2026 Events.txt" (67 eventos reais).
 
-- 🟡 **Regra "melhores N resultados contam".** A WT conta apenas os melhores
-  resultados no ranking, não todos. Sem isso, os pontos inflam (>1000) ao longo
-  das temporadas. Implementar junto com o decaimento para pontuações realistas.
+- 🟢 **Calibração de BEST_N e da participação.** BEST_N=5 e os parâmetros de
+  `participation.js` (exponente de grau, fadiga) foram calibrados por olho para
+  totais realistas (~200–400). Revisar contra dados reais da WT.
 
-- 🟡 **Calendário completo do PDF oficial.** O PDF é imagem com células mescladas
-  (OCR não alinha títulos). Curamos um subconjunto Kyorugi/Senior confiável.
-  **Ideal: receber o calendário como CSV/Excel** (como nomes e ranking) para
-  importar TODOS os eventos com datas/títulos exatos. Também: datas aproximadas
-  (`dateExact:false`) a confirmar; incluir Grand Slam/Team/World Cup (formatos
-  especiais) e, nos anos certos, Mundial (G-8) e Olimpíadas (G-20).
+- 🟡 **Sugestões ainda não implementadas** (documento de diretrizes de calendário):
+  - #2 **Tours/viagens geográficas** — probabilidade maior de competir em país
+    vizinho na sequência (variável de orçamento/energia de viagem).
+  - #3 **Periodização/pico de forma** — 1–2 torneios-alvo/ano com atributos no
+    ápice; performance "comum" nos demais.
+  - #5 **Lesões e rotatividade** — desgaste cumulativo → afastamentos ("cirurgia,
+    volta em 3 meses"), abrindo espaço para novos nomes. Integra com o
+    AthleteInjured/AthleteRetired do Event Bus.
+  Todas integráveis por extensão, sem alterar o núcleo (Athlete AI System).
+
+- 🟡 **Formatos especiais e anos especiais.** Incluir Grand Slam/Team/World Cup
+  (formatos próprios) e, nos anos certos, Mundial (G-8) e Olimpíadas (G-20) com
+  repescagem (§7). Eventos exclusivamente femininos entram com o feminino.
 
 ## Melhorias técnicas pendentes
 

@@ -13,8 +13,8 @@
  */
 
 import { eventsForDate, CALENDAR_STATUS } from "./calendar.js";
-import { simulateCompetition, selectEntrants } from "./competitionSystem.js";
-import { athletesInCategory } from "../core/world.js";
+import { simulateCompetition } from "./competitionSystem.js";
+import { selectParticipants } from "./participation.js";
 import { applyConsequences } from "./consequence.js";
 import { applyCompetitionPoints, recomputeRankings } from "./ranking.js";
 import { recordCompetitionHistory } from "./history.js";
@@ -86,8 +86,7 @@ export class SimulationDirector {
     const { byCategory, allMatches } = simulateCompetition(
       this.random,
       competition,
-      (categoryId) =>
-        selectEntrants(athletesInCategory(world, categoryId), competition.fieldSize),
+      (categoryId) => selectParticipants(world, competition, categoryId, this.random),
       {
         onMatch: (match) =>
           this._emit("FightFinished", {

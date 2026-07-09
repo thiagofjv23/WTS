@@ -296,7 +296,36 @@ ela os pontos inflam). Ambos afetam o realismo dos números, não a mecânica.
 
 ---
 
-## Estado do Núcleo: COMPLETO ✅ (dados reais, temporada e múltiplas temporadas)
+## Passo 11 — Best-N + Participação por atleta (pontuações realistas) ✅
+
+**Objetivo:** tornar as pontuações realistas ao longo das temporadas, via regra
+"melhores N resultados" e um modelo de participação por atleta (não todos entram
+em tudo). Baseado no documento de diretrizes de calendário (sugestões #1 e #4).
+
+**Entregue:**
+- **Calendário real completo:** `scripts/buildCalendar.mjs` importa
+  "2026 Events.txt" (texto oficial) → `calendar2026.js` com **67 eventos**
+  Kyorugi/Senior reais (data, G-Rank, nome, local). Resolve o problema do
+  PDF-imagem; exclui Poomsae/Virtual/Junior/Cadet/Team/Grand Slam/femininos.
+- **Best-N** (`ranking.js`): `effectivePoints` soma só os `BEST_N=5` maiores
+  resultados (já decaídos) — impede a inflação de pontos.
+- **Participação** (`src/engine/participation.js`): `enterProbability` +
+  `selectParticipants` + `recentLoad`. Atletas fortes priorizam eventos de grau
+  alto; base "farma" G-1/G-2; fadiga (28→35 dias) limita eventos seguidos.
+  Ligado ao Simulation Director no lugar do top-N fixo.
+- `tests/participation.test.mjs` — 9 testes.
+
+**Testado:** `npm test` → **101/101 passaram.**
+
+**Calibração (por olho, documentada):** eventos/temporada — topo ~6 (seletivos),
+mid ~9 (rodam o circuito), base ~5. **Efeito comprovado:** campeões de G-1 têm
+ranking real médio ~45 (mid-tier vencem os Opens) enquanto G-6/G-10 são vencidos
+pela elite (~13). Pontos de topo caíram de **>1000 para ~200–400** (realistas);
+campeões passam a rotacionar entre temporadas.
+
+---
+
+## Estado do Núcleo: COMPLETO ✅ (dados reais, temporadas, participação realista)
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

@@ -20,6 +20,7 @@ node scripts/demoReal.mjs         # um Grand Prix com ATLETAS REAIS
 node scripts/demo.mjs             # Aberto G-1 com atletas sintéticos (gerados)
 npm test                          # 92 testes
 npm run build:roster              # regenera roster + eventos reais a partir do .xlsx
+npm run build:calendar            # regenera o calendário 2026 a partir do .txt oficial
 npm run build:names               # regenera o dicionário de nomes (atletas gerados)
 ```
 
@@ -32,11 +33,16 @@ ranking (favoritos reais nascem fortes). Escopo atual: TOP 256 das 4 categorias
 masculinas (~1.024 atletas). Ver `DECISIONS.md`.
 
 O **calendário** vem do calendário oficial WT 2026 (`calendar2026.js`, apenas
-Kyorugi/Senior): 25 competições reais com datas e G-Rank (incluindo Grand Prix
-Series G-6 e Grand Prix Final G-10). O simulador roda **múltiplas temporadas
-consecutivas** com **decaimento de pontos de 4 anos** (§5): os pontos antigos
-expiram e o ranking evolui ano a ano. Quatro temporadas (~12 mil lutas) rodam em
-poucos segundos.
+Kyorugi/Senior): **67 competições reais** com datas, G-Rank, nome e local
+(incluindo Grand Prix Series G-6 e Grand Prix Final G-10). O simulador roda
+**múltiplas temporadas consecutivas** com **decaimento de pontos de 4 anos** (§5)
+e a regra **"melhores N resultados contam"**, mantendo as pontuações realistas.
+
+Cada atleta **escolhe em quais eventos competir** (participation.js): os fortes
+priorizam os grandes eventos, os de base "farmam" pontos nos Opens, e a fadiga
+limita competições em sequência. Resultado: os Opens (G-1) são vencidos por
+atletas de nível médio e os grandes eventos pela elite — o ranking evolui e os
+campeões rotacionam ao longo dos anos.
 
 ## Arquitetura do código (`src/`)
 

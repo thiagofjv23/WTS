@@ -136,6 +136,42 @@ datas/graus por linha mas NÃO alinha os títulos de forma confiável. Por isso 
 calendário. Datas marcadas `dateExact:true` foram lidas com confiança; as demais
 são aproximadas. Poomsae/Virtual/Junior/Cadet/Team/Grand Slam ficam fora.
 
+## [2026-07-09] Calendário — Importado do texto oficial (2026 Events.txt)
+O usuário forneceu o calendário em texto (resolvendo o problema do PDF-imagem).
+`scripts/buildCalendar.mjs` reconstrói a associação título↔linhas (células
+mescladas: o título vem nas linhas após uma linha de evento terminada em TAB) e
+gera `calendar2026.js` com 67 eventos Kyorugi/Senior reais (data, G-Rank, nome,
+local). Exclui Poomsae, Virtual, Junior, Cadet, Team, Grand Slam (formato
+especial) e eventos exclusivamente femininos (mundo masculino no escopo).
+
+## [2026-07-09] Ranking — Regra "melhores N resultados contam" (best-N)
+Contexto: a WT considera apenas os melhores resultados no ranking, não todos —
+sem isso os pontos inflam ao longo das temporadas.
+
+Decisão: `effectivePoints` passa a somar apenas as N MAIORES entradas do ledger
+(já com decaimento aplicado), não todas. `BEST_N` configurável (padrão 5),
+calibrado para gerar totais realistas de topo (~200–350 pts). Combina com o
+decaimento §5 (cada entrada decai; depois pegamos as N melhores).
+
+## [2026-07-09] Participação — Escolha de torneios por atleta (Athlete AI)
+Contexto: antes, os top-32 de cada categoria entravam em TODOS os eventos
+(irreal). Baseado na sugestão #1 (e #4) do documento de diretrizes.
+
+Decisão: `participation.js` decide, por atleta e por evento, a probabilidade de
+inscrição:
+ - Atração por grau: atletas mais fortes (percentil de ranking alto) têm baixa
+   probabilidade de entrar em eventos de grau baixo (G-1) e alta nos grandes
+   (G-4/G-6/G-10). Atletas de base entram em muitos G-1/G-2 para "farmar".
+   Fórmula: attract = (gradeValue/100)^(percentil×2).
+ - Fadiga (sugestão #4): competições recentes (janela de 28 dias, lidas do
+   history) reduzem a probabilidade — evita entrar em muitos eventos seguidos.
+ - Campo final: quem decidiu entrar, limitado a fieldSize por ranking, com um
+   mínimo (minField) para garantir chaves válidas.
+Assim os favoritos concentram-se nos grandes eventos e os menores são vencidos
+por atletas de nível médio — espalhando os pontos de forma realista. Sugestões
+#2 (viagens), #3 (pico de forma) e #5 (lesões/rotatividade) ficam para depois
+(TODO), integráveis por extensão sem alterar este núcleo.
+
 ## [2026-07-09] Pipeline — Salvar após avançar a data (reordenação justificada)
 Contexto: SimulationPipeline lista Save (etapa 12) antes de Avançar a data
 (etapa 13). Salvar antes gera um snapshot com a data ainda "no dia jogado".
