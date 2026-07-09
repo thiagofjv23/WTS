@@ -1,0 +1,31 @@
+# Sugestões de Diretrizes para Simulação de Calendário de Taekwondo
+
+**Para: IA Desenvolvedora do Projeto**
+**Contexto:** Simulação de ecossistema esportivo (Visão de Observador / "Ant-Farm" de NPCs)
+
+Este documento apresenta sugestões de caminhos e comportamentos para enriquecer o ecossistema do seu jogo de simulação de Taekwondo. Como não há um "atleta do jogador" e atuamos como observadores de um mundo vivo, as ideias abaixo não impõem regras rígidas. Elas são propostas de variáveis que você, como IA com visão global do projeto, pode balancear e decidir como integrar à lógica de tomada de decisão dos atletas virtuais.
+
+---
+
+## 1. O Peso dos Rankings (Classes "G") e a Escolha de Torneios
+Na vida real, a *World Taekwondo* usa um sistema de classes (G1, G2, G4... até G20) que define os pontos distribuídos. 
+*   **Sugestão de Rota:** A simulação poderia dotar os NPCs de uma lógica de priorização baseada em seus próprios rankings. Atletas virtuais no topo da tabela poderiam ser programados para ignorar eventos G1 e focar energia apenas em torneios maiores. Em contrapartida, atletas de base poderiam ter uma tendência a se inscrever massivamente em torneios G1/G2 pelo mundo para "farmar" pontos. Fica a seu critério definir como a matemática dessa atração por eventos funcionará no motor do jogo.
+
+## 2. Lógica de "Tours" e Viagens Geográficas
+Atletas reais costumam agrupar viagens para competições em países vizinhos para poupar recursos.
+*   **Sugestão de Rota:** Você pode considerar a inclusão de uma variável oculta de "orçamento" ou "energia de viagem" para os NPCs. Se o simulador detectar que um NPC está na Europa para um evento, ele poderia ter uma probabilidade maior de aparecer em um evento num país vizinho na semana seguinte. Isso criaria uma movimentação orgânica e realista no mapa-múndi da simulação, sem a necessidade de microgerenciamento.
+
+## 3. Periodização Anual e Flutuação de Performance
+No esporte de alto rendimento, ninguém está 100% o ano todo; existem os "picos de forma" alinhados com os Mundiais e Olimpíadas.
+*   **Sugestão de Rota:** A engine do jogo poderia atribuir a cada NPC um ou dois "torneios-alvo" gerados proceduralmente por ano. Quando os observamos nesses eventos específicos, seus atributos (velocidade, estamina) estariam em seu ápice. Em torneios menores, eles teriam performances "comuns". Como implementar esses multiplicadores (ou se eles serão visíveis para quem observa) é uma decisão livre para o seu game design.
+
+## 4. O Desgaste Invisível do Corte de Peso
+Lutar constantemente na mesma categoria exige sucessivos cortes de peso (desidratação severa), o que drena o corpo a longo prazo.
+*   **Sugestão de Rota:** Para evitar que os NPCs do topo participem de todos os torneios do calendário, você pode experimentar uma mecânica de fadiga cumulativa. Se o sistema notar que um atleta virtual lutou em muitos campeonatos em um curto período, ele poderia sofrer um "debuff" invisível de recuperação nas lutas seguintes. Você pode até sugerir caminhos onde os NPCs decidam lutar em uma categoria de peso acima em torneios menores só para evitar esse desgaste sistêmico.
+
+## 5. Risco de Lesão e Rotatividade de Atletas
+O taekwondo moderno gera muito impacto nas articulações, exigindo janelas de descanso para curar microlesões.
+*   **Sugestão de Rota:** Pode ser interessante adicionar um sistema de durabilidade ("wear and tear") contínuo. Ao acompanharmos a simulação, poderíamos ser surpreendidos por notícias ou eventos de que um grande nome do esporte "se retirou do calendário por 3 meses para cirurgia". Isso ajudaria a rotacionar os campeões e daria espaço para novos NPCs surgirem nas chaves dos torneios, mantendo o ecossistema sempre dinâmico e imprevisível.
+
+---
+*Nota à IA Desenvolvedora: Sinta-se livre para mesclar, ignorar ou expandir estas sugestões conforme o escopo técnico da simulação exigir. O objetivo é apenas inspirar a criação de um mundo esportivo que respire e pareça vivo aos olhos de quem assiste.*
