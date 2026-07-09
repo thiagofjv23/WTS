@@ -42,3 +42,13 @@ O sistema deve gerar chaves automáticas por categoria seguindo estas restriçõ
 * **Potência de Dois:** O tamanho da chave deve se ajustar para o próximo número perfeito (4, 8, 16 ou 32).
 * **Distribuição de Byes:** Se o número de atletas não for perfeito, os competidores com maior ranking ganham a vantagem de passar direto (Bye) para a segunda fase.
 * **Bloqueio de Equipe:** Atletas com o mesmo campo "Academia/Clube" devem ser sorteados em lados opostos da árvore de lutas para evitar confronto inicial.
+
+## 7. Sistema de Repescagem Olímpica (Dois Bronzes)
+O torneio deve gerar duas chaves de repescagem separadas após a definição dos dois finalistas (Vencedor da Chave A e Vencedor da Chave B):
+* **Quem entra na Repescagem A:** Todos os atletas que perderam para o Finalista A ao longo do torneio.
+* **Quem entra na Repescagem B:** Todos os atletas que perderam para o Finalista B ao longo do torneio.
+* **Formato da disputa:** 
+  1. O atleta que perdeu para o finalista na primeira rodada luta contra o que perdeu na segunda rodada.
+  2. O vencedor dessa luta enfrenta o atleta que perdeu nas quartas de final.
+  3. O vencedor deste último confronto enfrenta o perdedor da semifinal do lado oposto da chave.
+* **Premiação:** O vencedor da Repescagem A ganha uma medalha de bronze, e o vencedor da Repescagem B ganha a outra medalha de bronze.
