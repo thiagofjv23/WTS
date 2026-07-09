@@ -48,6 +48,14 @@ será retomado. Atualizado a cada passo do desenvolvimento.
   Ranking inicial soma pontos brutos; o decaimento por aniversário do evento
   entra quando houver múltiplas temporadas simuladas.
 
+- 🔴 **Desempate avançado de ranking.** `taekwondo-ranking.md` §3 (mais pontos
+  em eventos de maior peso → pontos no ano corrente → confronto direto). Hoje o
+  desempate é por rating combativo. Requer guardar pontos por G-Rank e por ano.
+
+- 🟢 **Fatores de premiação além do 9º lugar.** O doc §2 só especifica até 9º
+  (15.12%). Para 17º+ (chaves de 32) estendemos com ×0.7 — confirmar os valores
+  oficiais da World Taekwondo.
+
 - 🔴 **Persistência real (localStorage/IndexedDB).** Storage inicial é uma
   camada abstrata com backend em memória/arquivo para testes em Node. O backend
   localStorage entra junto com a UI no navegador.

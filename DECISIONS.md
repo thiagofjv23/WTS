@@ -69,6 +69,25 @@ Decisão: `StorageService` recebe um backend (interface get/set/remove). No
 núcleo/testes usamos um backend em memória; no navegador injetamos um backend
 localStorage; futuramente IndexedDB. O motor nunca fala com localStorage direto.
 
+## [2026-07-09] Ranking — Tabela de premiação explícita (não geométrica)
+Contexto: `taekwondo-ranking.md` §2 dá 1º=100%, 2º=60%, 3º=36%, 5º=21.6%,
+9º=15.12%. A progressão NÃO é ×0.6 constante (o passo 5º→9º é ×0.7).
+
+Decisão: usar a tabela explícita do documento (`PLACEMENT_FACTORS`) em vez de
+uma fórmula 0.6^n. Para colocações além do 9º (17º+, que surgem em chaves de 32),
+estendemos multiplicando por 0.7 — SUPOSIÇÃO a confirmar, pois o documento não
+especifica esses degraus. Decaimento de 4 anos (§5) e desempate avançado (§3)
+seguem adiados.
+
+## [2026-07-09] Pipeline — Salvar após avançar a data (reordenação justificada)
+Contexto: SimulationPipeline lista Save (etapa 12) antes de Avançar a data
+(etapa 13). Salvar antes gera um snapshot com a data ainda "no dia jogado".
+
+Decisão: no Simulation Director, avançamos data/contadores e depois salvamos, de
+modo que o snapshot persistido represente o estado completo do dia e a simulação
+retome limpa no dia seguinte (eventos do dia já marcados como processados). Os
+documentos permitem reordenação "com justificativa técnica documentada" — é o caso.
+
 ## [2026-07-09] Combate — Modelo probabilístico por trocas (a calibrar)
 Contexto: os docs de combate definem o FLUXO, não a matemática. Fica a nosso
 critério traduzir atributo→probabilidade.

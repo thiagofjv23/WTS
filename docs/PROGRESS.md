@@ -175,3 +175,40 @@ bloqueio de equipe/clube (sem entidade Club).
 **Próximo passo:** Passo 7 — Ranking System (aplicar pontos G-Rank por colocação
 + desempate) e o Simulation Director costurando o pipeline diário via Event Bus,
 para rodar um campeonato completo no console ponta a ponta.
+
+---
+
+## Passo 7 — Ranking System + Simulation Director (pipeline completo) ✅
+
+**Objetivo:** costurar o pipeline diário e rodar um campeonato inteiro no console.
+
+**Entregue:**
+- `src/engine/ranking.js` — `pointsForPlacement` (tabela oficial §2, não
+  geométrica), `recomputeRankings` (posições derivadas dos pontos).
+- `src/engine/consequence.js` — estatísticas de atletas e países (soma).
+- `src/engine/history.js` — histórico permanente (append-only).
+- `src/engine/calendar.js` + `src/utils/dates.js` — agendamento e datas ISO.
+- `src/engine/simulationDirector.js` — orquestra o pipeline e publica eventos:
+  `NewDayStarted → Calendar → Competition(→Combat) → Consequence → Ranking →
+  History → Save → DayFinished`.
+- `scripts/demo.mjs` — demo de console (pódios, ranking, quadro de medalhas).
+- `tests/pipeline.test.mjs` — 9 testes.
+
+**Testado:** `npm test` → **71/71 passaram.** Inclui: tabela de pontos G-1
+(10/6/3.6/2.16/1.51); campeões apurados; ranking/estatísticas/país/histórico
+atualizados; vitórias=derrotas; eventos publicados; save persistido;
+**determinismo do pipeline** (mesma seed → mundo final idêntico).
+
+**Demo executada** (`node scripts/demo.mjs`): 72 atletas, 68 lutas, 4 pódios,
+ranking mundial por categoria, quadro de medalhas por país, 4 registros de
+histórico, save persistido, data avançada. **Núcleo provado ponta a ponta.**
+
+---
+
+## Estado do Núcleo: COMPLETO ✅
+
+O motor roda um campeonato completo sem interface, de forma determinística e
+seguindo os documentos de arquitetura. A partir daqui, expansões entram por
+extensão (ver TODO.md): categorias femininas, seed completo (~2.200 atletas),
+demais systems (Training/Recovery/AI/News), múltiplas temporadas com calendário
+anual, e por fim a interface mobile-first.
