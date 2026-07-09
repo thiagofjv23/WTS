@@ -1,0 +1,11 @@
+{
+  "name": "wt-simulator",
+  "version": "0.1.0",
+  "description": "World Taekwondo Simulator - simulador de ecossistema mundial de Taekwondo",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node tests/run.mjs",
+    "build:names": "node scripts/buildNames.mjs"
+  }
+}
