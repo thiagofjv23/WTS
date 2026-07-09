@@ -112,3 +112,37 @@ faixa ~60–85, idades 18–32.
 
 **Próximo passo:** Passo 5 — Combat Framework (uma luta completa entre dois
 atletas, emergente e determinística), isolada e testável.
+
+---
+
+## Passo 5 — Combat Framework ✅
+
+**Objetivo:** simular uma luta completa como sucessão de decisões (emergente),
+não como comparação de atributos, seguindo combat_framework.md e fight_algorithm.md.
+
+**Entregue (engines modulares compartilhando o Fight State):**
+- `src/engine/combat/fightState.js` — estado único da luta.
+- `src/engine/combat/rules.js` — catálogo de ações, valores de pontuação (WT),
+  gam-jeom, melhor de 3 rounds, critérios de vitória.
+- `src/engine/combat/probability.js` — Probability Engine (logística sobre
+  diferenças de atributos; energia, forma, momentum).
+- `src/engine/combat/decision.js` — Decision Engine (planos táticos, escolha de
+  ação, adaptação de comportamento por Adaptabilidade).
+- `src/engine/combat/fightManager.js` — orquestrador na ordem oficial: distância
+  → iniciativa → gam-jeom → ação → defesa → contra-ataque → acerto → placar →
+  momentum/energia; rounds, desempate (golden exchange), encerramento.
+- `tests/combat.test.mjs` — 8 testes.
+
+**Testado:** `npm test` → **51/51 passaram.**
+- Vencedor/perdedor distintos; vencedor com 2 rounds; determinismo por seed;
+  estatísticas coerentes; **equilíbrio estatístico** (favorito claro vence
+  >75% mas <100%; iguais ~50/50).
+
+**Curva de calibração observada (1000 lutas/par):** gap 0 ≈ 49%, gap 4 ≈ 73%,
+gap 10 ≈ 92%, gap 24 ≈ 99.8%. Ajustável (ver DECISIONS.md/TODO.md).
+
+**A engine NÃO toca ranking/medalhas/histórico** — só produz o resultado técnico,
+como exige o fight_algorithm.md.
+
+**Próximo passo:** Passo 6 — Competition System (chaves/brackets por categoria,
+eliminação simples com byes por ranking) consumindo o Combat Framework.

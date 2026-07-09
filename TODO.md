@@ -59,6 +59,12 @@ será retomado. Atualizado a cada passo do desenvolvimento.
 - 🟢 **Auditoria de aleatoriedade** (registro de randomValues por evento,
   `random_system.md`). Estrutura prevista, ativação adiada.
 - 🟢 **Modo Histórico do Random System** (recriar cenários conhecidos).
+- 🟢 **Calibração do combate.** A inclinação atual (gap de 10 pts ≈ 92% de
+  vitória) é ajustável via constante `k` em `probability.js:advantage()`.
+  Revisar após simular temporadas inteiras e observar a taxa de zebras global.
+- 🟢 **Mecânicas de combate futuras** (fight_algorithm.md → Extensibilidade):
+  knockout, golden point explícito, revisão por vídeo, lesões durante a luta,
+  desistências, desclassificações. Entram como etapas complementares do fluxo.
 - 🟢 **Pools de nomes pequenos.** Alguns países têm poucos nomes masculinos
   (CN: 9, KR: 10), gerando repetição de primeiros nomes com muitos atletas.
   Combos ainda dão centenas de nomes únicos por país, mas ao escalar o seed

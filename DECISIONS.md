@@ -77,3 +77,12 @@ Decisão (provisória, a calibrar): cada troca resolve iniciativa, ataque, defes
 e contra-ataque via funções logísticas sobre diferenças de atributos, moduladas
 por energia/momentum/forma. Detalhes registrados no passo do combate. Marcado
 como ponto de calibração — números serão ajustados após rodar milhares de lutas.
+
+Curva observada no Passo 5 (nível uniforme, 1000 lutas por par):
+- gap 0 (70×70): ~49% — equilíbrio correto.
+- gap 4 (72×68): ~73%.
+- gap 10 (75×65): ~92%.
+- gap 24 (82×58): ~99.8%.
+Coerente com athlete_attributes.md (diferença entre elite é pequena; a maioria
+dos confrontos intra-categoria fica em gaps < 12). A inclinação é ajustável pela
+constante `k` de `advantage()` em probability.js caso queiramos mais zebras.
