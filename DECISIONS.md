@@ -106,6 +106,36 @@ regex próprio (sharedStrings + células), mapeia colunas por CABEÇALHO (não p
 letra, pois a posição varia entre abas) e gera `src/database/realRoster.js`
 compacto. O .xlsx (326 KB) nunca é lido em runtime — mesmo princípio dos nomes.
 
+## [2026-07-09] G-Rank — Fórmula geral n×10 (calendário real tem G-6/G-10)
+O calendário oficial 2026 usa graus além do taekwondo-ranking.md (G-6 Grand Prix
+Series, G-10 Grand Prix Final, G-8 equipes). A regra WT é campeão = n×10 pontos,
+consistente com o doc (G-1=10 … G-20=200). Passamos a calcular pontos por
+`championPointsFor("G-n") = n×10`, aceitando qualquer G-n.
+
+## [2026-07-09] Ranking — Decaimento de 4 anos via LEDGER de resultados
+Contexto: §5 exige decaimento (100/75/50/25/0% por ano). Antes somávamos pontos
+brutos num total.
+
+Decisão: cada atleta tem `pointsLedger` (lista de {date, points, gRank}). Os
+pontos efetivos são recalculados a cada atualização de ranking aplicando o fator
+de decaimento sobre a idade de cada resultado. Determinístico e fiel ao §5.
+Os pontos reais do seed entram como uma entrada de ledger datada no início do
+mundo (2026-07-01) — logo, decaem ao longo das temporadas seguintes
+(aproximação: na realidade foram ganhos ao longo dos 4 anos anteriores).
+
+## [2026-07-09] Temporadas — Primeira temporada simulada = 2027
+O ranking-semente é a foto de junho/2026. As temporadas simuladas começam em
+2027 (yearOffset=1), repetindo a estrutura anual do calendário 2026 com o ano
+deslocado. A temporada parcial de 2026 (já ocorrida na realidade) é pulada.
+
+## [2026-07-09] Calendário 2026 — Curado do PDF oficial (imagem/OCR)
+O PDF do calendário é baseado em IMAGEM com células mescladas, então o OCR lê
+datas/graus por linha mas NÃO alinha os títulos de forma confiável. Por isso o
+`calendar2026.js` é curado: eventos Kyorugi/Senior com G-Rank do ranking
+(autoritativo) + os grandes eventos de 2026 (Grand Prix Series/Final) lidos do
+calendário. Datas marcadas `dateExact:true` foram lidas com confiança; as demais
+são aproximadas. Poomsae/Virtual/Junior/Cadet/Team/Grand Slam ficam fora.
+
 ## [2026-07-09] Pipeline — Salvar após avançar a data (reordenação justificada)
 Contexto: SimulationPipeline lista Save (etapa 12) antes de Avançar a data
 (etapa 13). Salvar antes gera um snapshot com a data ainda "no dia jogado".

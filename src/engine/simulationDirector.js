@@ -98,14 +98,14 @@ export class SimulationDirector {
       }
     );
 
-    // Ranking: pontos por colocação, depois recálculo das posições.
+    // Ranking: credita pontos no ledger e recalcula pontos efetivos/posições
+    // (antes das estatísticas de país, que somam os pontos efetivos).
     applyCompetitionPoints(world, competition, byCategory);
+    recomputeRankings(world, competition.date);
     // Consequências: estatísticas de atletas e países.
     applyConsequences(world, competition, byCategory, allMatches);
     // Histórico permanente.
     recordCompetitionHistory(world, competition, byCategory);
-    // Recalcula rankings ao final (SimulationPipeline etapa 8).
-    recomputeRankings(world, competition.date);
 
     competition.status = COMPETITION_STATUS.FINISHED;
     this._emit("CompetitionFinished", { competitionId: competition.id });

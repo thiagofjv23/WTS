@@ -77,6 +77,7 @@ export function createAthlete(data) {
       points: 0,
       position: null,
     },
+    pointsLedger: [], // resultados que compõem os pontos (para decaimento §5)
     statistics: emptyAthleteStatistics(),
     history: [],
     schemaVersion: 1,

@@ -260,7 +260,43 @@ Fernandes (real nº 1 do -80) dominou com 10 títulos. Atletas e eventos 100% re
 
 ---
 
-## Estado do Núcleo: COMPLETO ✅ (agora com dados reais e temporada)
+## Passo 10 — Calendário oficial 2026, decaimento e múltiplas temporadas ✅
+
+**Objetivo:** simular várias temporadas consecutivas usando o calendário oficial
+WT 2026 (Kyorugi/Senior) com decaimento de pontos de 4 anos.
+
+**Entregue:**
+- G-Rank generalizado: `championPointsFor("G-n") = n×10` (competition.js), aceita
+  G-6/G-10 do calendário real. `ranking.js` usa a fórmula geral.
+- **Decaimento §5** via ledger: `athlete.pointsLedger` + `decayFactor` +
+  `effectivePoints`; `recomputeRankings` recalcula pontos efetivos com
+  decaimento a cada atualização.
+- `src/database/calendar2026.js` — calendário oficial 2026 curado (25 eventos
+  Kyorugi/Senior; datas do PDF, graus do ranking; GP Series G-6, GP Final G-10).
+- `src/engine/season.js` — usa datas reais + `yearOffset` para temporadas
+  seguintes; `SimulationDirector.advanceUntil`.
+- `scripts/demoMultiSeason.mjs` — demo de N temporadas.
+- `tests/season.test.mjs` — reescrito: 10 testes (grades, calendário, decaimento,
+  multi-temporada, determinismo).
+
+**Testado:** `npm test` → **92/92 passaram.**
+
+**Extração do PDF:** o calendário é um PDF de IMAGEM; extraí via OCR (tesseract)
+com upscaling. Datas/graus por linha saem confiáveis; títulos (células mescladas)
+não alinham → calendário curado. Detalhes em DECISIONS.md.
+
+**Demo multi-temporada** (`node scripts/demoMultiSeason.mjs`): 4 temporadas,
+**12.400 lutas em ~2 s**. O **decaimento fica visível**: os pontos sobem e depois
+estabilizam/caem à medida que resultados antigos expiram; novos nomes entram no
+top 5. Determinístico por seed.
+
+**Gaps de realismo anotados no TODO:** participação por atleta (hoje todos os
+top-32 entram em todos os eventos) e regra "melhores N resultados contam" (sem
+ela os pontos inflam). Ambos afetam o realismo dos números, não a mecânica.
+
+---
+
+## Estado do Núcleo: COMPLETO ✅ (dados reais, temporada e múltiplas temporadas)
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

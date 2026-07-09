@@ -86,6 +86,24 @@ será retomado. Atualizado a cada passo do desenvolvimento.
   camada abstrata com backend em memória/arquivo para testes em Node. O backend
   localStorage entra junto com a UI no navegador.
 
+## Realismo de temporada (identificados na simulação multi-temporada)
+
+- 🟡 **Modelo de participação dos atletas.** Hoje os top-`fieldSize` de cada
+  categoria entram em TODOS os eventos → um top competindo em ~25 eventos/ano
+  (irreal; o normal são ~8–12). Modelar escolha de calendário por atleta
+  (viagem, foco, custo) via Athlete AI System.
+
+- 🟡 **Regra "melhores N resultados contam".** A WT conta apenas os melhores
+  resultados no ranking, não todos. Sem isso, os pontos inflam (>1000) ao longo
+  das temporadas. Implementar junto com o decaimento para pontuações realistas.
+
+- 🟡 **Calendário completo do PDF oficial.** O PDF é imagem com células mescladas
+  (OCR não alinha títulos). Curamos um subconjunto Kyorugi/Senior confiável.
+  **Ideal: receber o calendário como CSV/Excel** (como nomes e ranking) para
+  importar TODOS os eventos com datas/títulos exatos. Também: datas aproximadas
+  (`dateExact:false`) a confirmar; incluir Grand Slam/Team/World Cup (formatos
+  especiais) e, nos anos certos, Mundial (G-8) e Olimpíadas (G-20).
+
 ## Melhorias técnicas pendentes
 
 - 🟢 **Bloqueio de equipe/clube nas chaves** (`taekwondo-ranking.md` §6, último

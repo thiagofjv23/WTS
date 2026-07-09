@@ -13,3 +13,12 @@ export function addDays(isoDate, days) {
 export function yearOf(isoDate) {
   return Number(isoDate.slice(0, 4));
 }
+
+/** Meses inteiros decorridos de `fromISO` até `toISO` (>= 0). */
+export function monthsBetween(fromISO, toISO) {
+  const [fy, fm, fd] = fromISO.split("-").map(Number);
+  const [ty, tm, td] = toISO.split("-").map(Number);
+  let months = (ty - fy) * 12 + (tm - fm);
+  if (td < fd) months -= 1; // ainda não completou o mês
+  return Math.max(0, months);
+}

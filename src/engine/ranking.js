@@ -10,15 +10,39 @@
  * profundas que 9º (17º+, em chaves de 32) estendemos com ×0.7 — suposição a
  * confirmar (ver DECISIONS.md/TODO.md).
  *
- * Decaimento temporal de 4 anos (§5) e desempate avançado (§3) ficam adiados
- * (TODO.md); aqui somamos pontos brutos e desempatamos por rating.
+ * Decaimento temporal de 4 anos (§5): cada resultado perde valor a cada
+ * aniversário — 100% / 75% / 50% / 25% / 0% após 4 anos. Os pontos de ranking
+ * são calculados a partir de um LEDGER de resultados (athlete.pointsLedger),
+ * aplicando o fator de decaimento sobre a data atual do mundo. Desempate
+ * avançado (§3) segue adiado (TODO.md) — desempatamos por rating.
  */
 
-import { G_RANKS } from "../entities/competition.js";
+import { championPointsFor } from "../entities/competition.js";
 import { combatRating } from "./combat/probability.js";
+import { monthsBetween } from "../utils/dates.js";
 
 function round2(v) {
   return Math.round(v * 100) / 100;
+}
+
+/** Fator de decaimento (§5) pelo nº de meses desde o evento. */
+export function decayFactor(months) {
+  const years = Math.floor(months / 12);
+  const table = [1, 0.75, 0.5, 0.25];
+  return years < table.length ? table[years] : 0;
+}
+
+/**
+ * Pontos de ranking efetivos de um atleta na data do mundo, somando o ledger
+ * de resultados com o decaimento aplicado a cada um.
+ */
+export function effectivePoints(athlete, worldDate) {
+  const ledger = athlete.pointsLedger || [];
+  let total = 0;
+  for (const e of ledger) {
+    total += e.points * decayFactor(monthsBetween(e.date, worldDate));
+  }
+  return round2(total);
 }
 
 /** Fatores de premiação por degrau, conforme taekwondo-ranking.md §2. */
@@ -46,14 +70,14 @@ export function placementFactor(placement) {
 
 /** Pontos de ranking ganhos por uma colocação numa competição de dado G-Rank. */
 export function pointsForPlacement(gRankKey, placement) {
-  const g = G_RANKS[gRankKey];
-  if (!g) throw new Error(`G-Rank inválido: ${gRankKey}`);
-  return round2(g.championPoints * placementFactor(placement));
+  return round2(championPointsFor(gRankKey) * placementFactor(placement));
 }
 
 /**
- * Aplica os resultados de uma competição ao ranking dos atletas.
- * Credita pontos e registra rankingPointsEarned em cada colocação (in-place).
+ * Aplica os resultados de uma competição ao ledger dos atletas.
+ * Registra rankingPointsEarned em cada colocação e adiciona a entrada ao ledger
+ * (com a data da competição, para o decaimento futuro). Não mexe diretamente em
+ * ranking.points — isso é responsabilidade de recomputeRankings.
  * @returns {number} total de pontos distribuídos (para verificação/testes).
  */
 export function applyCompetitionPoints(world, competition, byCategory) {
@@ -64,7 +88,12 @@ export function applyCompetitionPoints(world, competition, byCategory) {
       entry.rankingPointsEarned = pts;
       const athlete = world.athletes[entry.athleteId];
       if (athlete) {
-        athlete.ranking.points = round2(athlete.ranking.points + pts);
+        (athlete.pointsLedger ||= []).push({
+          date: competition.date,
+          points: pts,
+          gRank: competition.gRank,
+          competitionId: competition.id,
+        });
         distributed += pts;
       }
     }
@@ -75,13 +104,15 @@ export function applyCompetitionPoints(world, competition, byCategory) {
 }
 
 /**
- * Recalcula as posições de ranking por categoria a partir dos pontos.
- * Atualiza athlete.ranking.position e world.rankings[categoryId].
+ * Recalcula os pontos efetivos (com decaimento) e as posições por categoria.
+ * Atualiza athlete.ranking.points/position e world.rankings[categoryId].
  */
 export function recomputeRankings(world, worldDate) {
+  const date = worldDate ?? world.state.currentDate;
   const byCategory = {};
   for (const athlete of Object.values(world.athletes)) {
     if (athlete.status === "aposentado") continue;
+    athlete.ranking.points = effectivePoints(athlete, date);
     (byCategory[athlete.weightCategoryId] ||= []).push(athlete);
   }
   for (const [categoryId, list] of Object.entries(byCategory)) {
@@ -97,7 +128,7 @@ export function recomputeRankings(world, worldDate) {
     world.rankings[categoryId] = {
       categoryId,
       athleteIds: list.map((a) => a.id),
-      lastUpdated: worldDate ?? world.state.currentDate,
+      lastUpdated: date,
     };
   }
 }

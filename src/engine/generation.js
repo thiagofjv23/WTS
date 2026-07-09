@@ -160,6 +160,17 @@ export function generateRealAthlete(random, idGen, opts) {
   athlete.fullName = entry.name;
   athlete.memberNumber = entry.memberNumber;
   athlete.realRank = entry.rank;
-  athlete.ranking.points = Math.round(entry.points * 100) / 100;
+  const pts = Math.round(entry.points * 100) / 100;
+  athlete.ranking.points = pts;
+  // Ponto de partida no ledger: os pontos reais como um resultado datado no
+  // início do mundo (decairão ao longo das temporadas). Ver DECISIONS.md.
+  if (pts > 0) {
+    athlete.pointsLedger.push({
+      date: worldStartDate,
+      points: pts,
+      gRank: "seed",
+      competitionId: null,
+    });
+  }
   return athlete;
 }
