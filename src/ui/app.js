@@ -12,6 +12,7 @@ import { renderCalendar } from "./pages/calendar.js";
 import { renderCountries } from "./pages/countries.js";
 import { renderNews } from "./pages/news.js";
 import { athleteModal } from "./pages/athlete.js";
+import { competitionModal } from "./pages/competition.js";
 
 const PAGES = [
   { id: "ranking", label: "Ranking", icon: "🏆" },
@@ -114,9 +115,10 @@ export class App {
   renderPage() {
     const c = this.contentEl;
     const openAthlete = (id) => this.openAthlete(id);
+    const openComp = (id) => this.openCompetition(id);
     if (this.page === "ranking") renderRanking(c, this.game, openAthlete, this.pageState);
-    else if (this.page === "calendar") renderCalendar(c, this.game, this.pageState);
-    else if (this.page === "news") renderNews(c, this.game);
+    else if (this.page === "calendar") renderCalendar(c, this.game, this.pageState, openComp);
+    else if (this.page === "news") renderNews(c, this.game, openComp);
     else if (this.page === "countries") renderCountries(c, this.game);
   }
 
@@ -145,7 +147,7 @@ export class App {
             el("div.result-name", `${r.name} `, el("span.badge", r.gRank)),
             el("div.result-podiums",
               ...Object.entries(r.podiums).map(([cat, champ]) =>
-                el("div.podium-line", el("span.podium-cat", cat), el("span.podium-champ", champ ? `🥇 ${champ.name} (${champ.ioc})` : "—"))
+                el("div.podium-line", el("span.podium-cat", cat), el("span.podium-champ", champ ? `🥇 ${champ.flag || ""} ${champ.name}` : "—"))
               )
             )
           )
@@ -161,6 +163,18 @@ export class App {
     const modal = athleteModal(view, {
       onClose: () => modal.remove(),
       onToggleFavorite: (aid) => this.game.toggleFavoriteAthlete(aid),
+      onCompetition: (cid) => this.openCompetition(cid),
+    });
+    this.root.append(modal);
+  }
+
+  openCompetition(id) {
+    const view = this.game.getCompetitionView(id);
+    if (!view) return;
+    const modal = competitionModal(view, {
+      onClose: () => modal.remove(),
+      onAthlete: (aid) => this.openAthlete(aid),
+      state: {},
     });
     this.root.append(modal);
   }

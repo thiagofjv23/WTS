@@ -105,8 +105,20 @@ desacoplamento previsto na arquitetura.
    01/01/2026, então a temporada 2026 completa aparece desde o começo.
 3. **Resultados** — campeões recentes por evento/categoria.
 4. **Países** — quadro por pontos de ranking e medalhas.
-5. **Modal de Atleta** — identidade, forma/moral/experiência, estatísticas,
-   atributos visíveis em barras e histórico. Botão de favorito.
+5. **Modal de Atleta** — identidade (com bandeira), forma/moral/experiência,
+   status (inclui "lesionado até…"), estatísticas, atributos visíveis em barras,
+   **próximos campeonatos** (campo projetado) e histórico clicável. Favorito.
+6. **Modal de Campeonato** (clicável no Calendário/Resultados) — abas por peso.
+   Antes do evento: **prováveis inscritos** (respeitando as travas). Depois:
+   **classificação final** por peso + **resultados das lutas** por rodada.
+
+## Indicadores visuais
+
+- **Bandeiras** por país (emoji via mapa IOC→ISO-2, `config/flags.js`) em todas
+  as telas onde um país aparece.
+- **Setas de movimento** no ranking: ▲ verde (subiu N) / ▼ vermelha (caiu N) /
+  — estável / "novo". A referência é a posição no início do último avanço de
+  tempo (o GameController tira um snapshot antes de avançar).
 
 ---
 

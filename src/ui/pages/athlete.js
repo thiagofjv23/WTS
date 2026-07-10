@@ -23,7 +23,7 @@ function attrGroup(title, keys, attrs) {
 }
 
 /** Cria o modal do atleta. onFavorite recebe o id e retorna o novo estado. */
-export function athleteModal(view, { onClose, onToggleFavorite }) {
+export function athleteModal(view, { onClose, onToggleFavorite, onCompetition }) {
   const favBtn = el(
     `button.icon-btn${view.favorite ? ".active" : ""}`,
     { onClick: () => { const now = onToggleFavorite(view.id); favBtn.classList.toggle("active", now); favBtn.textContent = now ? "★" : "☆"; } },
@@ -49,7 +49,8 @@ export function athleteModal(view, { onClose, onToggleFavorite }) {
         "div.list.compact",
         ...view.history.map((h) =>
           el(
-            "div.row.hist-row",
+            "button.row.hist-row",
+            { onClick: () => onCompetition && h.competitionId && onCompetition(h.competitionId) },
             el("span.hist-date", fmtDate(h.date)),
             el("span.row-main", el("span.row-name", `${medalIcon(h.medal)} ${h.competition}`),
               el("span.row-sub", `${h.placement}º lugar`)),
@@ -59,13 +60,29 @@ export function athleteModal(view, { onClose, onToggleFavorite }) {
       )
     : el("p.empty", "Sem histórico ainda.");
 
+  const upcoming = (view.upcoming && view.upcoming.length)
+    ? el(
+        "div.list.compact",
+        ...view.upcoming.map((e) =>
+          el(
+            "button.row.hist-row",
+            { onClick: () => onCompetition && onCompetition(e.id) },
+            el("span.hist-date", fmtDate(e.date)),
+            el("span.row-main", el("span.row-name", e.name),
+              el("span.row-sub", e.location || "")),
+            el("span.badge", e.gRank)
+          )
+        )
+      )
+    : el("p.empty", "Sem inscrições previstas.");
+
   const content = el(
     "div.modal-content",
     el(
       "div.modal-head",
       el("div.modal-title",
-        el("h3", view.name),
-        el("div.modal-sub", `${view.category} · ${view.countryName}`, countryChip(view.ioc))
+        el("h3", el("span.flag.flag-lg", view.flag || "🏳"), " ", view.name),
+        el("div.modal-sub", `${view.category} · ${view.countryName}`, countryChip(view.ioc, view.flag))
       ),
       el("div.modal-actions", favBtn, el("button.icon-btn", { onClick: onClose }, "✕"))
     ),
@@ -73,13 +90,18 @@ export function athleteModal(view, { onClose, onToggleFavorite }) {
       el("span.tag", `Forma ${view.form}`),
       el("span.tag", `Moral ${view.morale}`),
       el("span.tag", `Exp ${view.experience}`),
-      el("span.tag", view.status)
+      el(`span.tag${view.status === "lesionado" ? ".tag-injured" : ""}`,
+        view.status === "lesionado" && view.injuredUntil
+          ? `Lesionado até ${fmtDate(view.injuredUntil)}`
+          : view.status)
     ),
     stats,
     el("h4.block-title", "Atributos"),
     attrGroup("Técnicos", TECHNICAL, view.attributes),
     attrGroup("Físicos", PHYSICAL, view.attributes),
     attrGroup("Mentais", MENTAL, view.attributes),
+    el("h4.block-title", "Próximos campeonatos"),
+    upcoming,
     el("h4.block-title", "Histórico"),
     history
   );

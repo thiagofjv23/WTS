@@ -16,7 +16,7 @@ function monthOf(iso) {
   return Number(iso.slice(5, 7)) - 1;
 }
 
-export function renderCalendar(container, game, state) {
+export function renderCalendar(container, game, state, onOpen) {
   const years = game.getScheduledYears();
   const current = yearOf(game.getState().currentDate);
   if (!state.year || !years.includes(state.year)) state.year = years.includes(current) ? current : years[0];
@@ -44,7 +44,7 @@ export function renderCalendar(container, game, state) {
       groups.push(el("h3.month-header", MONTHS[m]));
       lastMonth = m;
     }
-    groups.push(eventCard(e));
+    groups.push(eventCard(e, onOpen));
   }
 
   mount(
@@ -55,9 +55,10 @@ export function renderCalendar(container, game, state) {
   );
 }
 
-function eventCard(e) {
+function eventCard(e, onOpen) {
   return el(
-    `div.card.event-card${e.done ? ".done" : ""}`,
+    `button.card.event-card${e.done ? ".done" : ""}`,
+    { onClick: () => onOpen && onOpen(e.id) },
     el(
       "div.event-head",
       el("span.event-date", el("span.status-dot", e.done ? "✓" : "•"), " ", fmtDate(e.date)),
@@ -67,7 +68,7 @@ function eventCard(e) {
     el(
       "div.event-meta",
       e.location ? el("span", e.location) : el("span", ""),
-      el("span.event-pts", `campeão +${e.championPoints}`)
+      el("span.event-pts", e.done ? "ver resultados ›" : `campeão +${e.championPoints}`)
     )
   );
 }

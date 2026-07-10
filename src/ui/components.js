@@ -19,8 +19,20 @@ export function gRankBadge(gRank) {
   return el(`span.badge.${gRankClass(gRank)}`, gRank);
 }
 
-export function countryChip(ioc) {
-  return el("span.chip", ioc || "??");
+/** Chip de país: bandeira (se houver) + código IOC. */
+export function countryChip(ioc, flag) {
+  return el("span.chip", flag ? el("span.flag", flag) : null, ioc || "??");
+}
+
+/**
+ * Indicador de movimento no ranking: seta verde (subiu) / vermelha (desceu)
+ * com o nº de posições, ou "—" quando estável, ou "novo".
+ */
+export function rankMovement(delta) {
+  if (delta == null) return el("span.move.move-new", "novo");
+  if (delta > 0) return el("span.move.move-up", `▲${delta}`);
+  if (delta < 0) return el("span.move.move-down", `▼${-delta}`);
+  return el("span.move.move-flat", "—");
 }
 
 export function medalIcon(medal) {
@@ -51,12 +63,13 @@ export function rankingRow(entry, onClick) {
     "button.row.rank-row",
     { onClick: () => onClick(entry.id) },
     el("span.pos", `${entry.position}`),
+    rankMovement(entry.delta),
+    el("span.flag.flag-lg", entry.flag || "🏳"),
     el(
       "span.row-main",
       el("span.row-name", entry.favorite ? "★ " + entry.name : entry.name),
       el("span.row-sub", entry.countryName)
     ),
-    countryChip(entry.ioc),
     el("span.pts", `${entry.points}`)
   );
 }

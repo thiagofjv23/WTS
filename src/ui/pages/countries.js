@@ -11,6 +11,7 @@ export function renderCountries(container, game) {
     el(
       "div.row.country-row",
       el("span.pos", `${i + 1}`),
+      el("span.flag.flag-lg", c.flag || "🏳"),
       el(
         "span.row-main",
         el("span.row-name", c.code),

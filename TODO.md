@@ -157,13 +157,23 @@ será retomado. Atualizado a cada passo do desenvolvimento.
 
 ## Interface (próximos incrementos)
 
+- ✅ **Bandeiras dos países** — feito (`config/flags.js`), em todas as telas.
+- ✅ **Setas de movimento no ranking** — feito (▲/▼ com nº).
+- ✅ **Tela de campeonato clicável** (inscritos previstos / resultados +
+  classificação por peso) — feito.
+- ✅ **Próximos campeonatos na ficha do atleta** — feito.
 - 🟢 **Aba de Favoritos e busca dedicada.** A busca (`searchAthletes`) e os
   favoritos já existem no GameController; falta a tela.
-- 🟢 **Bandeiras dos países** (requer mapa IOC→ISO-2, já listado abaixo).
 - 🟢 **Gráficos de evolução de ranking, filtros e tela de Configurações.**
 - 🟢 **Avanço longo em blocos** com barra de progresso (hoje é síncrono; rápido,
   mas várias temporadas de uma vez poderiam travar a UI momentaneamente).
-- 🟢 **Tela de detalhe de país e de competição** (reaproveitar os cards).
+- 🟢 **Tela de detalhe de país** (reaproveitar os cards; ranking do país,
+  medalhas, atletas).
+- 🟢 **Poda das lutas antigas.** `competition.matches` cresce o save ao longo das
+  temporadas; podar competições muito antigas (ou mover para arquivo) quando o
+  save ficar grande (alvo mobile/localStorage).
+- 🟢 **Notícias de forma/lesão** na aba Resultados (Event Bus já emite
+  AthleteInjured/AthleteRecovered).
 
 ## Melhorias técnicas pendentes
 

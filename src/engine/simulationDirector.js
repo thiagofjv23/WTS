@@ -104,6 +104,22 @@ export class SimulationDirector {
       }
     );
 
+    // Persiste as lutas (compacto) para consulta na interface: por categoria,
+    // {round, aId, bId, winnerId, score:[roundsA, roundsB]}.
+    competition.matches = allMatches.map((m) => {
+      const rounds = m.rounds || [];
+      const rwA = rounds.filter((r) => r.winner === m.athleteAId).length;
+      const rwB = rounds.filter((r) => r.winner === m.athleteBId).length;
+      return {
+        categoryId: m.categoryId,
+        round: m.round,
+        aId: m.athleteAId,
+        bId: m.athleteBId,
+        winnerId: m.winnerId,
+        score: [rwA, rwB],
+      };
+    });
+
     // Ranking: credita pontos no ledger e recalcula pontos efetivos/posições
     // (antes das estatísticas de país, que somam os pontos efetivos).
     applyCompetitionPoints(world, competition, byCategory);

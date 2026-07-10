@@ -76,6 +76,7 @@ export function createAthlete(data) {
     ranking: {
       points: 0,
       position: null,
+      previousPosition: null, // posição no início do último avanço (para setas)
     },
     // Estado físico dinâmico (não altera os atributos permanentes):
     // wear = desgaste acumulado; injuredUntil = data de retorno se lesionado.

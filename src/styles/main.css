@@ -111,9 +111,19 @@ button.primary, .primary { background: var(--accent); border-color: var(--accent
 .medals { font-size: 13px; white-space: nowrap; }
 
 .chip {
+  display: inline-flex; align-items: center; gap: 4px;
   font-size: 11px; font-weight: 700; letter-spacing: .5px; padding: 3px 7px;
   border-radius: 6px; background: var(--bg-elev2); color: var(--text-dim); border: 1px solid var(--line);
 }
+.flag { font-size: 15px; line-height: 1; }
+.flag-lg { font-size: 22px; }
+
+/* movimento de ranking */
+.move { min-width: 34px; text-align: center; font-size: 12px; font-weight: 800; }
+.move-up { color: #2ec77e; }
+.move-down { color: #ff5470; }
+.move-flat { color: var(--text-dim); font-weight: 600; }
+.move-new { color: var(--accent); font-size: 10px; font-weight: 700; }
 
 /* ---------- BADGES (G-Rank) ---------- */
 .badge { font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px; color: #10131f; }
@@ -201,6 +211,24 @@ button.primary, .primary { background: var(--accent); border-color: var(--accent
 
 .hist-row { padding: 8px 10px; }
 .hist-date { font-size: 12px; color: var(--text-dim); flex: 0 0 82px; }
+
+.tag-injured { background: rgba(255, 84, 112, .15); color: var(--danger); border-color: var(--danger); }
+
+/* ---------- COMPETITION MODAL ---------- */
+.comp-status { margin: 12px 0 6px; font-weight: 700; color: var(--accent); }
+.comp-body { margin-top: 8px; }
+.entry-row { padding: 9px 10px; }
+.round-block { margin-bottom: 14px; }
+.round-title { font-size: 13px; color: var(--accent); margin: 6px 2px; text-transform: uppercase; letter-spacing: .5px; }
+.match-row {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px;
+  padding: 8px 10px; background: var(--bg-elev); border: 1px solid var(--line);
+  border-radius: 10px; margin-bottom: 5px; font-size: 13px;
+}
+.match-side { display: flex; align-items: center; gap: 5px; color: var(--text-dim); min-width: 0; }
+.match-side.right { justify-content: flex-end; text-align: right; }
+.match-side.win { color: var(--text); font-weight: 700; }
+.match-score { font-weight: 800; color: var(--gold); padding: 0 6px; white-space: nowrap; }
 
 /* results modal */
 .result-card { margin-bottom: 8px; }

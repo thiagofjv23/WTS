@@ -21,9 +21,23 @@ import { MEN_CATEGORIES, getWeightCategory } from "../config/weightCategories.js
 import { championPointsFor, G_RANK_LABELS } from "../entities/competition.js";
 import { TECHNICAL, PHYSICAL, MENTAL } from "../config/attributes.js";
 import { yearOf } from "../utils/dates.js";
+import { flagEmoji } from "../config/flags.js";
+import { continentOf } from "../config/continents.js";
+import { classifyEvent, isEligible, applyNationalLimit } from "../engine/eligibility.js";
+import { enterProbability } from "../engine/participation.js";
+import { athletesInCategory } from "../core/world.js";
 
 const SAVE_KEY = "world";
 const MEN_IDS = MEN_CATEGORIES.map((c) => c.id);
+
+/** Rótulo da rodada a partir do tamanho (2 = Final, 4 = Semifinal, …). */
+function roundLabel(roundSize) {
+  if (roundSize === 2) return "Final";
+  if (roundSize === 4) return "Semifinal";
+  if (roundSize === 8) return "Quartas de final";
+  if (roundSize === 16) return "Oitavas de final";
+  return `Rodada de ${roundSize}`;
+}
 
 export class GameController {
   /**
@@ -133,10 +147,18 @@ export class GameController {
    * Avança até o próximo dia com competição (processando os dias no caminho).
    * @returns {{date: string, results: Array}|null}
    */
+  /** Guarda a posição atual de cada atleta (base das setas de movimento). */
+  _snapshotRankingPositions() {
+    for (const a of Object.values(this.world.athletes)) {
+      a.ranking.previousPosition = a.ranking.position;
+    }
+  }
+
   advanceToNextEvent() {
     this._ensureUpcoming();
     const target = this._nextPendingDate();
     if (!target) return null;
+    this._snapshotRankingPositions();
     const finished = [];
     const off = this.bus.on("CompetitionFinished", (ev) =>
       finished.push(ev.payload.competitionId)
@@ -149,6 +171,7 @@ export class GameController {
 
   /** Avança um único dia. */
   advanceOneDay() {
+    this._snapshotRankingPositions();
     const finished = [];
     const off = this.bus.on("CompetitionFinished", (ev) =>
       finished.push(ev.payload.competitionId)
@@ -192,20 +215,31 @@ export class GameController {
     return this.world.countries[athlete.countryId] || { code: "??", name: "?" };
   }
 
+  /** Info de país pronta para a UI (código, nome, bandeira). */
+  countryView(ioc) {
+    return { ioc, flag: flagEmoji(ioc) };
+  }
+
   getRanking(categoryId, limit = 50) {
     const ranking = this.world.rankings[categoryId];
     if (!ranking) return [];
     return ranking.athleteIds.slice(0, limit).map((id, i) => {
       const a = this.world.athletes[id];
       const c = this._countryOf(a);
+      const prev = a.ranking.previousPosition;
+      const position = i + 1;
+      // delta > 0 = subiu; < 0 = caiu; null = novo/sem referência.
+      const delta = prev == null ? null : prev - position;
       return {
         id: a.id,
-        position: i + 1,
+        position,
         name: a.fullName,
         ioc: c.code,
+        flag: flagEmoji(c.code),
         countryName: c.name,
         points: a.ranking.points,
         favorite: this.isFavoriteAthlete(a.id),
+        delta,
       };
     });
   }
@@ -221,10 +255,13 @@ export class GameController {
       id: a.id,
       name: a.fullName,
       ioc: c.code,
+      flag: flagEmoji(c.code),
       countryName: c.name,
       category: cat ? cat.name : a.weightCategoryId,
+      weightCategoryId: a.weightCategoryId,
       age: yearOf(this.world.state.currentDate) - yearOf(a.birthDate),
       status: a.status,
+      injuredUntil: a.condition?.injuredUntil ?? null,
       position: a.ranking.position,
       points: a.ranking.points,
       favorite: this.isFavoriteAthlete(a.id),
@@ -233,9 +270,11 @@ export class GameController {
       morale: a.attributes.moral,
       experience: a.attributes.experiencia,
       statistics: { ...a.statistics },
-      history: [...a.history].reverse().slice(0, 12).map((h) => ({
+      upcoming: this.getAthleteUpcoming(a.id),
+      history: [...a.history].reverse().slice(0, 20).map((h) => ({
         date: h.date,
         competition: this.world.competitions[h.competitionId]?.name || "?",
+        competitionId: h.competitionId,
         placement: h.placement,
         medal: h.medal,
         points: h.pointsEarned,
@@ -243,11 +282,72 @@ export class GameController {
     };
   }
 
+  /** Próximos campeonatos em que o atleta deve competir (campo projetado). */
+  getAthleteUpcoming(athleteId, limit = 12) {
+    const athlete = this.world.athletes[athleteId];
+    if (!athlete) return [];
+    const today = this.world.state.currentDate;
+    const cat = athlete.weightCategoryId;
+    const events = this.world.calendar
+      .filter((e) => !e.processed && e.date >= today)
+      .map((e) => this.world.competitions[e.competitionId])
+      .filter((c) => c && c.categoryIds.includes(cat))
+      .sort((a, b) => (a.date < b.date ? -1 : 1));
+
+    const out = [];
+    for (const c of events) {
+      const field = this._projectedFieldIds(c, cat);
+      if (field.has(athleteId)) {
+        out.push({
+          id: c.id, name: c.name, date: c.date, gRank: c.gRank,
+          location: c.location, championPoints: championPointsFor(c.gRank),
+        });
+        if (out.length >= limit) break;
+      }
+    }
+    return out;
+  }
+
+  /** IDs do campo projetado de uma categoria num evento (aplica as travas). */
+  _projectedFieldIds(competition, categoryId) {
+    return new Set(this.projectedField(competition, categoryId).map((a) => a.id));
+  }
+
+  /**
+   * Campo projetado (prováveis inscritos) de uma categoria: aplica as travas de
+   * elegibilidade e limita ao fieldSize por ranking. Exato para eventos por
+   * convite (Grand Prix/continental); aproximação para Opens.
+   */
+  projectedField(competition, categoryId, limit = null) {
+    const rules = classifyEvent(competition);
+    let pool = athletesInCategory(this.world, categoryId).filter((a) =>
+      isEligible(a, this.world, rules)
+    );
+    if (rules.nationalLimit) pool = applyNationalLimit(pool, this.world, rules.nationalLimit);
+    // Opens: mantém apenas quem provavelmente se inscreve (a elite ignora
+    // eventos pequenos). Eventos por convite: todos os elegíveis comparecem.
+    if (!rules.invitational) {
+      const catSize = this.world.rankings[categoryId]?.athleteIds.length || pool.length;
+      pool = pool.filter((a) => enterProbability(a, competition, catSize) >= 0.45);
+    }
+    pool.sort((a, b) => b.ranking.points - a.ranking.points);
+    const size = limit ?? competition.fieldSize ?? pool.length;
+    return pool.slice(0, size).map((a, i) => {
+      const c = this._countryOf(a);
+      return {
+        id: a.id, seed: i + 1, name: a.fullName, ioc: c.code, flag: flagEmoji(c.code),
+        position: a.ranking.position, points: a.ranking.points,
+      };
+    });
+  }
+
   getCountryTable(limit = 30) {
     return Object.values(this.world.countries)
       .map((c) => ({
         code: c.code,
         name: c.name,
+        flag: flagEmoji(c.code),
+        continent: continentOf(c.code),
         golds: c.statistics.golds,
         silvers: c.statistics.silvers,
         bronzes: c.statistics.bronzes,
@@ -290,6 +390,7 @@ export class GameController {
       .filter((c) => yearOf(c.date) === y)
       .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
       .map((c) => ({
+        id: c.id,
         date: c.date,
         name: c.name,
         gRank: c.gRank,
@@ -298,6 +399,68 @@ export class GameController {
         championPoints: championPointsFor(c.gRank),
         done: c.status === "concluida" || c.date < today,
       }));
+  }
+
+  /**
+   * Visão completa de um campeonato para a interface.
+   * - Antes: campo projetado (prováveis inscritos) por categoria.
+   * - Depois: resultados das lutas + classificação final por peso.
+   */
+  getCompetitionView(competitionId) {
+    const c = this.world.competitions[competitionId];
+    if (!c) return null;
+    const done = c.status === "concluida";
+    const rules = classifyEvent(c);
+    const categories = c.categoryIds.map((catId) => {
+      const catName = getWeightCategory(catId)?.name || catId;
+      if (done) {
+        const placements = (c.results[catId] || []).map((p) => {
+          const a = this.world.athletes[p.athleteId];
+          const cc = a ? this._countryOf(a) : { code: "??" };
+          return {
+            athleteId: p.athleteId,
+            name: a ? a.fullName : "?",
+            ioc: cc.code, flag: flagEmoji(cc.code),
+            placement: p.placement, medal: p.medal,
+            points: p.rankingPointsEarned ?? 0,
+          };
+        });
+        const matches = (c.matches || [])
+          .filter((m) => m.categoryId === catId)
+          .map((m) => this._matchView(m));
+        return { categoryId: catId, categoryName: catName, placements, matches };
+      }
+      return {
+        categoryId: catId,
+        categoryName: catName,
+        field: this.projectedField(c, catId),
+      };
+    });
+    return {
+      id: c.id, name: c.name, gRank: c.gRank, gLabel: G_RANK_LABELS[c.gRank] || c.gRank,
+      date: c.date, location: c.location, championPoints: championPointsFor(c.gRank),
+      done,
+      eligibility: {
+        rankingLockTopN: rules.rankingLockTopN,
+        continent: rules.continent,
+        arabOnly: rules.arabOnly,
+        nationalLimit: rules.nationalLimit,
+      },
+      categories,
+    };
+  }
+
+  _matchView(m) {
+    const name = (id) => this.world.athletes[id]?.fullName || "?";
+    const flag = (id) => flagEmoji(this._countryOf(this.world.athletes[id] || {}).code);
+    return {
+      round: m.round,
+      roundLabel: roundLabel(m.round),
+      a: { id: m.aId, name: name(m.aId), flag: flag(m.aId) },
+      b: { id: m.bId, name: name(m.bId), flag: flag(m.bId) },
+      winnerId: m.winnerId,
+      score: m.score,
+    };
   }
 
   /** Anos que possuem eventos agendados (para navegação do calendário). */
@@ -317,8 +480,11 @@ export class GameController {
         competition: h.competitionName,
         gRank: h.gRank,
         category: getWeightCategory(h.categoryId)?.name || h.categoryId,
+        championId: h.champion,
         champion: this.world.athletes[h.champion]?.fullName || "?",
         championIoc: this._countryOf(this.world.athletes[h.champion] || {}).code || "??",
+        championFlag: flagEmoji(this._countryOf(this.world.athletes[h.champion] || {}).code),
+        competitionId: h.competitionId,
       }));
   }
 
@@ -330,7 +496,7 @@ export class GameController {
       const champ = placements.find((p) => p.placement === 1);
       const a = champ && this.world.athletes[champ.athleteId];
       podiums[getWeightCategory(catId)?.name || catId] = a
-        ? { name: a.fullName, ioc: this._countryOf(a).code }
+        ? { name: a.fullName, ioc: this._countryOf(a).code, flag: flagEmoji(this._countryOf(a).code) }
         : null;
     }
     return { name: c.name, gRank: c.gRank, date: c.date, podiums };

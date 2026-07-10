@@ -5,12 +5,13 @@
 import { el, mount, fmtDate } from "../dom.js";
 import { gRankBadge, sectionTitle } from "../components.js";
 
-export function renderNews(container, game, onAthleteSearch) {
+export function renderNews(container, game, onOpen) {
   const results = game.getRecentResults(25);
   const items = results.length
     ? results.map((r) =>
         el(
-          "div.card.news-card",
+          "button.card.news-card",
+          { onClick: () => onOpen && r.competitionId && onOpen(r.competitionId) },
           el(
             "div.news-head",
             el("span.news-date", fmtDate(r.date)),
@@ -20,7 +21,7 @@ export function renderNews(container, game, onAthleteSearch) {
           el(
             "div.news-body",
             el("span.news-cat", r.category),
-            el("span.news-champ", `🥇 ${r.champion} (${r.championIoc})`)
+            el("span.news-champ", `🥇 ${r.championFlag || ""} ${r.champion}`)
           )
         )
       )

@@ -442,7 +442,35 @@ geração de jovens (próxima grande alavanca de realismo de longo prazo).
 
 ---
 
-## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE ✅
+## Passo 15 — Indicadores visuais e telas ricas na UI ✅
+
+**Objetivo:** melhorar a interface para humanos (bandeiras, movimento, telas
+detalhadas de campeonato e atleta).
+
+**Entregue:**
+- `src/config/flags.js` — IOC→ISO-2 (176 países) → **bandeira emoji**. Exibida em
+  ranking, ficha do atleta, países, resultados, campeonato e pódios.
+- **Setas de movimento** no ranking (▲ verde / ▼ vermelha com nº / — / novo).
+  GameController tira snapshot das posições antes de cada avanço; `getRanking`
+  devolve `delta`.
+- **Modal de Campeonato clicável** (`ui/pages/competition.js`): antes → campo
+  projetado (prováveis inscritos, respeitando as travas; Opens sem a elite);
+  depois → classificação final por peso + resultados das lutas por rodada.
+  Persistimos as lutas de forma compacta em `competition.matches`.
+- **Ficha do atleta**: bandeira, status "lesionado até…", **próximos
+  campeonatos** (campo projetado) e histórico clicável (abre o campeonato).
+- Novas consultas no GameController: `getCompetitionView`, `projectedField`,
+  `getAthleteUpcoming`, `getScheduledYears`, deltas e bandeiras.
+- `tests/uiQueries.test.mjs` — 6 testes.
+
+**Testado:** `npm test` → **133/133 passaram.** Verificado no navegador
+(Chromium): bandeiras, setas, resultados de campeonato (classificação + lutas),
+campo projetado (US Open G-2 mostra atletas #177–204, não a elite), inscrições
+do atleta — sem erros de console.
+
+---
+
+## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por
