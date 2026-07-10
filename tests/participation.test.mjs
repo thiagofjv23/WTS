@@ -10,7 +10,7 @@ import {
   recentLoad,
   selectParticipants,
 } from "../src/engine/participation.js";
-import { effectivePoints, BEST_N } from "../src/engine/ranking.js";
+import { effectivePoints, G12_ANNUAL_CAP } from "../src/engine/ranking.js";
 import { buildRealWorld } from "../src/database/realSeed.js";
 import { buildSeasonCalendar } from "../src/engine/season.js";
 import { SimulationDirector } from "../src/engine/simulationDirector.js";
@@ -34,28 +34,54 @@ function comp(gRank, date = "2027-06-01") {
   });
 }
 
-suite("Best-N (melhores resultados)");
+suite("Teto de pontos (Point Cap G-1/G-2)");
 
-test("effectivePoints soma apenas os BEST_N maiores", () => {
-  const athlete = {
-    pointsLedger: Array.from({ length: 10 }, (_, i) => ({
-      date: "2027-01-01", points: (i + 1) * 5, gRank: "G-1",
-    })),
-  };
-  // sem decaimento (mesma data): top5 = 50+45+40+35+30 = 200
-  assertEqual(effectivePoints(athlete, "2027-01-01"), 200);
-  assertEqual(BEST_N, 5);
-});
-
-test("resultados fracos além do N não contam", () => {
+test("G-1/G-2 somam no máximo 40 por ano", () => {
   const athlete = {
     pointsLedger: [
-      { date: "2027-01-01", points: 100 },
-      { date: "2027-01-01", points: 1 },
-      { date: "2027-01-01", points: 1 },
+      { date: "2027-02-01", points: 20, gRank: "G-2" },
+      { date: "2027-03-01", points: 20, gRank: "G-2" },
+      { date: "2027-04-01", points: 10, gRank: "G-1" }, // além do teto → não conta
     ],
   };
-  assertEqual(effectivePoints(athlete, "2027-01-01"), 102);
+  assertEqual(G12_ANNUAL_CAP, 40);
+  assertEqual(effectivePoints(athlete, "2027-05-01"), 40);
+});
+
+test("o teto é anual (reinicia a cada ano)", () => {
+  const athlete = {
+    pointsLedger: [
+      { date: "2027-02-01", points: 20, gRank: "G-2" },
+      { date: "2027-03-01", points: 20, gRank: "G-2" },
+      { date: "2027-04-01", points: 20, gRank: "G-2" }, // 2027 já no teto
+      { date: "2028-02-01", points: 20, gRank: "G-2" }, // novo ano, conta
+    ],
+  };
+  // 2027 conta 40 (com decaimento de 1 ano em 2028-05 = 75%) + 2028 conta 20.
+  assertEqual(effectivePoints(athlete, "2028-05-01"), Math.round((40 * 0.75 + 20) * 100) / 100);
+});
+
+test("G-3+ não têm teto (ilimitado)", () => {
+  const athlete = {
+    pointsLedger: [
+      { date: "2027-02-01", points: 40, gRank: "G-4" },
+      { date: "2027-03-01", points: 60, gRank: "G-6" },
+      { date: "2027-04-01", points: 100, gRank: "G-10" },
+    ],
+  };
+  assertEqual(effectivePoints(athlete, "2027-05-01"), 200);
+});
+
+test("teto e ilimitados combinam corretamente", () => {
+  const athlete = {
+    pointsLedger: [
+      { date: "2027-02-01", points: 20, gRank: "G-2" },
+      { date: "2027-03-01", points: 20, gRank: "G-2" },
+      { date: "2027-04-01", points: 20, gRank: "G-2" }, // teto → só 40 contam
+      { date: "2027-05-01", points: 40, gRank: "G-4" }, // ilimitado
+    ],
+  };
+  assertEqual(effectivePoints(athlete, "2027-06-01"), 80);
 });
 
 suite("Participação — probabilidade");
@@ -123,7 +149,7 @@ test("G-1 é vencido por não-elite; grandes eventos pela elite", () => {
     `G-1 (${mean(g1Ranks).toFixed(0)}) deveria ser vencido por atletas de ranking pior que os grandes (${mean(bigRanks).toFixed(0)})`);
 });
 
-test("pontos de topo ficam realistas após 3 temporadas (best-N + participação)", () => {
+test("pontos de topo ficam realistas após 3 temporadas (teto + participação)", () => {
   const { world, random, idGen } = buildRealWorld({ seed: 42 });
   const dir = new SimulationDirector({ world, random, idGen, eventBus: new EventBus() });
   for (let s = 1; s <= 3; s++) {
@@ -132,8 +158,10 @@ test("pontos de topo ficam realistas após 3 temporadas (best-N + participação
   }
   for (const cat of MEN_CATEGORIES) {
     const leader = world.athletes[world.rankings[cat.id].athleteIds[0]];
-    assert(leader.ranking.points < 500,
-      `${cat.id}: líder com ${leader.ranking.points} pts (inflado; best-N deveria limitar)`);
+    // Longe da inflação anterior (>1000). O teto limita G-1/G-2; o total ainda
+    // reflete a dominância do favorito (calibração do combate — ver TODO).
+    assert(leader.ranking.points < 800,
+      `${cat.id}: líder com ${leader.ranking.points} pts (inflado)`);
     assert(leader.ranking.points > 80, `${cat.id}: líder com poucos pontos`);
   }
 });

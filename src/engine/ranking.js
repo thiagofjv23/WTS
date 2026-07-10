@@ -33,25 +33,50 @@ export function decayFactor(months) {
 }
 
 /**
- * Quantos resultados contam para o ranking (regra "melhores N resultados" da WT).
- * Calibrado para totais de topo realistas (~200–350 pts). Ver DECISIONS.md/TODO.
+ * Teto anual de pontos vindos de eventos G-1 e G-2 (regra do Point Cap da WT).
+ * Eventos G-3+ não têm teto. Ver DECISIONS.md.
  */
-export const BEST_N = 5;
+export const G12_ANNUAL_CAP = 40;
+
+/** Grades sujeitos ao teto anual. */
+const CAPPED_GRANKS = new Set(["G-1", "G-2"]);
 
 /**
- * Pontos de ranking efetivos de um atleta na data do mundo: aplica o decaimento
- * a cada resultado do ledger e soma apenas os BEST_N maiores (regra best-N).
+ * Pontos de ranking efetivos de um atleta na data do mundo:
+ *  - aplica o decaimento (§5) a cada resultado do ledger;
+ *  - limita a soma dos resultados G-1/G-2 a G12_ANNUAL_CAP por ANO (contando os
+ *    de maior valor primeiro); G-3+ e o seed entram sem teto.
  */
-export function effectivePoints(athlete, worldDate, bestN = BEST_N) {
+export function effectivePoints(athlete, worldDate) {
   const ledger = athlete.pointsLedger || [];
-  const decayed = [];
-  for (const e of ledger) {
-    const v = e.points * decayFactor(monthsBetween(e.date, worldDate));
-    if (v > 0) decayed.push(v);
-  }
-  decayed.sort((a, b) => b - a);
+  const smallByYear = new Map(); // ano → [{ points, decay }]
   let total = 0;
-  for (let i = 0; i < Math.min(bestN, decayed.length); i++) total += decayed[i];
+
+  for (const e of ledger) {
+    const decay = decayFactor(monthsBetween(e.date, worldDate));
+    if (decay <= 0) continue;
+    if (CAPPED_GRANKS.has(e.gRank)) {
+      const year = e.date.slice(0, 4);
+      if (!smallByYear.has(year)) smallByYear.set(year, []);
+      smallByYear.get(year).push({ points: e.points, decay });
+    } else {
+      total += e.points * decay; // G-3+ e seed: sem teto
+    }
+  }
+
+  // Aplica o teto anual por ano, contando os melhores resultados até 40 (nominal)
+  // e aplicando o decaimento à parcela contada.
+  for (const list of smallByYear.values()) {
+    list.sort((a, b) => b.points - a.points);
+    let acc = 0;
+    for (const e of list) {
+      if (acc >= G12_ANNUAL_CAP) break;
+      const counted = Math.min(e.points, G12_ANNUAL_CAP - acc);
+      acc += counted;
+      total += counted * e.decay;
+    }
+  }
+
   return round2(total);
 }
 

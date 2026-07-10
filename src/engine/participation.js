@@ -14,6 +14,7 @@ import { championPointsFor } from "../entities/competition.js";
 import { athletesInCategory } from "../core/world.js";
 import { combatRating } from "./combat/probability.js";
 import { daysBetween } from "../utils/dates.js";
+import { classifyEvent, isEligible, applyNationalLimit } from "./eligibility.js";
 
 const DEFAULT_FIELD_SIZE = 32;
 const MIN_FIELD = 8; // garante chaves válidas mesmo se poucos se inscreverem
@@ -72,23 +73,33 @@ export function selectParticipants(world, competition, categoryId, random, opts 
   const minField = opts.minField ?? MIN_FIELD;
   const pool = athletesInCategory(world, categoryId);
   if (pool.length === 0) return [];
-  const catSize = world.rankings[categoryId]?.athleteIds.length || pool.length;
 
-  const willing = [];
-  for (const a of pool) {
-    if (random.chance(enterProbability(a, competition, catSize))) willing.push(a);
-  }
+  // 1. Travas duras de elegibilidade (continente, árabe, lock de ranking).
+  const rules = classifyEvent(competition);
+  let eligible = pool.filter((a) => isEligible(a, world, rules));
+  // 2. Limite nacional (1 por país nos continentais/mundial).
+  if (rules.nationalLimit) eligible = applyNationalLimit(eligible, world, rules.nationalLimit);
+  if (eligible.length === 0) return [];
 
-  // Garante um campo mínimo preenchendo com os melhores ranqueados restantes.
-  if (willing.length < minField) {
-    const chosen = new Set(willing.map((a) => a.id));
-    const rest = pool.filter((a) => !chosen.has(a.id)).sort(byRanking);
-    for (const a of rest) {
-      if (willing.length >= Math.min(minField, pool.length)) break;
-      willing.push(a);
+  let field;
+  if (rules.invitational) {
+    // Eventos por convite/representação: os elegíveis comparecem.
+    field = eligible;
+  } else {
+    // 3. Decisão voluntária de participação (grau/ranking + fadiga).
+    const catSize = world.rankings[categoryId]?.athleteIds.length || pool.length;
+    field = eligible.filter((a) => random.chance(enterProbability(a, competition, catSize)));
+    // Campo mínimo: completa com os melhores elegíveis restantes.
+    if (field.length < Math.min(minField, eligible.length)) {
+      const chosen = new Set(field.map((a) => a.id));
+      const rest = eligible.filter((a) => !chosen.has(a.id)).sort(byRanking);
+      for (const a of rest) {
+        if (field.length >= Math.min(minField, eligible.length)) break;
+        field.push(a);
+      }
     }
   }
 
-  willing.sort(byRanking);
-  return fieldSize > 0 ? willing.slice(0, fieldSize) : willing;
+  field.sort(byRanking);
+  return fieldSize > 0 ? field.slice(0, fieldSize) : field;
 }

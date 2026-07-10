@@ -172,6 +172,44 @@ por atletas de nível médio — espalhando os pontos de forma realista. Sugest�
 #2 (viagens), #3 (pico de forma) e #5 (lesões/rotatividade) ficam para depois
 (TODO), integráveis por extensão sem alterar este núcleo.
 
+## [2026-07-10] Estrutura competitiva — Teto de pontos, travas e locks de ranking
+Fonte: "Estrutura Competitiva e Dinâmica de Ranking do Taekwondo Mundial". Regras
+concretas implementadas na LÓGICA (UI fica para depois — TODO):
+
+1. **Teto de pontos (Point Cap).** Eventos G-1 e G-2 somam no máximo **40 pontos
+   por ano** ao ranking (por atleta/categoria). G-3+ são ilimitados. Substitui a
+   antiga regra "best-N" (que era uma aproximação); o teto é o mecanismo REAL da
+   WT e evita o "farm" infinito de Opens. Implementado em `ranking.js`
+   (`effectivePoints`): agrupa os resultados G-1/G-2 por ano, conta os melhores
+   até 40 (nominal) e aplica o decaimento à parcela contada; G-3+ e o seed
+   entram sem teto.
+
+2. **Travas de elegibilidade** (`eligibility.js` + `continents.js`):
+   - **Grand Prix Series (G-6): só top 32** do ranking da categoria; **Grand Prix
+     Final (G-10): só top 16**. Trava dura (convite por ranking), não
+     probabilística.
+   - **Campeonatos continentais (G-4)**: só atletas do continente do evento
+     (Europeu, Asiático, Pan-Americano, Africano, Oceania) + **limite nacional**
+     (1 atleta/país/categoria — o melhor ranqueado).
+   - **President's Cup (G-3)**: restrito ao continente indicado no nome.
+   - **Arab Cup / eventos "Arab"**: só países árabes (Liga Árabe).
+   - **Jogos continentais** claramente nomeados (Asian/South American Games)
+     recebem a mesma restrição de continente.
+
+3. **Dados novos:** `continents.js` mapeia os 176 códigos IOC do roster para 5
+   uniões continentais da WT (Europa, Ásia, Pan-América, África, Oceania) +
+   conjunto de países árabes. Códigos sem mapeamento (ex.: Time de Refugiados)
+   não entram em eventos restritos por continente.
+
+Integração: `participation.selectParticipants` aplica primeiro as travas duras
+(continente/árabe/ranking-lock), depois o limite nacional, depois a vontade de
+inscrição (probabilística, com fadiga). Eventos com ranking-lock são convite:
+os elegíveis entram sem sorteio de vontade.
+
+Adiado (TODO): Mundial G-14 (bienal, limite nacional, sem lock), Olimpíadas G-20
+(classificação: top 5 do ranking + Grand Slam + qualificatórios continentais),
+periodização/pico de forma (#3) e lesões/rotatividade (#5).
+
 ## [2026-07-10] Mundo — Início em 01/01/2026 e 1ª temporada = 2026
 Decisão do usuário: iniciar o mundo em 01/01/2026 (antes 01/07/2026) para
 alinhar com o ano-calendário completo. Assim a 1ª temporada simulada é 2026

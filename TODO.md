@@ -91,8 +91,35 @@ será retomado. Atualizado a cada passo do desenvolvimento.
 - ✅ **Modelo de participação dos atletas** — feito (participation.js): atletas
   escolhem eventos por grau/ranking + fadiga. Sugestão #1 e #4 do documento de
   diretrizes.
-- ✅ **Regra "melhores N resultados contam"** — feito (ranking.js, BEST_N=5).
+- ✅ **Teto de pontos G-1/G-2 (40/ano)** — feito (ranking.js). Substituiu o
+  best-N (aproximação) pelo mecanismo real da WT.
+- ✅ **Travas de elegibilidade** — feito (eligibility.js + continents.js): lock
+  de ranking do Grand Prix (top 32 / top 16), campeonatos continentais
+  (continente + 1 por país), President's Cup por continente, Arab Cup.
 - ✅ **Calendário completo** — importado de "2026 Events.txt" (67 eventos reais).
+
+## Estrutura competitiva — pendências de LÓGICA
+
+- 🟡 **Campeonato Mundial (G-14, bienal)** e **Olimpíadas (G-20)** com a
+  classificação olímpica (top 5 do ranking + Grand Slam + qualificatórios
+  continentais). Ainda não há evento G-14/G-20 no calendário 2026; adicionar nos
+  anos certos junto com a repescagem (§7).
+- 🟡 **Grand Slam** (formato especial, invitational) — porta de entrada olímpica.
+- 🟢 **Calibração dos totais de pontos.** Com teto+travas os líderes ficam em
+  ~450–600 pts (antes >1000); ainda acima do real (~250–350) por causa da
+  dominância do favorito no combate (inclinação `k` em probability.js). Rever
+  junto da calibração do combate.
+- 🟢 **Jogos regionais restritos** (Mediterranean/Balkan/Central American Games)
+  — hoje sem trava; classificar continente/sub-região se desejado.
+
+## Estrutura competitiva — implicações na UI (fazer depois, conforme pedido)
+
+- 🟢 **Mostrar as travas de cada evento** no calendário/ficha do evento:
+  "Grand Prix — top 32", "Continental — só Europa", "Arab Cup", limite nacional.
+- 🟢 **Continente/nacionalidade** na ficha do atleta e do país.
+- 🟢 **Status do teto anual** do atleta (ex.: "G1/G2: 40/40 usados em 2027").
+- 🟢 **Elegibilidade do atleta**: para quais próximos eventos ele pode/entrará.
+- 🟢 **Lista de convidados do Grand Prix** (top 32/16) por categoria.
 
 - 🟢 **Calibração de BEST_N e da participação.** BEST_N=5 e os parâmetros de
   `participation.js` (exponente de grau, fadiga) foram calibrados por olho para

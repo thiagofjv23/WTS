@@ -374,7 +374,36 @@ usado como baseline de janeiro/2026.
 
 ---
 
-## Estado: núcleo + dados reais + temporadas + participação + INTERFACE ✅
+## Passo 13 — Estrutura competitiva: teto de pontos e travas (lógica) ✅
+
+**Objetivo:** implementar as regras do documento "Estrutura Competitiva e
+Dinâmica de Ranking do Taekwondo Mundial" na lógica (UI depois — ver TODO).
+
+**Entregue:**
+- **Teto de pontos** (`ranking.js`): G-1/G-2 somam no máximo **40 pts/ano** por
+  atleta; G-3+ ilimitados. Substituiu o best-N pelo mecanismo real da WT.
+- **Continentes** (`src/config/continents.js`): 176 códigos IOC → 5 uniões
+  continentais WT + conjunto de países árabes.
+- **Elegibilidade** (`src/engine/eligibility.js`): classifica cada evento e
+  aplica as travas — Grand Prix Series (top 32), Final (top 16), campeonatos
+  continentais (continente + 1 país/categoria), President's Cup por continente,
+  Arab Cup (só árabes). Integrado ao `participation.selectParticipants`.
+- `tests/eligibility.test.mjs` — 13 testes; ajuste dos testes de ranking p/ teto.
+
+**Testado:** `npm test` → **116/116 passaram.**
+
+**Verificação no ecossistema (temporada real):** todo campeonato continental é
+vencido por atleta do continente (Zandi/Ásia, Jendoubi/África, Oceania/AUS,
+Pan-Am/VEN, Europeu/BLR); Grand Prix só com o top 32; Arab Cup só com árabes.
+Pontos de líder caíram para ~450–600 (antes >1000) — ainda acima do real por
+causa da dominância do favorito no combate (calibração no TODO).
+
+**Adiado (lógica):** Mundial G-14, Olimpíadas G-20 + qualificação, Grand Slam,
+periodização/pico de forma (#3) e lesões/rotatividade (#5).
+
+---
+
+## Estado: núcleo + dados reais + temporadas + participação + travas + INTERFACE ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por
