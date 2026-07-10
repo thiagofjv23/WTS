@@ -77,6 +77,14 @@ export function createAthlete(data) {
       points: 0,
       position: null,
     },
+    // Estado físico dinâmico (não altera os atributos permanentes):
+    // wear = desgaste acumulado; injuredUntil = data de retorno se lesionado.
+    condition: {
+      wear: 0,
+      wearUpdated: null,
+      injuredUntil: null,
+      injuriesTotal: 0,
+    },
     pointsLedger: [], // resultados que compõem os pontos (para decaimento §5)
     statistics: emptyAthleteStatistics(),
     history: [],

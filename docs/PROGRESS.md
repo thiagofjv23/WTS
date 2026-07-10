@@ -403,7 +403,46 @@ periodização/pico de forma (#3) e lesões/rotatividade (#5).
 
 ---
 
-## Estado: núcleo + dados reais + temporadas + participação + travas + INTERFACE ✅
+## Passo 14 — Forma dinâmica (#3), Lesões e Recuperação (#5) + calibração ✅
+
+**Objetivo:** aproximar os totais de ranking do real via zebras EXPLICÁVEIS
+(forma/lesão), não ruído — e calibrar o combate.
+
+**Entregue:**
+- **Form System** (`engine/form.js`): forma por evento; elite periodiza (pico
+  nos grandes, "desligada" nos pequenos) + variação "forma do dia". Vira
+  multiplicador TEMPORÁRIO sobre os atributos, só naquele combate; o Combat
+  Engine recebe atributos efetivos do dia. Integrado ao competitionSystem.
+- **Injury System** (`engine/injuries.js`): desgaste cumulativo + risco de lesão
+  por carga/desgaste/durabilidade; afasta o atleta (semanas a meses).
+- **Recovery System** (`engine/recovery.js`): roda no pipeline (§4), reativa
+  quem voltou. Eventos `AthleteInjured`/`AthleteRecovered` no World Event Bus.
+- **Calibração do combate** (`probability.js` `COMBAT_CONFIG.k=0.03`): curva mais
+  realista (iguais 51%, gap4 64%, gap10 80%, gap24 98%).
+- `condition` no atleta + `world.injuries`. Lesionados saem dos campos
+  automaticamente (participation usa só "ativo") e decaem no ranking.
+- `tests/form.test.mjs` + `tests/injuries.test.mjs` — 11 testes.
+
+**Testado:** `npm test` → **127/127 passaram.**
+
+**Descoberta importante (medida):** o total de pontos do líder é praticamente
+INVARIANTE ao `k` do combate — é função do total de pontos disponíveis no
+calendário, não da inclinação. Por isso a solução certa foi forma+lesões
+(rotação/narrativa) + `k` moderado, não achatar o `k`.
+
+**Resultado (4 temporadas):** top-8 por categoria em ~266–464 (o grosso do
+ranking bate a faixa real ~206–310; só os 1–2 primeiros ficam altos, um campeão
+dominante plausível). **15 de 16 Grand Prix Finals com campeões diferentes**
+(rotação real). ~3% do plantel lesionado a cada momento.
+
+**Pendência de calibração (TODO):** o topo (1º–2º) ainda ~30% acima do real;
+reduzir exigiria limitar comparecimento/pódios em grandes eventos — além dos
+documentos atuais (precisa de decisão). Também: envelhecimento/aposentadoria +
+geração de jovens (próxima grande alavanca de realismo de longo prazo).
+
+---
+
+## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

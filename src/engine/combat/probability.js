@@ -4,13 +4,20 @@
  * (ver DECISIONS.md).
  */
 
+/**
+ * Configuração de combate (calibração). `k` é a inclinação da curva de vantagem:
+ * menor = mais equilíbrio/zebras (favoritos vencem menos por larga margem).
+ * Ver DECISIONS.md/TODO.
+ */
+export const COMBAT_CONFIG = { k: 0.03 };
+
 /** Logística: mapeia uma diferença de atributos para (0,1), centrada em 0.5. */
-export function logistic(diff, k = 0.06) {
+export function logistic(diff, k = COMBAT_CONFIG.k) {
   return 1 / (1 + Math.exp(-k * diff));
 }
 
 /** Vantagem relativa de a sobre b em (0,1); 0.5 = equilíbrio. */
-export function advantage(a, b, k = 0.06) {
+export function advantage(a, b, k = COMBAT_CONFIG.k) {
   return logistic(a - b, k);
 }
 

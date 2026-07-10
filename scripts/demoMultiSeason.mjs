@@ -28,8 +28,10 @@ console.log(`Calendário/temporada: ${CALENDAR_2026.length} eventos (oficial 202
 console.log(`Simulando ${numSeasons} temporadas a partir de 2027.\n`);
 
 const bus = new EventBus();
-let totalFights = 0;
+let totalFights = 0, injuries = 0, recoveries = 0;
 bus.on("FightFinished", () => totalFights++);
+bus.on("AthleteInjured", () => injuries++);
+bus.on("AthleteRecovered", () => recoveries++);
 const director = new SimulationDirector({ world, random, idGen, eventBus: bus });
 
 function snapshotTop(catId, k = 5) {
@@ -51,7 +53,8 @@ for (let s = 0; s < numSeasons; s++) {
   console.log(`\n▶ Temporada ${year}: ${comps.length} eventos · líder ${CAT}: ${name(champ.id)} (${ioc(champ.id)}) ${champ.pts} pts`);
 }
 
-console.log(`\nTotal de lutas simuladas: ${totalFights}`);
+const injuredNow = Object.values(world.athletes).filter((a) => a.status === "lesionado").length;
+console.log(`\nTotal de lutas: ${totalFights} · lesões: ${injuries} · recuperações: ${recoveries} · lesionados agora: ${injuredNow}`);
 
 console.log(`\n── ${CAT} — depois de ${numSeasons} temporadas ──`);
 snapshotTop(CAT).forEach((r, i) =>

@@ -18,6 +18,8 @@ import { selectParticipants } from "./participation.js";
 import { applyConsequences } from "./consequence.js";
 import { applyCompetitionPoints, recomputeRankings } from "./ranking.js";
 import { recordCompetitionHistory } from "./history.js";
+import { processRecovery } from "./recovery.js";
+import { applyCompetitionInjuries } from "./injuries.js";
 import { COMPETITION_STATUS } from "../entities/competition.js";
 import { addDays } from "../utils/dates.js";
 import { RandomSystem } from "../services/random.js";
@@ -47,6 +49,11 @@ export class SimulationDirector {
     const world = this.world;
     const date = world.state.currentDate;
     this._emit("NewDayStarted", { date });
+
+    // Recovery System (§4): reativa atletas que voltaram de lesão.
+    for (const rec of processRecovery(world, date)) {
+      this._emit("AthleteRecovered", { athleteId: rec.athleteId });
+    }
 
     // Calendar → competições do dia.
     const events = eventsForDate(world, date);
@@ -103,6 +110,14 @@ export class SimulationDirector {
     recomputeRankings(world, competition.date);
     // Consequências: estatísticas de atletas e países.
     applyConsequences(world, competition, byCategory, allMatches);
+    // Lesões (§9): desgaste + risco de lesão para os participantes.
+    for (const inj of applyCompetitionInjuries(world, competition, allMatches, this.random, competition.date)) {
+      this._emit("AthleteInjured", {
+        athleteId: inj.athleteId,
+        severity: inj.severity,
+        until: inj.until,
+      });
+    }
     // Histórico permanente.
     recordCompetitionHistory(world, competition, byCategory);
 

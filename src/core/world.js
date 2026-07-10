@@ -37,6 +37,7 @@ export function createWorld(opts = {}) {
     calendar: [],
     history: [],
     news: [],
+    injuries: [], // lesões ativas: { athleteId, until, severity }
     favorites: { athletes: [], countries: [], competitions: [] },
     configuration: {},
     // Estados dos serviços (para salvamento determinístico).

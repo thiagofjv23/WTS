@@ -125,15 +125,31 @@ será retomado. Atualizado a cada passo do desenvolvimento.
   `participation.js` (exponente de grau, fadiga) foram calibrados por olho para
   totais realistas (~200–400). Revisar contra dados reais da WT.
 
-- 🟡 **Sugestões ainda não implementadas** (documento de diretrizes de calendário):
-  - #2 **Tours/viagens geográficas** — probabilidade maior de competir em país
-    vizinho na sequência (variável de orçamento/energia de viagem).
-  - #3 **Periodização/pico de forma** — 1–2 torneios-alvo/ano com atributos no
-    ápice; performance "comum" nos demais.
-  - #5 **Lesões e rotatividade** — desgaste cumulativo → afastamentos ("cirurgia,
-    volta em 3 meses"), abrindo espaço para novos nomes. Integra com o
-    AthleteInjured/AthleteRetired do Event Bus.
-  Todas integráveis por extensão, sem alterar o núcleo (Athlete AI System).
+- ✅ **#3 Periodização/pico de forma** — feito (`engine/form.js`).
+- ✅ **#5 Lesões e recuperação** — feito (`engine/injuries.js` + `recovery.js`).
+- 🟡 **#2 Tours/viagens geográficas** — ainda não: maior probabilidade de
+  competir em país vizinho na sequência (orçamento/energia de viagem).
+
+## Próxima grande alavanca de realismo — Ciclo de vida do atleta
+
+- 🟡 **Envelhecimento, declínio e aposentadoria + geração de jovens.** Hoje os
+  atributos são estáticos e ninguém se aposenta. Modelar: evolução até o pico
+  (~24–27), declínio, aposentadoria por idade/queda, e **geração de novos
+  atletas** para repor (o nameGenerator já existe). É o que dá rotatividade de
+  gerações e mantém o mundo vivo por décadas. Systems Aging/Retirement/Talent
+  Generation já previstos no simulation_director.md.
+
+- 🟢 **Calibração do topo do ranking.** Com forma+lesões+`k=0.03` o grosso do
+  ranking bate o real (~206–310), mas o 1º–2º ficam ~30% acima. Reduzir exigiria
+  limitar comparecimento/pódios da elite nos grandes eventos (mecanismo além dos
+  documentos atuais) — decidir com o usuário antes de implementar.
+
+## Forma/Lesões — implicações na UI (fazer depois)
+
+- 🟢 Mostrar **status "lesionado"** e a data de retorno na ficha/listas; filtrar
+  ou marcar lesionados no ranking.
+- 🟢 Mostrar a **forma do dia** do atleta num evento (e o desgaste acumulado).
+- 🟢 **Notícias** de lesão/retorno (o Event Bus já emite AthleteInjured/Recovered).
 
 - 🟡 **Formatos especiais e anos especiais.** Incluir Grand Slam/Team/World Cup
   (formatos próprios) e, nos anos certos, Mundial (G-8) e Olimpíadas (G-20) com
@@ -156,9 +172,8 @@ será retomado. Atualizado a cada passo do desenvolvimento.
 - 🟢 **Auditoria de aleatoriedade** (registro de randomValues por evento,
   `random_system.md`). Estrutura prevista, ativação adiada.
 - 🟢 **Modo Histórico do Random System** (recriar cenários conhecidos).
-- 🟢 **Calibração do combate.** A inclinação atual (gap de 10 pts ≈ 92% de
-  vitória) é ajustável via constante `k` em `probability.js:advantage()`.
-  Revisar após simular temporadas inteiras e observar a taxa de zebras global.
+- ✅ **Calibração do combate** — feito (`COMBAT_CONFIG.k=0.03`): iguais ~51%,
+  gap4 ~64%, gap10 ~80%, gap24 ~98%. Ajustável em `probability.js`.
 - 🟢 **Mecânicas de combate futuras** (fight_algorithm.md → Extensibilidade):
   knockout, golden point explícito, revisão por vídeo, lesões durante a luta,
   desistências, desclassificações. Entram como etapas complementares do fluxo.

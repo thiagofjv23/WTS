@@ -172,6 +172,32 @@ por atletas de nível médio — espalhando os pontos de forma realista. Sugest�
 #2 (viagens), #3 (pico de forma) e #5 (lesões/rotatividade) ficam para depois
 (TODO), integráveis por extensão sem alterar este núcleo.
 
+## [2026-07-10] Forma dinâmica (#3), Lesões e Recuperação (#5)
+Objetivo: aproximar os totais de ranking do real espalhando as vitórias dos
+grandes eventos — com zebras EXPLICÁVEIS (forma/lesão), não ruído puro.
+
+**Form System** (`engine/form.js`): a forma do atleta oscila por evento. Elite
+(top 32) periodiza — pico nos eventos grandes (G-4+), "desligado" nos pequenos
+(G-1/G-2/G-3); todos têm variação aleatória por evento ("forma do dia"). A forma
+vira um multiplicador temporário sobre os atributos SÓ para aquele combate
+(combat_framework: estados não alteram atributos permanentes). O Combat Engine
+recebe atributos efetivos do dia; não conhece o conceito de forma.
+
+**Injury System** (`engine/injuries.js`): desgaste cumulativo (`condition.wear`)
+sobe com a carga de lutas e recupera com o tempo (lazy). Após cada competição,
+cada participante rola risco de lesão em função da carga, do desgaste acumulado
+e da durabilidade (resistência/recuperação). Lesão → status "lesionado" +
+`injuredUntil` (semanas a meses por severidade) + evento `AthleteInjured`.
+
+**Recovery System** (`engine/recovery.js`): roda todo dia (pipeline §4);
+reativa quem cumpriu o período de recuperação (`AthleteRecovered`). Atletas
+lesionados são automaticamente excluídos dos campos (participation usa só
+"ativo") e permanecem no ranking com pontos decaindo — o que rotaciona campeões.
+
+Ambos usam o RandomSystem (deterministas) e o World Event Bus. Substituem a ideia
+de achatar o `k` do combate por um mecanismo com causa (forma/lesão), mais fiel
+ao "mundo vivo". Parâmetros calibrados por medição (ver TODO).
+
 ## [2026-07-10] Estrutura competitiva — Teto de pontos, travas e locks de ranking
 Fonte: "Estrutura Competitiva e Dinâmica de Ranking do Taekwondo Mundial". Regras
 concretas implementadas na LÓGICA (UI fica para depois — TODO):
