@@ -5,11 +5,12 @@
 import { el, mount } from "../dom.js";
 import { sectionTitle } from "../components.js";
 
-export function renderCountries(container, game) {
-  const table = game.getCountryTable(40);
+export function renderCountries(container, game, onCountry) {
+  const table = game.getCountryTable(60);
   const rows = table.map((c, i) =>
     el(
-      "div.row.country-row",
+      "button.row.country-row",
+      { onClick: () => onCountry && onCountry(c.code) },
       el("span.pos", `${i + 1}`),
       el("span.flag.flag-lg", c.flag || "🏳"),
       el(

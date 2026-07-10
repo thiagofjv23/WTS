@@ -11,14 +11,17 @@ import { renderRanking } from "./pages/ranking.js";
 import { renderCalendar } from "./pages/calendar.js";
 import { renderCountries } from "./pages/countries.js";
 import { renderNews } from "./pages/news.js";
+import { renderFavorites } from "./pages/favorites.js";
 import { athleteModal } from "./pages/athlete.js";
 import { competitionModal } from "./pages/competition.js";
+import { countryModal } from "./pages/country.js";
 
 const PAGES = [
   { id: "ranking", label: "Ranking", icon: "🏆" },
   { id: "calendar", label: "Calendário", icon: "📅" },
-  { id: "news", label: "Resultados", icon: "📰" },
+  { id: "news", label: "Notícias", icon: "📰" },
   { id: "countries", label: "Países", icon: "🌍" },
+  { id: "favorites", label: "Favoritos", icon: "⭐" },
 ];
 
 export class App {
@@ -116,10 +119,12 @@ export class App {
     const c = this.contentEl;
     const openAthlete = (id) => this.openAthlete(id);
     const openComp = (id) => this.openCompetition(id);
+    const openCountry = (code) => this.openCountry(code);
     if (this.page === "ranking") renderRanking(c, this.game, openAthlete, this.pageState);
     else if (this.page === "calendar") renderCalendar(c, this.game, this.pageState, openComp);
-    else if (this.page === "news") renderNews(c, this.game, openComp);
-    else if (this.page === "countries") renderCountries(c, this.game);
+    else if (this.page === "news") renderNews(c, this.game, openComp, openAthlete);
+    else if (this.page === "countries") renderCountries(c, this.game, openCountry);
+    else if (this.page === "favorites") renderFavorites(c, this.game, openAthlete, this.pageState);
   }
 
   // ---- Comandos de tempo ---------------------------------------------------
@@ -175,6 +180,16 @@ export class App {
       onClose: () => modal.remove(),
       onAthlete: (aid) => this.openAthlete(aid),
       state: {},
+    });
+    this.root.append(modal);
+  }
+
+  openCountry(code) {
+    const view = this.game.getCountryView(code);
+    if (!view) return;
+    const modal = countryModal(view, {
+      onClose: () => modal.remove(),
+      onAthlete: (aid) => this.openAthlete(aid),
     });
     this.root.append(modal);
   }

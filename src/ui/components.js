@@ -57,6 +57,11 @@ export function attrBar(label, value) {
   );
 }
 
+/** Selo de lesionado (cruz vermelha). */
+export function injuryMark() {
+  return el("span.injury-mark", { title: "Lesionado" }, "✚");
+}
+
 /** Linha de ranking (usada na página de Ranking). */
 export function rankingRow(entry, onClick) {
   return el(
@@ -67,7 +72,12 @@ export function rankingRow(entry, onClick) {
     el("span.flag.flag-lg", entry.flag || "🏳"),
     el(
       "span.row-main",
-      el("span.row-name", entry.favorite ? "★ " + entry.name : entry.name),
+      el(
+        "span.row-name",
+        entry.favorite ? "★ " : null,
+        entry.name,
+        entry.injured ? injuryMark() : null
+      ),
       el("span.row-sub", entry.countryName)
     ),
     el("span.pts", `${entry.points}`)

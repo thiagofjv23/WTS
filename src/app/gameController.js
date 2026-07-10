@@ -200,6 +200,15 @@ export class GameController {
     return this.world.favorites.athletes.includes(athleteId);
   }
 
+  /** Lista resumida dos atletas favoritados (para a aba de Favoritos). */
+  getFavoriteAthletes() {
+    return this.world.favorites.athletes
+      .map((id) => this.world.athletes[id])
+      .filter(Boolean)
+      .map((a) => this._athleteRow(a))
+      .sort((x, y) => y.points - x.points);
+  }
+
   // ---- Consultas -----------------------------------------------------------
 
   getState() {
@@ -220,7 +229,24 @@ export class GameController {
     return { ioc, flag: flagEmoji(ioc) };
   }
 
-  getRanking(categoryId, limit = 50) {
+  /** Linha compacta de atleta (favoritos, busca, país). */
+  _athleteRow(a) {
+    const c = this._countryOf(a);
+    return {
+      id: a.id,
+      name: a.fullName,
+      ioc: c.code,
+      flag: flagEmoji(c.code),
+      category: getWeightCategory(a.weightCategoryId)?.name || a.weightCategoryId,
+      position: a.ranking.position,
+      points: a.ranking.points,
+      injured: a.status === "lesionado",
+      favorite: this.isFavoriteAthlete(a.id),
+    };
+  }
+
+  /** Ranking da categoria. Sem `limit` retorna TODOS os atletas ranqueados. */
+  getRanking(categoryId, limit = Infinity) {
     const ranking = this.world.rankings[categoryId];
     if (!ranking) return [];
     return ranking.athleteIds.slice(0, limit).map((id, i) => {
@@ -239,9 +265,15 @@ export class GameController {
         countryName: c.name,
         points: a.ranking.points,
         favorite: this.isFavoriteAthlete(a.id),
+        injured: a.status === "lesionado",
         delta,
       };
     });
+  }
+
+  /** Total de atletas ranqueados numa categoria. */
+  getRankingSize(categoryId) {
+    return this.world.rankings[categoryId]?.athleteIds.length || 0;
   }
 
   getAthlete(id) {
@@ -456,8 +488,9 @@ export class GameController {
     return {
       round: m.round,
       roundLabel: roundLabel(m.round),
-      a: { id: m.aId, name: name(m.aId), flag: flag(m.aId) },
-      b: { id: m.bId, name: name(m.bId), flag: flag(m.bId) },
+      // rank = posição no ranking no início do campeonato (ideia do chaveamento).
+      a: { id: m.aId, name: name(m.aId), flag: flag(m.aId), rank: m.aRank ?? null },
+      b: { id: m.bId, name: name(m.bId), flag: flag(m.bId), rank: m.bRank ?? null },
       winnerId: m.winnerId,
       score: m.score,
     };
@@ -503,20 +536,85 @@ export class GameController {
   }
 
   /** Busca simples por nome de atleta (romanizado). */
-  searchAthletes(query, limit = 20) {
+  searchAthletes(query, limit = 30) {
     const q = query.trim().toLowerCase();
     if (!q) return [];
     const out = [];
     for (const a of Object.values(this.world.athletes)) {
       if (a.fullName.toLowerCase().includes(q)) {
-        const c = this._countryOf(a);
-        out.push({
-          id: a.id, name: a.fullName, ioc: c.code,
-          category: getWeightCategory(a.weightCategoryId)?.name, points: a.ranking.points,
-        });
+        out.push(this._athleteRow(a));
         if (out.length >= limit) break;
       }
     }
-    return out;
+    return out.sort((x, y) => y.points - x.points);
+  }
+
+  /**
+   * Feed de notícias: campeões recentes + lesões/recuperações, por data (desc).
+   */
+  getNews(limit = 30) {
+    const feed = [];
+    // Campeões recentes (do histórico).
+    for (const h of this.world.history.slice(-60)) {
+      const champ = this.world.athletes[h.champion];
+      const c = champ ? this._countryOf(champ) : { code: "??" };
+      feed.push({
+        type: "champion",
+        date: h.date,
+        competition: h.competitionName,
+        competitionId: h.competitionId,
+        gRank: h.gRank,
+        category: getWeightCategory(h.categoryId)?.name || h.categoryId,
+        athleteId: h.champion,
+        name: champ ? champ.fullName : "?",
+        flag: flagEmoji(c.code),
+      });
+    }
+    // Lesões e recuperações.
+    for (const n of this.world.news) {
+      const a = this.world.athletes[n.athleteId];
+      const c = a ? this._countryOf(a) : { code: "??" };
+      feed.push({
+        type: n.type, // "injury" | "recovery"
+        date: n.date,
+        athleteId: n.athleteId,
+        name: a ? a.fullName : "?",
+        flag: flagEmoji(c.code),
+        severity: n.severity,
+        until: n.until,
+        category: a ? getWeightCategory(a.weightCategoryId)?.name : null,
+      });
+    }
+    feed.sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0));
+    return feed.slice(0, limit);
+  }
+
+  /**
+   * Detalhe de um país: estatísticas + atletas (com posição no ranking).
+   * @param {string} code  código IOC
+   */
+  getCountryView(code) {
+    const country = Object.values(this.world.countries).find((c) => c.code === code);
+    if (!country) return null;
+    const athletes = country.athleteIds
+      .map((id) => this.world.athletes[id])
+      .filter(Boolean)
+      .map((a) => this._athleteRow(a))
+      .sort((x, y) => y.points - x.points);
+    // Melhor atleta por categoria.
+    const bestByCategory = MEN_CATEGORIES.map((cat) => {
+      const best = athletes.find((a) => a.category === cat.name);
+      return { category: cat.name, athlete: best || null };
+    });
+    return {
+      code: country.code,
+      name: country.name,
+      flag: flagEmoji(country.code),
+      continent: continentOf(country.code),
+      statistics: { ...country.statistics },
+      athleteCount: athletes.length,
+      bestByCategory,
+      athletes,
+    };
   }
 }

@@ -78,6 +78,66 @@ test("evento concluído: classificação + lutas por peso", () => {
   assert(Array.isArray(final.score) && final.score.length === 2, "placar de rounds");
 });
 
+suite("Ranking completo, lesão nas listas e confrontos");
+
+test("getRanking sem limite retorna todos os atletas", () => {
+  const g = newGame();
+  const all = g.getRanking("WC-M-58");
+  assertEqual(all.length, g.getRankingSize("WC-M-58"));
+  assert(all.length > 200, "deveria trazer o plantel inteiro");
+  assert(all.every((r) => "injured" in r), "cada entrada indica lesão");
+});
+
+test("confrontos trazem o ranking de início do campeonato", () => {
+  const g = newGame();
+  g.advanceToNextEvent();
+  const done = g.getSeasonSchedule().find((e) => e.done);
+  const view = g.getCompetitionView(done.id);
+  const matches = view.categories[0].matches;
+  assert(matches.length > 0);
+  assert(matches.every((m) => "rank" in m.a && "rank" in m.b), "confronto traz ranks");
+  assert(matches.some((m) => Number.isInteger(m.a.rank)), "ao menos um rank numérico");
+});
+
+suite("Notícias, favoritos e país");
+
+test("feed de notícias inclui campeões e lesões/recuperações", () => {
+  const g = newGame();
+  for (let i = 0; i < 12; i++) g.advanceToNextEvent();
+  const feed = g.getNews(50);
+  assert(feed.length > 0, "feed não vazio");
+  assert(feed.some((n) => n.type === "champion"), "deveria ter campeões");
+  assert(feed.some((n) => n.type === "injury" || n.type === "recovery"), "deveria ter lesão/recuperação");
+  // ordenado por data desc
+  for (let i = 1; i < feed.length; i++) assert(feed[i - 1].date >= feed[i].date, "fora de ordem");
+});
+
+test("favoritos: adicionar e listar", () => {
+  const g = newGame();
+  const id = g.getRanking("WC-M-58", 1)[0].id;
+  g.toggleFavoriteAthlete(id);
+  const favs = g.getFavoriteAthletes();
+  assertEqual(favs.length, 1);
+  assertEqual(favs[0].id, id);
+  assert(favs[0].flag !== undefined, "favorito traz bandeira");
+});
+
+test("busca encontra atleta por nome", () => {
+  const g = newGame();
+  const someone = g.getRanking("WC-M-58", 1)[0];
+  const term = someone.name.split(" ")[0];
+  const found = g.searchAthletes(term);
+  assert(found.some((a) => a.id === someone.id), "deveria encontrar o atleta buscado");
+});
+
+test("detalhe de país traz atletas e melhores por categoria", () => {
+  const g = newGame();
+  const cv = g.getCountryView("KOR");
+  assert(cv && cv.flag, "país com bandeira");
+  assert(cv.athletes.length > 0, "deveria listar atletas");
+  assertEqual(cv.bestByCategory.length, 4, "4 categorias masculinas");
+});
+
 suite("Próximos campeonatos do atleta");
 
 test("elite aparece nos grandes eventos, não nos Opens pequenos", () => {

@@ -20,6 +20,7 @@ import { applyCompetitionPoints, recomputeRankings } from "./ranking.js";
 import { recordCompetitionHistory } from "./history.js";
 import { processRecovery } from "./recovery.js";
 import { applyCompetitionInjuries } from "./injuries.js";
+import { newsInjury, newsRecovery } from "./news.js";
 import { COMPETITION_STATUS } from "../entities/competition.js";
 import { addDays } from "../utils/dates.js";
 import { RandomSystem } from "../services/random.js";
@@ -52,6 +53,7 @@ export class SimulationDirector {
 
     // Recovery System (§4): reativa atletas que voltaram de lesão.
     for (const rec of processRecovery(world, date)) {
+      newsRecovery(world, date, rec.athleteId);
       this._emit("AthleteRecovered", { athleteId: rec.athleteId });
     }
 
@@ -104,8 +106,10 @@ export class SimulationDirector {
       }
     );
 
-    // Persiste as lutas (compacto) para consulta na interface: por categoria,
-    // {round, aId, bId, winnerId, score:[roundsA, roundsB]}.
+    // Persiste as lutas (compacto) para consulta na interface. Aqui o ranking
+    // ainda NÃO foi recalculado, então athlete.ranking.position é a posição no
+    // INÍCIO do campeonato — guardamos aRank/bRank para exibir o chaveamento.
+    const rankOf = (id) => world.athletes[id]?.ranking.position ?? null;
     competition.matches = allMatches.map((m) => {
       const rounds = m.rounds || [];
       const rwA = rounds.filter((r) => r.winner === m.athleteAId).length;
@@ -117,6 +121,8 @@ export class SimulationDirector {
         bId: m.athleteBId,
         winnerId: m.winnerId,
         score: [rwA, rwB],
+        aRank: rankOf(m.athleteAId),
+        bRank: rankOf(m.athleteBId),
       };
     });
 
@@ -128,6 +134,7 @@ export class SimulationDirector {
     applyConsequences(world, competition, byCategory, allMatches);
     // Lesões (§9): desgaste + risco de lesão para os participantes.
     for (const inj of applyCompetitionInjuries(world, competition, allMatches, this.random, competition.date)) {
+      newsInjury(world, competition.date, inj.athleteId, inj.severity, inj.until);
       this._emit("AthleteInjured", {
         athleteId: inj.athleteId,
         severity: inj.severity,

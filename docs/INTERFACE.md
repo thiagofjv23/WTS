@@ -108,9 +108,18 @@ desacoplamento previsto na arquitetura.
 5. **Modal de Atleta** — identidade (com bandeira), forma/moral/experiência,
    status (inclui "lesionado até…"), estatísticas, atributos visíveis em barras,
    **próximos campeonatos** (campo projetado) e histórico clicável. Favorito.
-6. **Modal de Campeonato** (clicável no Calendário/Resultados) — abas por peso.
+6. **Modal de Campeonato** (clicável no Calendário/Notícias) — abas por peso.
    Antes do evento: **prováveis inscritos** (respeitando as travas). Depois:
-   **classificação final** por peso + **resultados das lutas** por rodada.
+   **classificação final** por peso + **resultados das lutas** por rodada, com o
+   **ranking de cada atleta no início do campeonato** ao lado do nome (ideia do
+   chaveamento).
+7. **Notícias** — feed com campeões recentes + **lesões e recuperações**.
+8. **Favoritos + Busca** — lista de favoritos e busca de qualquer atleta.
+9. **Modal de País** (clicável em Países) — medalhas, continente, melhor por
+   categoria e lista de atletas do país.
+
+O **Ranking** exibe **todos** os atletas ranqueados da categoria (com contador),
+e marca com um selo vermelho ✚ os que estão **lesionados**.
 
 ## Indicadores visuais
 

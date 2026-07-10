@@ -119,10 +119,13 @@ export function competitionModal(view, { onClose, onAthlete, state }) {
 
   function matchRow(m) {
     const aWon = m.winnerId === m.a.id;
+    const rank = (r) => el("span.match-rank", r != null ? `#${r}` : "—");
     return el("div.match-row",
-      el(`span.match-side${aWon ? ".win" : ""}`, el("span.flag", m.a.flag || "🏳"), " ", m.a.name),
+      el(`span.match-side${aWon ? ".win" : ""}`,
+        el("span.flag", m.a.flag || "🏳"), " ", rank(m.a.rank), " ", el("span.match-name", m.a.name)),
       el("span.match-score", `${m.score[0]}–${m.score[1]}`),
-      el(`span.match-side.right${!aWon ? ".win" : ""}`, m.b.name, " ", el("span.flag", m.b.flag || "🏳"))
+      el(`span.match-side.right${!aWon ? ".win" : ""}`,
+        el("span.match-name", m.b.name), " ", rank(m.b.rank), " ", el("span.flag", m.b.flag || "🏳"))
     );
   }
 

@@ -125,6 +125,34 @@ button.primary, .primary { background: var(--accent); border-color: var(--accent
 .move-flat { color: var(--text-dim); font-weight: 600; }
 .move-new { color: var(--accent); font-size: 10px; font-weight: 700; }
 
+/* selo de lesionado */
+.injury-mark {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; margin-left: 6px; border-radius: 4px;
+  background: var(--danger); color: #fff; font-size: 11px; font-weight: 900;
+  vertical-align: middle;
+}
+
+/* contador (ex.: total do ranking) */
+.count-badge {
+  font-size: 13px; font-weight: 700; color: var(--text-dim);
+  background: var(--bg-elev2); border: 1px solid var(--line);
+  padding: 3px 10px; border-radius: 999px;
+}
+
+/* busca */
+.search-input {
+  width: 100%; padding: 12px 14px; border-radius: 12px; font-size: 15px;
+  background: var(--bg-elev); border: 1px solid var(--line); color: var(--text);
+  margin-bottom: 6px;
+}
+.search-input:focus { outline: none; border-color: var(--accent); }
+
+/* chip de categoria (país) */
+.cat-tag {
+  flex: 0 0 66px; font-size: 12px; font-weight: 700; color: var(--accent);
+}
+
 /* ---------- BADGES (G-Rank) ---------- */
 .badge { font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px; color: #10131f; }
 .g-open { background: #8a93a8; }
@@ -225,10 +253,13 @@ button.primary, .primary { background: var(--accent); border-color: var(--accent
   padding: 8px 10px; background: var(--bg-elev); border: 1px solid var(--line);
   border-radius: 10px; margin-bottom: 5px; font-size: 13px;
 }
-.match-side { display: flex; align-items: center; gap: 5px; color: var(--text-dim); min-width: 0; }
+.match-side { display: flex; align-items: center; gap: 4px; color: var(--text-dim); min-width: 0; }
 .match-side.right { justify-content: flex-end; text-align: right; }
 .match-side.win { color: var(--text); font-weight: 700; }
+.match-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.match-rank { font-size: 11px; font-weight: 700; color: var(--accent); flex: 0 0 auto; }
 .match-score { font-weight: 800; color: var(--gold); padding: 0 6px; white-space: nowrap; }
+.news-med .news-title { font-size: 15px; }
 
 /* results modal */
 .result-card { margin-bottom: 8px; }

@@ -236,6 +236,21 @@ Adiado (TODO): Mundial G-14 (bienal, limite nacional, sem lock), Olimpíadas G-2
 (classificação: top 5 do ranking + Grand Slam + qualificatórios continentais),
 periodização/pico de forma (#3) e lesões/rotatividade (#5).
 
+## [2026-07-10] UI — Ranking de início do campeonato nos confrontos
+As lutas persistidas (`competition.matches`) guardam `aRank`/`bRank` capturados
+NO MOMENTO em que são gravadas — antes de `recomputeRankings` deste evento — ou
+seja, a posição no ranking no INÍCIO do campeonato. A UI mostra `#N` ao lado do
+nome nas lutas, dando a ideia do chaveamento.
+
+## [2026-07-10] UI — Feed de notícias no motor (News System)
+`world.news` (limitado a 400 entradas) recebe lesões e recuperações; o feed da UI
+(`getNews`) mescla isso com os campeões do histórico, ordenado por data. Mantém a
+UI sem lógica e respeita o limite de save (poda no TODO).
+
+## [2026-07-10] UI — Ranking exibe todos os atletas
+`getRanking` sem `limit` retorna o plantel inteiro (256/categoria). Suficiente
+para o alvo atual; virtualização da lista fica no TODO caso o volume cresça.
+
 ## [2026-07-10] Mundo — Início em 01/01/2026 e 1ª temporada = 2026
 Decisão do usuário: iniciar o mundo em 01/01/2026 (antes 01/07/2026) para
 alinhar com o ano-calendário completo. Assim a 1ª temporada simulada é 2026

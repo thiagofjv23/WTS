@@ -470,6 +470,34 @@ do atleta — sem erros de console.
 
 ---
 
+## Passo 16 — Favoritos/Busca, País, Notícias de lesão, ranking completo ✅
+
+**Objetivo:** mais telas e indicadores para humanos.
+
+**Entregue (lógica no GameController; UI só consome):**
+- **News System** (`engine/news.js`) — o Director registra campeões, **lesões** e
+  **recuperações** em `world.news` (limitado). `getNews` mescla com o histórico.
+- **Ranking completo:** `getRanking` sem limite → **todos** os 256 atletas da
+  categoria; cada linha indica `injured`. UI mostra selo ✚ e contador.
+- **Ranking de início do campeonato nos confrontos:** o Director guarda
+  `aRank`/`bRank` na luta (posição antes de recalcular o ranking); a UI mostra
+  `#N` ao lado do nome nas lutas.
+- **Favoritos + Busca:** `getFavoriteAthletes`, `searchAthletes`; nova aba.
+- **Detalhe de país:** `getCountryView` (medalhas, continente, melhor por
+  categoria, atletas); modal clicável em Países.
+- UI: `pages/favorites.js`, `pages/country.js`, `pages/news.js` (reescrita),
+  selo de lesão no ranking, 5ª aba (Favoritos).
+- `tests/uiQueries.test.mjs` — +7 testes.
+
+**Testado:** `npm test` → **139/139.** Verificado no navegador: 256 linhas no
+ranking, 5 selos de lesão, 19 notícias médicas, busca, modal de país, ranks nos
+confrontos — sem erros de console.
+
+**TODO adicionado (lógica):** impedir que um atleta participe de 2 campeonatos no
+mesmo dia.
+
+---
+
 ## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e

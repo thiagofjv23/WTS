@@ -100,6 +100,14 @@ será retomado. Atualizado a cada passo do desenvolvimento.
 
 ## Estrutura competitiva — pendências de LÓGICA
 
+- 🟡 **Impedir dupla participação no mesmo dia.** Hoje um atleta pode ser
+  sorteado para dois campeonatos que ocorrem na mesma data (ex.: dois eventos no
+  mesmo dia do calendário). O Participation/Competition System deve garantir que
+  cada atleta entre em no máximo UM campeonato por dia (marcar quem já foi
+  inscrito naquele dia antes de montar o campo do evento seguinte). Afeta
+  também o campo projetado exibido na UI.
+
+
 - 🟡 **Campeonato Mundial (G-14, bienal)** e **Olimpíadas (G-20)** com a
   classificação olímpica (top 5 do ranking + Grand Slam + qualificatórios
   continentais). Ainda não há evento G-14/G-20 no calendário 2026; adicionar nos
@@ -162,18 +170,20 @@ será retomado. Atualizado a cada passo do desenvolvimento.
 - ✅ **Tela de campeonato clicável** (inscritos previstos / resultados +
   classificação por peso) — feito.
 - ✅ **Próximos campeonatos na ficha do atleta** — feito.
-- 🟢 **Aba de Favoritos e busca dedicada.** A busca (`searchAthletes`) e os
-  favoritos já existem no GameController; falta a tela.
+- ✅ **Aba de Favoritos e busca dedicada** — feito.
+- ✅ **Tela de detalhe de país** — feito (modal com medalhas, melhor por
+  categoria e atletas).
+- ✅ **Notícias de lesão/recuperação** — feito (feed de Notícias + selo de
+  lesionado no ranking).
+- ✅ **Ranking mostra todos os atletas** — feito (256/categoria).
+- ✅ **Ranking de início do campeonato nos confrontos** — feito.
 - 🟢 **Gráficos de evolução de ranking, filtros e tela de Configurações.**
 - 🟢 **Avanço longo em blocos** com barra de progresso (hoje é síncrono; rápido,
   mas várias temporadas de uma vez poderiam travar a UI momentaneamente).
-- 🟢 **Tela de detalhe de país** (reaproveitar os cards; ranking do país,
-  medalhas, atletas).
 - 🟢 **Poda das lutas antigas.** `competition.matches` cresce o save ao longo das
-  temporadas; podar competições muito antigas (ou mover para arquivo) quando o
-  save ficar grande (alvo mobile/localStorage).
-- 🟢 **Notícias de forma/lesão** na aba Resultados (Event Bus já emite
-  AthleteInjured/AthleteRecovered).
+  temporadas; podar competições muito antigas quando o save ficar grande.
+- 🟢 **Ranking com 256 linhas por categoria** — funciona, mas ao acumular muitas
+  temporadas vale virtualizar a lista (render sob demanda) no alvo mobile.
 
 ## Melhorias técnicas pendentes
 
