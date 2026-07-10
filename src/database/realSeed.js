@@ -16,7 +16,9 @@ import { recomputeCountryStatistics } from "../engine/consequence.js";
 import { MEN_CATEGORIES } from "../config/weightCategories.js";
 import { REAL_ROSTER, REAL_COUNTRIES } from "./realRoster.js";
 
-const WORLD_START_DATE = "2026-07-01";
+// Início do mundo no começo do ano-calendário, alinhando com o calendário
+// oficial 2026 (a 1ª temporada simulada é 2026, com todos os eventos à frente).
+const WORLD_START_DATE = "2026-01-01";
 
 /**
  * Constrói o mundo real.

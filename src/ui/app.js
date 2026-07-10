@@ -115,7 +115,7 @@ export class App {
     const c = this.contentEl;
     const openAthlete = (id) => this.openAthlete(id);
     if (this.page === "ranking") renderRanking(c, this.game, openAthlete, this.pageState);
-    else if (this.page === "calendar") renderCalendar(c, this.game);
+    else if (this.page === "calendar") renderCalendar(c, this.game, this.pageState);
     else if (this.page === "news") renderNews(c, this.game);
     else if (this.page === "countries") renderCountries(c, this.game);
   }

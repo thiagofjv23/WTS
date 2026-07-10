@@ -172,6 +172,26 @@ por atletas de nível médio — espalhando os pontos de forma realista. Sugest�
 #2 (viagens), #3 (pico de forma) e #5 (lesões/rotatividade) ficam para depois
 (TODO), integráveis por extensão sem alterar este núcleo.
 
+## [2026-07-10] Mundo — Início em 01/01/2026 e 1ª temporada = 2026
+Decisão do usuário: iniciar o mundo em 01/01/2026 (antes 01/07/2026) para
+alinhar com o ano-calendário completo. Assim a 1ª temporada simulada é 2026
+(offset 0) e TODOS os ~67 eventos do ano ficam à frente, visíveis logo no início
+(a tela bate com o calendário oficial).
+
+Aproximação assumida: o ranking-semente é a foto de JUNHO/2026, mas passa a ser
+usado como estado inicial de JANEIRO/2026 (baseline de força/pontos no começo do
+ano). Ou seja, a temporada 2026 é (re)simulada a partir dessas standings. É uma
+simplificação consciente para viabilizar o ano-calendário completo; os pontos-
+semente entram no ledger datados em 01/01/2026 e decaem normalmente. Confirmar/
+refinar quando houver uma foto de ranking do início do ciclo.
+
+## [2026-07-10] UI — Calendário mostra o ano inteiro
+`GameController.getSeasonSchedule(ano)` retorna todos os eventos do ano
+(realizados e a disputar). A tela agrupa por mês, com status e navegação entre
+anos, atendendo ao requisito de ver todos os campeonatos do ano desde o início.
+O agendamento de temporada continua automático: ao virar o ano, a próxima
+temporada é agendada e passa a aparecer.
+
 ## [2026-07-09] Pipeline — Salvar após avançar a data (reordenação justificada)
 Contexto: SimulationPipeline lista Save (etapa 12) antes de Avançar a data
 (etapa 13). Salvar antes gera um snapshot com a data ainda "no dia jogado".

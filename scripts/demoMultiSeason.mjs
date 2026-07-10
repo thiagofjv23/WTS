@@ -43,7 +43,7 @@ snapshotTop(CAT).forEach((r, i) =>
   console.log(`  ${i + 1}. ${name(r.id).padEnd(34)} (${ioc(r.id)})  ${r.pts} pts`)
 );
 
-for (let s = 1; s <= numSeasons; s++) {
+for (let s = 0; s < numSeasons; s++) {
   const year = 2026 + s;
   const comps = buildSeasonCalendar(world, idGen, { yearOffset: s, categoryFilter: MEN_IDS });
   director.advanceUntil(comps[comps.length - 1].date);

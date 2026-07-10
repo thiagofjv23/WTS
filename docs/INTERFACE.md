@@ -100,7 +100,9 @@ desacoplamento previsto na arquitetura.
 
 1. **Ranking** — abas por categoria masculina + lista (posição, nome, país,
    pontos). Toque abre o modal do atleta.
-2. **Calendário** — próximos eventos (data, G-Rank, local, pontos do campeão).
+2. **Calendário** — o ano inteiro (todos os eventos, realizados e a disputar)
+   agrupado por mês, com status e navegação entre anos. Mundo inicia em
+   01/01/2026, então a temporada 2026 completa aparece desde o começo.
 3. **Resultados** — campeões recentes por evento/categoria.
 4. **Países** — quadro por pontos de ranking e medalhas.
 5. **Modal de Atleta** — identidade, forma/moral/experiência, estatísticas,

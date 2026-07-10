@@ -37,7 +37,10 @@ export class GameController {
     this.random = null;
     this.idGen = null;
     this.director = null;
-    this.nextOffset = 1; // próxima temporada a agendar (2026 + offset)
+    // Próxima temporada a agendar = 2026 + offset. Começa em 0: a 1ª temporada
+    // simulada é 2026 (o mundo inicia em 01/01/2026 e todos os eventos do ano
+    // ficam à frente).
+    this.nextOffset = 0;
   }
 
   // ---- Ciclo de vida -------------------------------------------------------
@@ -53,7 +56,7 @@ export class GameController {
     this.world = built.world;
     this.random = built.random;
     this.idGen = built.idGen;
-    this.nextOffset = 1;
+    this.nextOffset = 0;
     this._makeDirector();
     this._scheduleNextSeason();
     this.save();
@@ -69,10 +72,11 @@ export class GameController {
     this.random = new RandomSystem(saved.meta.seed);
     if (typeof saved.rngState === "number") this.random.setState(saved.rngState);
     this.idGen = new IdGenerator(saved.idState || {});
-    // Retoma o offset a partir das competições já agendadas.
+    // Retoma o offset a partir das competições já agendadas (próxima temporada
+    // ainda não agendada = maior ano agendado + 1).
     const years = Object.values(this.world.competitions).map((c) => yearOf(c.date));
-    const maxYear = years.length ? Math.max(...years) : 2026;
-    this.nextOffset = Math.max(1, maxYear - 2026 + 1);
+    const maxYear = years.length ? Math.max(...years) : 2025;
+    this.nextOffset = Math.max(0, maxYear - 2026 + 1);
     this._makeDirector();
     this._ensureUpcoming();
     this.bus.publish("GameLoaded", { fresh: false });
@@ -272,6 +276,36 @@ export class GameController {
           championPoints: championPointsFor(c.gRank),
         };
       });
+  }
+
+  /**
+   * Agenda completa de uma temporada (ano): todos os eventos, realizados e
+   * agendados, em ordem de data. Permite ver o ano inteiro logo no início.
+   * @param {number} [year]  padrão: ano da data atual.
+   */
+  getSeasonSchedule(year) {
+    const y = year || yearOf(this.world.state.currentDate);
+    const today = this.world.state.currentDate;
+    return Object.values(this.world.competitions)
+      .filter((c) => yearOf(c.date) === y)
+      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+      .map((c) => ({
+        date: c.date,
+        name: c.name,
+        gRank: c.gRank,
+        gLabel: G_RANK_LABELS[c.gRank] || c.gRank,
+        location: c.location,
+        championPoints: championPointsFor(c.gRank),
+        done: c.status === "concluida" || c.date < today,
+      }));
+  }
+
+  /** Anos que possuem eventos agendados (para navegação do calendário). */
+  getScheduledYears() {
+    const years = new Set(
+      Object.values(this.world.competitions).map((c) => yearOf(c.date))
+    );
+    return [...years].sort((a, b) => a - b);
   }
 
   getRecentResults(limit = 15) {

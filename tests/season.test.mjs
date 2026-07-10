@@ -98,9 +98,8 @@ test("simula 3 temporadas; pontos iniciais decaem e ranking evolui", () => {
     director.advanceUntil(comps[comps.length - 1].date);
   }
 
-  // Passaram ~3 anos desde o seed (2026-07) → fator de decaimento do seed = 25%.
+  // O seed é datado no início do mundo (01/01/2026) e decai ao longo dos anos.
   const seedEntry = world.athletes[leaderId].pointsLedger[0];
-  const monthsFromSeed = 3 * 12; // aprox
   assert(seedEntry.gRank === "seed", "primeira entrada deveria ser o seed");
   // O ledger acumulou muitos resultados ao longo das temporadas.
   assert(world.athletes[leaderId].pointsLedger.length > 3, "ledger deveria crescer");

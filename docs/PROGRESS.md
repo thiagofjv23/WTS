@@ -354,6 +354,26 @@ localStorage, atributos ocultos preservados.
 
 ---
 
+## Ajuste — Início em 01/01/2026 e calendário anual completo ✅
+
+**Pedido do usuário:** alinhar o início da simulação com o ano-calendário.
+
+- `realSeed.js`: `WORLD_START_DATE` = **2026-01-01** (antes 2026-07-01).
+- `GameController`: 1ª temporada agendada passa a ser **2026** (offset 0); ao
+  virar o ano, agenda a próxima automaticamente.
+- Calendário da UI: `getSeasonSchedule(ano)` + página reescrita mostra **todos os
+  67 eventos do ano**, agrupados por mês, com status (realizado/a disputar) e
+  navegação entre anos.
+- Demos ajustados para começar em 2026.
+
+**Verificado no navegador:** abre em 01/01/2026 · calendário 2026 com 67 eventos
+(0 realizados no início) por mês · sem erros de console. `npm test` → 101/101.
+
+**Aproximação documentada** (DECISIONS.md): o ranking-semente de junho/2026 é
+usado como baseline de janeiro/2026.
+
+---
+
 ## Estado: núcleo + dados reais + temporadas + participação + INTERFACE ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
