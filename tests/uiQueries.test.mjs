@@ -35,12 +35,17 @@ test("delta é null antes de avançar e reflete mudança depois", () => {
   const g = newGame();
   const before = g.getRanking("WC-M-58", 20);
   assert(before.every((r) => r.delta === null), "sem referência inicial → null");
-  g.advanceToNextEvent();
-  g.advanceToNextEvent();
-  // A categoria inteira: os Opens são disputados por atletas de ranking mais
-  // baixo, então o movimento pode estar fora do topo.
-  const after = g.getRanking("WC-M-58", 256);
-  assert(after.some((r) => r.delta !== null && r.delta !== 0), "deveria haver movimento");
+  // O ranking é MENSAL: só muda quando um avanço cruza o dia 1 de um mês (após
+  // resultados acumulados). Avançamos evento a evento até aparecer movimento.
+  let after = [];
+  for (let i = 0; i < 40; i++) {
+    g.advanceToNextEvent();
+    // A categoria inteira: os Opens são disputados por atletas de ranking mais
+    // baixo, então o movimento pode estar fora do topo.
+    after = g.getRanking("WC-M-58", 256);
+    if (after.some((r) => r.delta !== null && r.delta !== 0)) break;
+  }
+  assert(after.some((r) => r.delta !== null && r.delta !== 0), "deveria haver movimento ao cruzar um mês");
   // Consistência: delta = posição anterior - atual (subir = positivo).
   for (const r of after) {
     if (r.delta != null) assert(Number.isInteger(r.delta), "delta inteiro");

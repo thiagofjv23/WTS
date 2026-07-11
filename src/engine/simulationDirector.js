@@ -15,7 +15,7 @@
 import { eventsForDate, CALENDAR_STATUS } from "./calendar.js";
 import { simulateCompetition } from "./competitionSystem.js";
 import { selectParticipants } from "./participation.js";
-import { applyConsequences } from "./consequence.js";
+import { applyConsequences, recomputeCountryStatistics } from "./consequence.js";
 import { applyCompetitionPoints, recomputeRankings } from "./ranking.js";
 import { recordCompetitionHistory } from "./history.js";
 import { processRecovery } from "./recovery.js";
@@ -56,6 +56,13 @@ export class SimulationDirector {
     const world = this.world;
     const date = world.state.currentDate;
     this._emit("NewDayStarted", { date });
+
+    // Ranking oficial: materializado SÓ no dia 1 de cada mês (a WT publica o
+    // ranking mensalmente). Entre atualizações, os pontos continuam sendo
+    // creditados no ledger, mas as posições/pontos visíveis ficam congelados. O
+    // decaimento (§5) é avaliado nesta data: um resultado troca de faixa assim
+    // que o ranking do 1º do mês seguinte ao aniversário é calculado.
+    this._monthlyRankingUpdate(date);
 
     // Recovery System (§4): reativa atletas que voltaram de lesão.
     for (const rec of processRecovery(world, date)) {
@@ -115,9 +122,10 @@ export class SimulationDirector {
       }
     );
 
-    // Persiste as lutas (compacto) para consulta na interface. Aqui o ranking
-    // ainda NÃO foi recalculado, então athlete.ranking.position é a posição no
-    // INÍCIO do campeonato — guardamos aRank/bRank para exibir o chaveamento.
+    // Persiste as lutas (compacto) para consulta na interface. O ranking só é
+    // recalculado no dia 1 de cada mês, então athlete.ranking.position é o
+    // ranking oficial VIGENTE no início do campeonato — guardamos aRank/bRank
+    // para exibir o chaveamento.
     const rankOf = (id) => world.athletes[id]?.ranking.position ?? null;
     competition.matches = allMatches.map((m) => {
       const rounds = m.rounds || [];
@@ -136,10 +144,10 @@ export class SimulationDirector {
       };
     });
 
-    // Ranking: credita pontos no ledger e recalcula pontos efetivos/posições
-    // (antes das estatísticas de país, que somam os pontos efetivos).
+    // Ranking: credita os pontos no ledger (registro permanente). O ranking
+    // materializado (posições/pontos visíveis) NÃO muda aqui — é recalculado no
+    // dia 1 de cada mês (ver _monthlyRankingUpdate).
     applyCompetitionPoints(world, competition, byCategory);
-    recomputeRankings(world, competition.date);
     // Consequências: estatísticas de atletas e países.
     applyConsequences(world, competition, byCategory, allMatches);
     // Lesões (§9): desgaste + risco de lesão para os participantes.
@@ -161,7 +169,18 @@ export class SimulationDirector {
 
     competition.status = COMPETITION_STATUS.FINISHED;
     this._emit("CompetitionFinished", { competitionId: competition.id });
-    this._emit("RankingUpdated", { date: competition.date });
+  }
+
+  /**
+   * Recalcula o ranking materializado (pontos efetivos + posições) e as
+   * estatísticas nacionais — apenas no dia 1 de cada mês. O decaimento (§5) é
+   * avaliado nesta data. Fora do dia 1 é um no-op barato.
+   */
+  _monthlyRankingUpdate(date) {
+    if (date.slice(8, 10) !== "01") return;
+    recomputeRankings(this.world, date);
+    recomputeCountryStatistics(this.world);
+    this._emit("RankingUpdated", { date });
   }
 
   /** Avança vários dias em sequência (processa um dia por vez). */

@@ -549,6 +549,36 @@ causa (são ~90 KB permanentes); reforça a pendência de retenção/IndexedDB (
 
 ---
 
+## Ajuste — Ranking mensal (materialização no dia 1) ✅
+
+**Pedido do usuário:** o ranking deve atualizar (visualmente) **apenas no dia 1
+de cada mês**; nesse dia rodam os cálculos de decaimento. Ex.: um evento de
+março/2026 cai no decaimento (75%) quando o sistema calcula o ranking vigente em
+abril/2027 (em março ele perdeu força; o ranking de abril mostra isso).
+
+**Feito:**
+- `simulationDirector.js`: `recomputeRankings` saiu de cada competição. O
+  **ledger** segue sendo creditado por evento (`applyCompetitionPoints`), mas o
+  ranking materializado (posições/pontos visíveis + `world.rankings` + pontos
+  nacionais) só é recalculado em `_monthlyRankingUpdate`, disparado no dia 1 do
+  mês. O decaimento (§5) é avaliado nessa data. `RankingUpdated` passa a ser
+  emitido no dia 1 (não mais por competição).
+- `tests/rankingCadence.test.mjs` (novo, 3 testes): competição no meio do mês
+  credita o ledger mas NÃO mexe no ranking visível; `RankingUpdated` só no dia 1;
+  o decaimento é aplicado na data do recálculo mensal (queda de faixa).
+- `tests/uiQueries.test.mjs`: teste de setas de movimento ajustado à cadência
+  mensal (avança até cruzar um fim de mês).
+
+**Testado:** `npm test` → **151/151.** Verificação headless pelo GameController
+(mesma via da UI): ao longo de 13 meses, o ranking de WC-M-58 muda **somente**
+nos dias 01 (mar–dez/2026 e jan–fev/2027), nunca no meio do mês.
+
+**Ganhos:** mais realista (ciclo mensal da WT; participação usa o ranking mensal
+vigente), mais performático (~12 recálculos/ano vs ~67) e mais simples de manter
+(um único ponto de recálculo). Detalhes em DECISIONS.md.
+
+---
+
 ## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e

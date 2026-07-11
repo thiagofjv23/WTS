@@ -236,6 +236,33 @@ Adiado (TODO): Mundial G-14 (bienal, limite nacional, sem lock), Olimpíadas G-2
 (classificação: top 5 do ranking + Grand Slam + qualificatórios continentais),
 periodização/pico de forma (#3) e lesões/rotatividade (#5).
 
+## [2026-07-11] Ranking — Cadência mensal (materialização no dia 1)
+Contexto/pedido do usuário: o ranking oficial da WT é publicado mensalmente, não
+a cada evento. Antes, `recomputeRankings` rodava após CADA competição, então as
+posições/pontos visíveis mudavam o tempo todo.
+
+Decisão: o **ledger** (`athlete.pointsLedger`) continua sendo creditado a cada
+competição (registro permanente e fonte da verdade), mas o ranking MATERIALIZADO
+(`athlete.ranking.points/position` e `world.rankings`) só é recalculado no **dia
+1 de cada mês** (`SimulationDirector._monthlyRankingUpdate`, disparado quando
+`date` termina em `-01`). O **decaimento (§5)** é avaliado nessa data: um
+resultado troca de faixa assim que o ranking do 1º do mês seguinte ao aniversário
+é calculado (ex.: um evento de março/2026 cai para 75% no ranking de abril/2027 —
+em março/2027 ele perdeu força, e o ranking de abril é o que mostra isso).
+
+Consequências e por que é coerente:
+- **Realismo:** casa com o ciclo mensal real da WT; as travas de participação
+  (Grand Prix top-32 etc.) passam a usar o ranking mensal vigente, como na vida
+  real, não um ranking que muda a cada luta.
+- **Performance:** ~12 recálculos/ano em vez de ~67 (um por evento) — mais barato.
+- **Manutenção:** um único ponto de recálculo (o dia 1), fácil de raciocinar.
+- **`aRank`/`bRank`** das lutas passam a ser o ranking oficial vigente no início
+  do campeonato (o mensal), o que é ainda mais fiel ao chaveamento.
+- **Setas de movimento (UI):** os deltas passam a refletir a variação de um
+  ranking mensal para o outro (dentro do mês não há movimento — correto).
+- Estatísticas nacionais de pontos (`rankingPoints`) também se atualizam no dia 1;
+  as medalhas seguem sendo contabilizadas na hora (contadores cumulativos).
+
 ## [2026-07-10] UI — Ranking de início do campeonato nos confrontos
 As lutas persistidas (`competition.matches`) guardam `aRank`/`bRank` capturados
 NO MOMENTO em que são gravadas — antes de `recomputeRankings` deste evento — ou
