@@ -169,6 +169,7 @@ export class App {
       onClose: () => modal.remove(),
       onToggleFavorite: (aid) => this.game.toggleFavoriteAthlete(aid),
       onCompetition: (cid) => this.openCompetition(cid),
+      onAthlete: (aid) => this.openAthlete(aid),
     });
     this.root.append(modal);
   }

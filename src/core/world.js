@@ -38,6 +38,7 @@ export function createWorld(opts = {}) {
     history: [],
     news: [],
     injuries: [], // lesões ativas: { athleteId, until, severity }
+    rivalries: {}, // rivalidades por par: pairKey → { intensity, meetings, ... }
     favorites: { athletes: [], countries: [], competitions: [] },
     configuration: {},
     // Estados dos serviços (para salvamento determinístico).

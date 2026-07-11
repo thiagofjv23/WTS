@@ -29,9 +29,26 @@ import {
   combatRating,
 } from "./probability.js";
 import { pickInitialPlan, chooseAction, adjustBehavior, PLANS } from "./decision.js";
+import { TECHNICAL, PHYSICAL, MENTAL, clampAttribute } from "../../config/attributes.js";
 
 const EXCHANGES_MIN = 12;
 const EXCHANGES_MAX = 18;
+
+// Rivalidade: variância extra (em %) aplicada aos atributos de cada lado no
+// máximo de intensidade. Rivalidades tornam a luta mais imprevisível (o azarão
+// cresce), sem favorecer ninguém em média. Ver docs/RIVALRIES.md.
+const RIVALRY_ATTR_STD = 8;
+
+/** Copia o atleta com uma perturbação aleatória nos atributos (por rivalidade). */
+function rivalryAdjust(random, athlete, level) {
+  const std = (RIVALRY_ATTR_STD * level) / 100;
+  const factor = 1 + random.gaussian(0, std);
+  const attributes = { ...athlete.attributes };
+  for (const key of [...TECHNICAL, ...PHYSICAL, ...MENTAL]) {
+    attributes[key] = Math.round(clampAttribute((athlete.attributes[key] ?? 0) * factor));
+  }
+  return { ...athlete, attributes };
+}
 
 /** Scoring Engine — única autorizada a mexer no placar (combat_framework.md). */
 function applyScore(state, side, points, actionId) {
@@ -150,14 +167,22 @@ function runRound(random, state) {
  * @param {import('../../services/random.js').RandomSystem} random
  * @param {object} athleteA
  * @param {object} athleteB
+ * @param {object} [context]  { rivalry: nível 0..1 } — aumenta a variância.
  * @returns {object} resultado técnico da luta (winnerId, loserId, placar, stats)
  */
-export function simulateFight(random, athleteA, athleteB) {
+export function simulateFight(random, athleteA, athleteB, context = {}) {
+  const level = context.rivalry || 0;
+  let A = athleteA, B = athleteB;
+  if (level > 0) {
+    // Rivalidade: ambos entram "ligados" → mais variância nesta luta.
+    A = rivalryAdjust(random, athleteA, level);
+    B = rivalryAdjust(random, athleteB, level);
+  }
   const plans = {
-    A: pickInitialPlan(random, athleteA.attributes),
-    B: pickInitialPlan(random, athleteB.attributes),
+    A: pickInitialPlan(random, A.attributes),
+    B: pickInitialPlan(random, B.attributes),
   };
-  const state = createFightState(athleteA, athleteB, plans);
+  const state = createFightState(A, B, plans);
 
   for (let r = 1; r <= TOTAL_ROUNDS; r++) {
     state.round = r;

@@ -498,7 +498,58 @@ mesmo dia.
 
 ---
 
-## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica ✅
+## Passo 17 — Sistema de Rivalidades (lógica + UI + documento) ✅
+
+**Objetivo:** quando dois atletas se enfrentam repetidamente em fases decisivas
+(finais/semifinais), sobretudo em GRANDES eventos, forma-se uma **rivalidade**
+que deixa os confrontos mais imprevisíveis (a "gana" do clássico). Pedido do
+usuário: dar **muito mais peso a grandes eventos** (Mundiais/Olimpíadas valem
+mais), **documentar** a mecânica e **gerar a UI junto** (logic+UI no mesmo passo).
+
+**Entregue (lógica):**
+- `src/engine/rivalry.js` — **NOVO**. Agregado minúsculo e permanente por par
+  (`world.rivalries[pairKey]`): encontros, retrospecto (h2h), intensidade com
+  **peso por evento** (`championPoints/10` → G-1=1 … Olimpíada G-20=20) e **peso
+  por fase** (final 3, semi 2). Intensidade **esfria** (meia-vida 30 meses) e é
+  **podada** abaixo de `MIN_INTENSITY`. Não guarda log de lutas — só o agregado.
+- `src/engine/combat/fightManager.js` — se há rivalidade, `simulateFight` aplica
+  uma perturbação aleatória **simétrica** nos atributos dos dois lados (até ±8%
+  no auge). Não favorece ninguém em média — só **aumenta a variância** (mais
+  zebras). Estado temporário, nenhum atributo permanente é alterado.
+- `src/engine/competitionSystem.js` — consulta a rivalidade **do par** antes de
+  cada luta (`rivalryLookup`) e a repassa ao Combat Engine; grava `rivalry` na luta.
+- `src/engine/simulationDirector.js` — passa o `rivalryLookup` (nível decaído até
+  a data) e, na fase de consequência, chama `updateRivalriesFromCompetition` +
+  `pruneRivalries`. O **próximo** evento já usa o estado novo.
+- `src/core/world.js` — `rivalries: {}` no estado do mundo.
+
+**Entregue (UI):**
+- **Ficha do atleta:** seção **"Rivais"** — chamas 🔥 (intensidade), bandeira,
+  nome, nº de encontros, último grande palco e retrospecto (ex.: `4–2`);
+  clicável → abre o rival. (`gameController.getAthleteRivals` + `pages/athlete.js`).
+- **Tela de campeonato:** selo 🔥 nos confrontos que foram **duelos de rivais**.
+- Estilos em `main.css` (`.rival-row`, `.rival-heat`, `.h2h`, `.rival-badge`).
+
+**Documento:** `docs/RIVALRIES.md` — modelo de dados, formação com peso G-Rank,
+efeito no combate, lugar no pipeline, UI e tabela de calibração.
+
+**Testado:** `npm test` → **148/148 passaram.** `tests/rivalry.test.mjs` (9):
+pairKey canônica; só finais/semis criam rivalidade; grandes eventos pesam muito
+mais (G-1=3 vs G-20=60); retrospecto/encontros acumulam; decaimento ~30 meses;
+`rivalryLevel` normaliza 0..1; poda das fracas/frias; a rivalidade aumenta as
+zebras (favorito vence menos, mas ainda >50%); determinismo.
+
+**Verificado no navegador** (Chromium, 390×844): após ~1 temporada, 242
+rivalidades ativas; ficha do atleta mostra a seção "Rivais" com dados reais
+(nomes, 🔥, retrospecto 2–0/1–0, último palco G-4/G-6) — sem erros de console.
+
+**Nota (save):** o teste de navegador reconfirmou que o `localStorage` estoura a
+cota após ~1 temporada com o histórico detalhado. As rivalidades **não** são a
+causa (são ~90 KB permanentes); reforça a pendência de retenção/IndexedDB (TODO).
+
+---
+
+## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

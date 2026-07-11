@@ -153,6 +153,12 @@ button.primary, .primary { background: var(--accent); border-color: var(--accent
   flex: 0 0 66px; font-size: 12px; font-weight: 700; color: var(--accent);
 }
 
+/* rivalidades */
+.rival-row { padding: 9px 10px; }
+.rival-heat { flex: 0 0 44px; font-size: 13px; }
+.h2h { font-weight: 800; color: var(--gold); min-width: 40px; text-align: right; }
+.rival-badge { margin-right: 4px; }
+
 /* ---------- BADGES (G-Rank) ---------- */
 .badge { font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px; color: #10131f; }
 .g-open { background: #8a93a8; }

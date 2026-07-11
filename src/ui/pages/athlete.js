@@ -22,8 +22,14 @@ function attrGroup(title, keys, attrs) {
   );
 }
 
+/** Nível de rivalidade → chama-chamas 🔥. */
+function rivalHeat(level) {
+  const n = level > 0.66 ? 3 : level > 0.33 ? 2 : 1;
+  return "🔥".repeat(n);
+}
+
 /** Cria o modal do atleta. onFavorite recebe o id e retorna o novo estado. */
-export function athleteModal(view, { onClose, onToggleFavorite, onCompetition }) {
+export function athleteModal(view, { onClose, onToggleFavorite, onCompetition, onAthlete }) {
   const favBtn = el(
     `button.icon-btn${view.favorite ? ".active" : ""}`,
     { onClick: () => { const now = onToggleFavorite(view.id); favBtn.classList.toggle("active", now); favBtn.textContent = now ? "★" : "☆"; } },
@@ -59,6 +65,24 @@ export function athleteModal(view, { onClose, onToggleFavorite, onCompetition })
         )
       )
     : el("p.empty", "Sem histórico ainda.");
+
+  const rivals = (view.rivals && view.rivals.length)
+    ? el(
+        "div.list.compact",
+        ...view.rivals.map((r) =>
+          el(
+            "button.row.rival-row",
+            { onClick: () => onAthlete && onAthlete(r.opponentId) },
+            el("span.rival-heat", rivalHeat(r.level)),
+            el("span.flag.flag-lg", r.flag || "🏳"),
+            el("span.row-main",
+              el("span.row-name", r.name),
+              el("span.row-sub", `${r.meetings} encontros · último ${r.lastGRank}`)),
+            el("span.h2h", `${r.wins}–${r.losses}`)
+          )
+        )
+      )
+    : el("p.empty", "Sem rivalidades ainda.");
 
   const upcoming = (view.upcoming && view.upcoming.length)
     ? el(
@@ -100,6 +124,8 @@ export function athleteModal(view, { onClose, onToggleFavorite, onCompetition })
     attrGroup("Técnicos", TECHNICAL, view.attributes),
     attrGroup("Físicos", PHYSICAL, view.attributes),
     attrGroup("Mentais", MENTAL, view.attributes),
+    el("h4.block-title", "Rivais"),
+    rivals,
     el("h4.block-title", "Próximos campeonatos"),
     upcoming,
     el("h4.block-title", "Histórico"),

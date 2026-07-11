@@ -25,6 +25,7 @@ import { flagEmoji } from "../config/flags.js";
 import { continentOf } from "../config/continents.js";
 import { classifyEvent, isEligible, applyNationalLimit } from "../engine/eligibility.js";
 import { enterProbability } from "../engine/participation.js";
+import { rivalsOf } from "../engine/rivalry.js";
 import { athletesInCategory } from "../core/world.js";
 
 const SAVE_KEY = "world";
@@ -302,6 +303,7 @@ export class GameController {
       morale: a.attributes.moral,
       experience: a.attributes.experiencia,
       statistics: { ...a.statistics },
+      rivals: this.getAthleteRivals(a.id),
       upcoming: this.getAthleteUpcoming(a.id),
       history: [...a.history].reverse().slice(0, 20).map((h) => ({
         date: h.date,
@@ -312,6 +314,28 @@ export class GameController {
         points: h.pointsEarned,
       })),
     };
+  }
+
+  /** Rivais do atleta (retrospecto e intensidade), mais fortes primeiro. */
+  getAthleteRivals(athleteId, limit = 6) {
+    const list = rivalsOf(this.world, athleteId, this.world.state.currentDate, limit);
+    return list.map((r) => {
+      const opp = this.world.athletes[r.opponentId];
+      const c = opp ? this._countryOf(opp) : { code: "??" };
+      return {
+        opponentId: r.opponentId,
+        name: opp ? opp.fullName : "?",
+        ioc: c.code,
+        flag: flagEmoji(c.code),
+        level: r.level,
+        meetings: r.meetings,
+        decisive: r.decisive,
+        wins: r.wins,
+        losses: r.losses,
+        lastGRank: r.lastGRank,
+        lastDate: r.lastDate,
+      };
+    });
   }
 
   /** Próximos campeonatos em que o atleta deve competir (campo projetado). */
@@ -493,6 +517,7 @@ export class GameController {
       b: { id: m.bId, name: name(m.bId), flag: flag(m.bId), rank: m.bRank ?? null },
       winnerId: m.winnerId,
       score: m.score,
+      rivalry: m.rivalry || 0, // nível de rivalidade que influenciou esta luta
     };
   }
 

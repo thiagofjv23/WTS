@@ -61,6 +61,8 @@ export function simulateCategory(random, athletes, opts = {}) {
   // a chave/bracket usa os atletas verdadeiros; as lutas usam as visões.
   const fighters = opts.fighters || null;
   const fighterOf = (a) => (fighters && fighters.get(a.id)) || a;
+  // Consulta a rivalidade (0..1) entre dois atletas, se fornecida.
+  const rivalryOf = opts.rivalryLookup || (() => 0);
 
   if (athletes.length === 0) return { placements: [], matches: [] };
   if (athletes.length === 1) {
@@ -85,7 +87,8 @@ export function simulateCategory(random, athletes, opts = {}) {
       const b = current[i + 1];
 
       if (a && b) {
-        const result = fightFn(random, fighterOf(a), fighterOf(b));
+        const rivalry = rivalryOf(a.id, b.id);
+        const result = fightFn(random, fighterOf(a), fighterOf(b), { rivalry });
         const winner = result.winnerId === a.id ? a : b;
         const loser = result.winnerId === a.id ? b : a;
         const match = {
@@ -94,6 +97,7 @@ export function simulateCategory(random, athletes, opts = {}) {
           athleteBId: b.id,
           winnerId: winner.id,
           rounds: result.rounds,
+          rivalry,
         };
         matches.push(match);
         if (onMatch) onMatch(match, result);

@@ -21,6 +21,12 @@ import { recordCompetitionHistory } from "./history.js";
 import { processRecovery } from "./recovery.js";
 import { applyCompetitionInjuries } from "./injuries.js";
 import { newsInjury, newsRecovery } from "./news.js";
+import {
+  rivalryIntensity,
+  rivalryLevel,
+  updateRivalriesFromCompetition,
+  pruneRivalries,
+} from "./rivalry.js";
 import { COMPETITION_STATUS } from "../entities/competition.js";
 import { addDays } from "../utils/dates.js";
 import { RandomSystem } from "../services/random.js";
@@ -97,6 +103,9 @@ export class SimulationDirector {
       competition,
       (categoryId) => selectParticipants(world, competition, categoryId, this.random),
       {
+        // Rivalidade (0..1) entre dois atletas na data do evento → afeta a luta.
+        rivalryLookup: (aId, bId) =>
+          rivalryLevel(rivalryIntensity(world, aId, bId, competition.date)),
         onMatch: (match) =>
           this._emit("FightFinished", {
             competitionId: competition.id,
@@ -123,6 +132,7 @@ export class SimulationDirector {
         score: [rwA, rwB],
         aRank: rankOf(m.athleteAId),
         bRank: rankOf(m.athleteBId),
+        rivalry: m.rivalry || 0,
       };
     });
 
@@ -141,6 +151,11 @@ export class SimulationDirector {
         until: inj.until,
       });
     }
+    // Rivalidades: atualiza a partir das lutas decisivas (finais/semis) e poda
+    // as que esfriaram. Feito APÓS as lutas, então o próximo evento já usa o
+    // estado novo.
+    updateRivalriesFromCompetition(world, competition, allMatches);
+    pruneRivalries(world, competition.date);
     // Histórico permanente.
     recordCompetitionHistory(world, competition, byCategory);
 

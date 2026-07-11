@@ -135,6 +135,10 @@ será retomado. Atualizado a cada passo do desenvolvimento.
 
 - ✅ **#3 Periodização/pico de forma** — feito (`engine/form.js`).
 - ✅ **#5 Lesões e recuperação** — feito (`engine/injuries.js` + `recovery.js`).
+- ✅ **Rivalidades** — feito (`engine/rivalry.js` + `docs/RIVALRIES.md`).
+  Finais/semis de grandes eventos criam rivalidade (peso por G-Rank e por fase),
+  que decai/poda e deixa os confrontos mais imprevisíveis. UI: seção "Rivais" na
+  ficha + selo 🔥 no campeonato.
 - 🟡 **#2 Tours/viagens geográficas** — ainda não: maior probabilidade de
   competir em país vizinho na sequência (orçamento/energia de viagem).
 
@@ -180,8 +184,17 @@ será retomado. Atualizado a cada passo do desenvolvimento.
 - 🟢 **Gráficos de evolução de ranking, filtros e tela de Configurações.**
 - 🟢 **Avanço longo em blocos** com barra de progresso (hoje é síncrono; rápido,
   mas várias temporadas de uma vez poderiam travar a UI momentaneamente).
-- 🟢 **Poda das lutas antigas.** `competition.matches` cresce o save ao longo das
-  temporadas; podar competições muito antigas quando o save ficar grande.
+- 🔴 **Retenção do save + IndexedDB (prioritário).** Confirmado em navegador: o
+  `localStorage` estoura a cota após **~1 temporada** com o histórico detalhado
+  de lutas (`competition.matches`). Plano combinado com o usuário:
+  **Camada 1 (retenção)** — G-1/G-2 guardam só os medalhistas após 1 ano
+  (apaga lutas/resultados); grandes eventos (G-4+, Mundiais, Grand Slam,
+  Olimpíadas) mantêm histórico detalhado para sempre; sempre é possível ver os
+  medalhistas de edições antigas; ledger de pontos podado após **4 anos** (a
+  janela de decaimento — mecânica única do TKD, mantida). As **rivalidades** já
+  substituem o log antigo para a narrativa (agregado ~90 KB permanente).
+  **Camada 2** — migrar o arquivo permanente para **IndexedDB** (backend
+  plugável no StorageService). A poda de lutas antigas é a Camada 1 deste item.
 - 🟢 **Ranking com 256 linhas por categoria** — funciona, mas ao acumular muitas
   temporadas vale virtualizar a lista (render sob demanda) no alvo mobile.
 
