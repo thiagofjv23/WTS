@@ -9,6 +9,28 @@ Formato: `[Data] Área — Decisão`
 
 ---
 
+## [2026-07-12] Calendário — Ano no NOME das edições clonadas (bug de passagem de ano)
+Bug: o calendário-base é de 2026 e muitos nomes trazem o ano ("Roma 2026 Grand
+Prix", "2026 U.S. Open", "Dutch Open 2026"). Ao clonar para 2027+, a DATA era
+deslocada mas o NOME continuava "2026" → a edição de 2027 aparecia como "…2026"
+com data de 2027, e no histórico do atleta a edição disputada parecia ser do ano
+anterior ("1 ano após a data real"). Confundia o observador.
+
+Correção: `buildSeasonCalendar` passou a atualizar o ano embutido no nome ao
+clonar (`shiftNameYear`: troca o ano-base pelo ano da temporada). Só afeta a
+apresentação — datas, IDs e a classificação de eventos (continente/President's
+Cup, via regex de palavras-chave) seguem iguais.
+
+NÃO afeta o decaimento: os pontos decaem pela DATA do resultado no ledger, nunca
+pelo nome (verificado em teste). Também corrigido: as setas de navegação de ano
+do calendário perdiam o handler de abrir evento (`onOpen`) ao trocar de ano —
+agora dá para navegar anos e abrir os resultados de edições passadas.
+
+Histórico: mantido COMPLETO por ora (sem poda), por decisão do usuário — dá para
+ver o histórico total. Custo medido: 10 anos simulados ≈ 17,5 s (≈1,3→2,2 s/ano,
+cresce com o histórico acumulado); save chega a ~37 MB (IndexedDB aguenta). A
+retenção segue como próximo passo quando quisermos limitar RAM/tempo.
+
 ## [2026-07-12] Tempo/UI — Avanço mensal/anual e tela de fim de ano
 Contexto/pedido (testes): botões de simulação mensal e anual, sem alterar os
 existentes; e uma tela especial ao fim de cada ano.

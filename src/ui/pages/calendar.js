@@ -27,9 +27,9 @@ export function renderCalendar(container, game, state, onOpen) {
   const idx = years.indexOf(state.year);
   const nav = el(
     "div.year-nav",
-    el("button.year-btn", { disabled: idx <= 0, onClick: () => { state.year = years[idx - 1]; renderCalendar(container, game, state); } }, "‹"),
+    el("button.year-btn", { disabled: idx <= 0, onClick: () => { state.year = years[idx - 1]; renderCalendar(container, game, state, onOpen); } }, "‹"),
     el("span.year-label", String(state.year)),
-    el("button.year-btn", { disabled: idx >= years.length - 1, onClick: () => { state.year = years[idx + 1]; renderCalendar(container, game, state); } }, "›")
+    el("button.year-btn", { disabled: idx >= years.length - 1, onClick: () => { state.year = years[idx + 1]; renderCalendar(container, game, state, onOpen); } }, "›")
   );
 
   const done = schedule.filter((e) => e.done).length;

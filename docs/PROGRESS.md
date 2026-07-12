@@ -712,6 +712,37 @@ tela de fim de ano (Ranking de Janeiro de 2027, variação vs início de 2026, c
 
 ---
 
+## Correção — Ano das edições clonadas + navegação do calendário ✅
+
+**Bug reportado:** ao virar o ano, as competições apareciam no calendário como se
+fossem do ano seguinte e o histórico dos atletas mostrava as edições disputadas
+"1 ano depois" da data real.
+
+**Causa:** o calendário-base é 2026 e muitos NOMES embutem o ano ("Roma 2026…",
+"2026 U.S. Open", "Dutch Open 2026"). Ao clonar a temporada, a data era deslocada
+mas o nome ficava preso em "2026" — a edição de 2027 aparecia como "…2026".
+
+**Corrigido:**
+- `engine/season.js`: `shiftNameYear` atualiza o ano embutido no nome ao clonar a
+  temporada (a edição de 2027 vira "…2027"). Só apresentação; datas/IDs/classe do
+  evento inalterados.
+- `ui/pages/calendar.js`: as setas de ano perdiam o `onOpen` ao navegar (não abria
+  o evento). Agora navega anos e abre os resultados das edições passadas.
+
+**Não afeta o decaimento** (os pontos decaem pela DATA do ledger, não pelo nome —
+coberto por teste). **Histórico mantido completo** (sem poda) por decisão do
+usuário.
+
+**Testado:** `npm test` → **172/172** (novos: nome acompanha a temporada;
+passagem de ano — nome/data/histórico batem; decaimento usa a data). Navegador:
+calendário de 2027 mostra "…2027"; setas navegam e abrem eventos passados; sem
+erros. **Medição de 10 anos** (storage coalescido, como no app): **~17,5 s**
+(≈1,3→2,2 s/ano, cresce com o histórico acumulado); save ~37 MB. (Observação: a
+serialização por dia — só no modo NÃO adiado — deixa isso ordens de grandeza mais
+lento; o app usa o modo adiado.)
+
+---
+
 ## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e

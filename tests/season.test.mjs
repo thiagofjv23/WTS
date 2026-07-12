@@ -84,6 +84,17 @@ test("agenda os eventos do calendário nas datas reais (com offset de ano)", () 
   }
 });
 
+test("o ANO no nome do evento acompanha a temporada (não fica preso em 2026)", () => {
+  const { world, idGen } = buildRealWorld({ seed: 1 });
+  const comps = buildSeasonCalendar(world, idGen, { yearOffset: 1, categoryFilter: MEN_IDS });
+  // Nenhuma edição de 2027 deve carregar "2026" no nome.
+  const stale = comps.filter((c) => c.date.startsWith("2027") && c.name.includes("2026"));
+  assertEqual(stale.length, 0, `edições de 2027 não deveriam citar 2026: ${stale.map((c) => c.name).slice(0, 2)}`);
+  // E o ano correto aparece onde o base tinha ano no nome.
+  const roma = comps.find((c) => /Roma .* Grand Prix Series/i.test(c.name));
+  assert(roma && roma.name.includes("2027"), `Roma 2027 esperado, veio "${roma?.name}"`);
+});
+
 suite("Múltiplas temporadas");
 
 test("simula 3 temporadas; pontos iniciais decaem e ranking evolui", () => {

@@ -22,6 +22,18 @@ function shiftYear(isoDate, years) {
 }
 
 /**
+ * Atualiza o ANO embutido no nome do evento ao clonar para outra temporada.
+ * O calendário-base é de 2026 e muitos nomes trazem o ano ("Roma 2026 …",
+ * "2026 U.S. Open", "Dutch Open 2026"); sem isso a edição de 2027 apareceria
+ * como "…2026" com data de 2027 — o que confunde o observador (parecia que a
+ * competição do ano anterior tinha ido para o ano seguinte). Ver DECISIONS.md.
+ */
+function shiftNameYear(name, baseYear, years) {
+  if (!years) return name;
+  return name.split(String(baseYear)).join(String(baseYear + years));
+}
+
+/**
  * Cria e agenda as competições de uma temporada.
  * @param {object} world
  * @param {object} idGen
@@ -56,10 +68,14 @@ export function buildSeasonCalendar(world, idGen, opts = {}) {
   let noDateIndex = 0;
 
   const competitions = usable.map((ev) => {
-    const date = ev.date
-      ? shiftYear(ev.date, yearOffset)
-      : addDays(startDate, 7 + noDateIndex++ * spacing);
-    return { ev, date };
+    if (!ev.date) {
+      return { ev, date: addDays(startDate, 7 + noDateIndex++ * spacing) };
+    }
+    const baseYear = Number(ev.date.slice(0, 4));
+    return {
+      ev: { ...ev, name: shiftNameYear(ev.name, baseYear, yearOffset) },
+      date: shiftYear(ev.date, yearOffset),
+    };
   });
 
   competitions.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
