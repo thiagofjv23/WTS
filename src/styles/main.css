@@ -106,6 +106,17 @@ button.primary, .primary { background: var(--accent); border-color: var(--accent
   background: var(--accent-2); color: #06231a; border: 1px solid var(--accent-2);
 }
 
+/* Selo de Seleção Nacional (titular = cheio; reserva = contorno). */
+.nt-badge {
+  display: inline-block; margin-left: 6px; padding: 1px 5px; border-radius: 5px;
+  font-size: 10px; font-weight: 800; letter-spacing: .5px; vertical-align: middle;
+  background: var(--accent); color: #fff; border: 1px solid var(--accent);
+}
+.nt-badge.reserve {
+  background: transparent; color: var(--accent);
+  border: 1px dashed var(--accent);
+}
+
 /* ---------- TABS ---------- */
 .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; }
 .tab {

@@ -21,3 +21,8 @@ export function newsInjury(world, date, athleteId, severity, until) {
 export function newsRecovery(world, date, athleteId) {
   pushNews(world, { type: "recovery", date, athleteId });
 }
+
+/** Convocação de um reserva para a Seleção Nacional após lesão de um titular. */
+export function newsCallup(world, date, athleteId, injuredId) {
+  pushNews(world, { type: "callup", date, athleteId, injuredId });
+}

@@ -4,11 +4,15 @@
  */
 
 import { el, fmtDate } from "../dom.js";
-import { gRankBadge, medalIcon } from "../components.js";
+import { gRankBadge, medalIcon, nationalTeamMark } from "../components.js";
 
 /** Selo de vaga conquistada via wildcard da President's Cup. */
 function wildcardBadge() {
   return el("span.wc-badge", { title: "Vaga via Wildcard da President's Cup" }, "WC");
+}
+
+function ntMark(a) {
+  return a.nationalTeam ? nationalTeamMark(a.nationalTeam) : null;
 }
 
 /** Traços de elegibilidade (travas) em chips legíveis. */
@@ -46,7 +50,9 @@ export function competitionModal(view, { onClose, onAthlete, state }) {
       "div.modal-head",
       el("div.modal-title",
         el("h3", view.name),
-        el("div.modal-sub", `${fmtDate(view.date)}`, gRankBadge(view.gRank), view.location ? el("span", view.location) : null)
+        el("div.modal-sub", `${fmtDate(view.date)}`,
+          view.selective ? el("span.badge.g-open", "Seletiva") : gRankBadge(view.gRank),
+          view.location ? el("span", view.location) : null)
       ),
       el("div.modal-actions", el("button.icon-btn", { onClick: onClose }, "✕"))
     ),
@@ -79,7 +85,7 @@ export function competitionModal(view, { onClose, onAthlete, state }) {
           el("span.pos", `${a.seed}`),
           el("span.flag", a.flag || "🏳"),
           el("span.row-main",
-            el("span.row-name", a.name, a.wildcard ? wildcardBadge() : null),
+            el("span.row-name", a.name, ntMark(a), a.wildcard ? wildcardBadge() : null),
             el("span.row-sub", a.position ? `ranking #${a.position}` : "sem ranking")),
           el("span.pts", `${a.points}`)
         )
@@ -95,7 +101,7 @@ export function competitionModal(view, { onClose, onAthlete, state }) {
           el("span.pos", `${p.placement}º`),
           el("span.flag", p.flag || "🏳"),
           el("span.row-main",
-            el("span.row-name", `${medalIcon(p.medal)} ${p.name}`, p.wildcard ? wildcardBadge() : null)),
+            el("span.row-name", `${medalIcon(p.medal)} ${p.name}`, ntMark(p), p.wildcard ? wildcardBadge() : null)),
           el("span.pts", p.points ? `+${p.points}` : "")
         )
       )

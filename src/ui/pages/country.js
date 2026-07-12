@@ -3,7 +3,7 @@
  */
 
 import { el } from "../dom.js";
-import { injuryMark } from "../components.js";
+import { injuryMark, nationalTeamMark } from "../components.js";
 
 const CONTINENTS = { EUR: "Europa", ASI: "Ásia", PAM: "Pan-América", AFR: "África", OCE: "Oceania" };
 
@@ -16,7 +16,8 @@ export function countryModal(view, { onClose, onAthlete }) {
       b.athlete
         ? el("button.row.entry-row", { onClick: () => onAthlete(b.athlete.id) },
             el("span.cat-tag", b.category),
-            el("span.row-main", el("span.row-name", b.athlete.name),
+            el("span.row-main", el("span.row-name", b.athlete.name,
+              b.athlete.nationalTeam ? nationalTeamMark(b.athlete.nationalTeam) : null),
               el("span.row-sub", b.athlete.position ? `#${b.athlete.position} do mundo` : "sem ranking")),
             el("span.pts", `${b.athlete.points}`))
         : el("div.row", el("span.cat-tag", b.category), el("span.row-main", el("span.row-sub", "—")))
@@ -27,7 +28,9 @@ export function countryModal(view, { onClose, onAthlete }) {
     "div.list.compact",
     ...view.athletes.slice(0, 40).map((a) =>
       el("button.row.entry-row", { onClick: () => onAthlete(a.id) },
-        el("span.row-main", el("span.row-name", a.name, a.injured ? injuryMark() : null),
+        el("span.row-main", el("span.row-name", a.name,
+          a.nationalTeam ? nationalTeamMark(a.nationalTeam) : null,
+          a.injured ? injuryMark() : null),
           el("span.row-sub", `${a.category} · ${a.position ? "#" + a.position : "—"}`)),
         el("span.pts", `${a.points}`))
     )

@@ -3,7 +3,7 @@
  */
 
 import { el, fmtDate } from "../dom.js";
-import { attrBar, countryChip, medalIcon } from "../components.js";
+import { attrBar, countryChip, medalIcon, nationalTeamMark } from "../components.js";
 import { TECHNICAL, PHYSICAL, MENTAL } from "../../config/attributes.js";
 
 const LABELS = {
@@ -105,7 +105,8 @@ export function athleteModal(view, { onClose, onToggleFavorite, onCompetition, o
     el(
       "div.modal-head",
       el("div.modal-title",
-        el("h3", el("span.flag.flag-lg", view.flag || "🏳"), " ", view.name),
+        el("h3", el("span.flag.flag-lg", view.flag || "🏳"), " ", view.name,
+          view.nationalTeam ? nationalTeamMark(view.nationalTeam) : null),
         el("div.modal-sub", `${view.category} · ${view.countryName}`, countryChip(view.ioc, view.flag))
       ),
       el("div.modal-actions", favBtn, el("button.icon-btn", { onClick: onClose }, "✕"))

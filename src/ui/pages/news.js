@@ -3,7 +3,7 @@
  */
 
 import { el, mount, fmtDate } from "../dom.js";
-import { gRankBadge, sectionTitle } from "../components.js";
+import { gRankBadge, sectionTitle, nationalTeamMark } from "../components.js";
 
 const SEVERITY = { leve: "lesão leve", moderada: "lesão moderada", grave: "lesão grave (cirurgia)" };
 
@@ -16,6 +16,7 @@ export function renderNews(container, game, onOpen, onAthlete) {
 }
 
 function card(n, onOpen, onAthlete) {
+  const nt = (role) => (role ? nationalTeamMark(role) : null);
   if (n.type === "champion") {
     return el(
       "button.card.news-card",
@@ -24,7 +25,19 @@ function card(n, onOpen, onAthlete) {
       el("div.news-title", n.competition),
       el("div.news-body",
         el("span.news-cat", n.category),
-        el("span.news-champ", `🥇 ${n.flag || ""} ${n.name}`))
+        el("span.news-champ", `🥇 ${n.flag || ""} ${n.name}`, nt(n.nationalTeam)))
+    );
+  }
+  // Convocação para a seleção (reserva chamado após lesão de titular).
+  if (n.type === "callup") {
+    return el(
+      "button.card.news-card.news-med",
+      { onClick: () => onAthlete && n.athleteId && onAthlete(n.athleteId) },
+      el("div.news-head", el("span.news-date", fmtDate(n.date)), el("span.badge.g-champ", "CONVOCADO")),
+      el("div.news-title", `${n.flag || ""} ${n.name}`, nt("titular")),
+      el("div.news-body",
+        el("span.news-cat", n.category || ""),
+        el("span.news-champ", n.replacing ? `convocado à Seleção Nacional no lugar de ${n.replacing}` : "convocado à Seleção Nacional"))
     );
   }
   // lesão / recuperação
@@ -36,7 +49,7 @@ function card(n, onOpen, onAthlete) {
       el("span.news-date", fmtDate(n.date)),
       el(`span.badge.${injury ? "g-open" : "g-mid"}`, injury ? "LESÃO" : "RETORNO")
     ),
-    el("div.news-title", `${injury ? "✚" : "✔"} ${n.flag || ""} ${n.name}`),
+    el("div.news-title", `${injury ? "✚" : "✔"} ${n.flag || ""} ${n.name}`, nt(n.nationalTeam)),
     el("div.news-body",
       el("span.news-cat", n.category || ""),
       el("span.news-champ",

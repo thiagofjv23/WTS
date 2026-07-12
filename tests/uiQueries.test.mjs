@@ -108,8 +108,14 @@ suite("Notícias, favoritos e país");
 
 test("feed de notícias inclui campeões e lesões/recuperações", () => {
   const g = newGame();
-  for (let i = 0; i < 12; i++) g.advanceToNextEvent();
-  const feed = g.getNews(50);
+  // Janeiro é preenchido pelas Seletivas Nacionais (que não geram notícia);
+  // avança até surgirem eventos oficiais (campeões no feed).
+  let feed = [];
+  for (let i = 0; i < 80; i++) {
+    g.advanceToNextEvent();
+    feed = g.getNews(50);
+    if (feed.some((n) => n.type === "champion")) break;
+  }
   assert(feed.length > 0, "feed não vazio");
   assert(feed.some((n) => n.type === "champion"), "deveria ter campeões");
   assert(feed.some((n) => n.type === "injury" || n.type === "recovery"), "deveria ter lesão/recuperação");

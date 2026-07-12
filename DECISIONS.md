@@ -9,6 +9,34 @@ Formato: `[Data] Área — Decisão`
 
 ---
 
+## [2026-07-12] Seleções Nacionais — Seletivas de janeiro
+Pedido: países com >20 atletas fazem seletivas em janeiro; os 2 finalistas viram
+Seleção Nacional (titulares) e os 2 terceiros, reservas (entram quando um titular
+se lesiona); marcar o atleta da seleção em todas as telas.
+
+Decisão (`src/engine/nationalTeams.js` + `docs/NATIONAL_TEAMS.md`):
+- **Seletiva = competição `type: "selective"`**, uma por país elegível, espalhada
+  pelos dias de janeiro (janeiro estava livre no calendário). Campo = atletas do
+  próprio país na categoria (até 32, por ranking). Agendada junto da temporada.
+- **Interna:** a seletiva NÃO pontua no ranking, não conta medalhas/estatísticas
+  nem entra no histórico. O Director trata seletivas num ramo próprio (roda o
+  bracket, guarda a classificação para exibir e define a seleção). Assim ela não
+  distorce o ecossistema. gRank fica como "G-1" dummy (nunca usado p/ pontos); a
+  UI mostra "Seletiva".
+- **Seleção:** 1º/2º = titulares, 2× 3º = reservas. Designação anual (a nova
+  seletiva limpa a anterior). Guardada em `world.nationalTeams` e, para consulta
+  rápida da UI, em `athlete.nationalTeam` ("titular"/"reserva").
+- **Reserva por lesão:** ao lesionar um titular (em evento oficial), o 1º reserva
+  ativo é convocado (vira titular) e sai uma notícia de convocação.
+- **Marcação:** selo **SN** ao lado do nome em todas as telas (cheio = titular,
+  tracejado = reserva). É só designação — NÃO altera quem disputa os continentais
+  (segue pelo ranking + wildcard), respeitando o escopo pedido.
+- **Combate real na seletiva:** as lutas usam o Combat Engine (com forma/zebras),
+  então um top do ranking pode ficar fora da seleção — drama emergente desejado.
+
+Custo medido: ~40 seletivas/ano ≈ +35 ms/ano (pulam consequências). ~20% do
+plantel fica marcado.
+
 ## [2026-07-12] Calendário — Ano no NOME das edições clonadas (bug de passagem de ano)
 Bug: o calendário-base é de 2026 e muitos nomes trazem o ano ("Roma 2026 Grand
 Prix", "2026 U.S. Open", "Dutch Open 2026"). Ao clonar para 2027+, a DATA era

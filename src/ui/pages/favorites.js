@@ -4,7 +4,7 @@
  */
 
 import { el, mount } from "../dom.js";
-import { sectionTitle, injuryMark } from "../components.js";
+import { sectionTitle, injuryMark, nationalTeamMark } from "../components.js";
 
 function athleteRow(a, onAthlete) {
   return el(
@@ -13,7 +13,9 @@ function athleteRow(a, onAthlete) {
     el("span.flag.flag-lg", a.flag || "🏳"),
     el(
       "span.row-main",
-      el("span.row-name", a.name, a.injured ? injuryMark() : null),
+      el("span.row-name", a.name,
+        a.nationalTeam ? nationalTeamMark(a.nationalTeam) : null,
+        a.injured ? injuryMark() : null),
       el("span.row-sub", `${a.category} · ${a.position ? "#" + a.position : "—"}`)
     ),
     el("span.pts", `${a.points}`)

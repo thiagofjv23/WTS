@@ -7,7 +7,7 @@
  */
 
 import { el, mount, fmtDate } from "./dom.js";
-import { rankMovement } from "./components.js";
+import { rankMovement, nationalTeamMark } from "./components.js";
 import { renderRanking } from "./pages/ranking.js";
 import { renderCalendar } from "./pages/calendar.js";
 import { renderCountries } from "./pages/countries.js";
@@ -184,7 +184,7 @@ export class App {
                   rankMovement(r.delta),
                   el("span.flag.flag-lg", r.flag || "🏳"),
                   el("span.row-main",
-                    el("span.row-name", r.name),
+                    el("span.row-name", r.name, r.nationalTeam ? nationalTeamMark(r.nationalTeam) : null),
                     el("span.row-sub", r.ioc)),
                   el("span.pts", `${r.points}`)
                 )

@@ -101,6 +101,12 @@ será retomado. Atualizado a cada passo do desenvolvimento.
   `docs/WILDCARDS.md`): o vencedor da Copa ganha vaga extra no continental (a
   única forma de um país ter 2 atletas); se já é o nº 1 do país, passa ao próximo
   classificado elegível. Selo **WC** na tela do campeonato.
+- ✅ **Seleções Nacionais e Seletivas de janeiro** — feito
+  (`engine/nationalTeams.js` + `docs/NATIONAL_TEAMS.md`): países com >20 atletas
+  fazem seletivas em janeiro; finalistas = titulares, terceiros = reservas
+  (convocados por lesão). Selo **SN** em todas as telas. Seletivas não pontuam.
+  Futuro possível: a Seleção Nacional passar a definir quem representa o país nos
+  continentais (hoje é por ranking + wildcard; a seleção é só marcação).
 - ✅ **Calendário completo** — importado de "2026 Events.txt" (67 eventos reais).
 
 ## Estrutura competitiva — pendências de LÓGICA

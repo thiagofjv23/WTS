@@ -62,6 +62,20 @@ export function injuryMark() {
   return el("span.injury-mark", { title: "Lesionado" }, "✚");
 }
 
+/**
+ * Selo de Seleção Nacional. role: "titular" (destaque cheio) ou "reserva"
+ * (contorno). Marca o atleta em todas as telas onde ele aparece.
+ */
+export function nationalTeamMark(role) {
+  if (!role) return null;
+  const reserve = role === "reserva";
+  return el(
+    `span.nt-badge${reserve ? ".reserve" : ""}`,
+    { title: reserve ? "Reserva da Seleção Nacional" : "Seleção Nacional" },
+    "SN"
+  );
+}
+
 /** Linha de ranking (usada na página de Ranking). */
 export function rankingRow(entry, onClick) {
   return el(
@@ -76,6 +90,7 @@ export function rankingRow(entry, onClick) {
         "span.row-name",
         entry.favorite ? "★ " : null,
         entry.name,
+        entry.nationalTeam ? nationalTeamMark(entry.nationalTeam) : null,
         entry.injured ? injuryMark() : null
       ),
       el("span.row-sub", entry.countryName)

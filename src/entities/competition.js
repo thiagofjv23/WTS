@@ -58,7 +58,10 @@ export const COMPETITION_STATUS = {
  *   ranking); null = todos os atletas ativos da categoria.
  */
 export function createCompetition(data) {
-  const { id, name, gRank, date, categoryIds, location = null, fieldSize = 32 } = data;
+  const {
+    id, name, gRank, date, categoryIds, location = null, fieldSize = 32,
+    type = "official", selectiveCountry = null,
+  } = data;
   if (!id) throw new Error("Competition: id é obrigatório.");
   if (!isValidGRank(gRank)) throw new Error(`Competition: gRank inválido "${gRank}".`);
   if (!Array.isArray(categoryIds) || categoryIds.length === 0) {
@@ -72,6 +75,10 @@ export function createCompetition(data) {
     location,
     categoryIds,
     fieldSize,
+    // type "official" (padrão) ou "selective" (Seletiva Nacional — não pontua no
+    // ranking, define a Seleção Nacional). selectiveCountry = código IOC do país.
+    type,
+    selectiveCountry,
     status: COMPETITION_STATUS.SCHEDULED,
     results: {}, // categoryId → [{ athleteId, placement, medal }]
     schemaVersion: 1,

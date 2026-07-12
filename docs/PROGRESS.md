@@ -743,7 +743,42 @@ lento; o app usa o modo adiado.)
 
 ---
 
-## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual ✅
+## Passo 22 — Seleções Nacionais e Seletivas de janeiro ✅
+
+**Pedido do usuário:** países com mais de 20 atletas fazem seletivas em janeiro;
+os 2 finalistas viram Seleção Nacional (titulares) e os 2 terceiros, reservas
+(entram quando um titular se lesiona). Espalhar as seletivas por janeiro e marcar
+o atleta da seleção em todas as telas.
+
+**Feito:**
+- `src/engine/nationalTeams.js` (novo): `qualifyingCountries` (>20 atletas),
+  `scheduleNationalSelectives` (uma por país, espalhada em janeiro),
+  `selectiveParticipants` (campo = atletas do país), `assignNationalTeam`
+  (finalistas=titulares, terceiros=reservas; limpa o ano anterior),
+  `promoteReserveOnInjury` (convoca reserva quando um titular se lesiona).
+- `entities/competition.js`: `type`/`selectiveCountry`. `core/world.js`:
+  `nationalTeams: {}`. `athlete.nationalTeam` = "titular"|"reserva"|null.
+- `simulationDirector`: ramo próprio das seletivas (roda o bracket + define a
+  seleção; NÃO pontua, não conta stats, não entra no histórico); promoção de
+  reserva no fluxo de lesões. `news.js`: notícia de convocação.
+- `gameController`: agenda seletivas junto da temporada; expõe `nationalTeam` em
+  todas as views; `projectedField` e as visões tratam a seletiva (campo do país,
+  rótulo "Seletiva", sem pontos).
+- UI: selo **SN** (cheio=titular, tracejado=reserva) em ranking, ficha,
+  campeonato (campo/classificação), país, favoritos/busca, notícias e fim de ano;
+  card **CONVOCADO** no feed. `components.js` `nationalTeamMark`; `main.css`.
+
+**Testado:** `npm test` → **177/177** (`tests/nationalTeams.test.mjs`: designação,
+convocação de reserva, limpeza anual, gate de >20 e janeiro, integração — não
+pontua/não entra no histórico). Verificado no navegador: selos SN no ranking;
+seletiva "Seletiva Nacional — Republic of Korea" com classificação marcada
+(titulares cheios, reservas tracejados) e sem pontos; sem erros. **Custo:**
+~40 seletivas/ano ≈ +35 ms/ano; ~20% do plantel marcado. Drama emergente: um
+top do ranking pode ficar fora da seleção após zebra na seletiva.
+
+---
+
+## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

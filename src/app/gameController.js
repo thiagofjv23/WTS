@@ -27,6 +27,7 @@ import { classifyEvent, isEligible, applyNationalLimit } from "../engine/eligibi
 import { enterProbability } from "../engine/participation.js";
 import { rivalsOf } from "../engine/rivalry.js";
 import { wildcardEntrantsFor } from "../engine/wildcards.js";
+import { scheduleNationalSelectives, isSelective, selectiveParticipants } from "../engine/nationalTeams.js";
 import { athletesInCategory } from "../core/world.js";
 
 const SAVE_KEY = "world";
@@ -124,10 +125,13 @@ export class GameController {
   // ---- Agendamento de temporadas ------------------------------------------
 
   _scheduleNextSeason() {
+    const year = SEASON_BASE_YEAR + this.nextOffset;
     buildSeasonCalendar(this.world, this.idGen, {
       yearOffset: this.nextOffset,
       categoryFilter: MEN_IDS,
     });
+    // Seletivas Nacionais de janeiro (países com mais de 20 atletas).
+    scheduleNationalSelectives(this.world, this.idGen, { year, categoryFilter: MEN_IDS });
     this.nextOffset += 1;
   }
 
@@ -273,6 +277,7 @@ export class GameController {
           name: a ? a.fullName : "?",
           ioc: c.code, flag: flagEmoji(c.code),
           points: Math.round(pts * 100) / 100,
+          nationalTeam: a?.nationalTeam || null,
           // delta > 0 = subiu posições; null = não estava no ranking do ano anterior.
           delta: pp == null ? null : pp - position,
         };
@@ -338,6 +343,7 @@ export class GameController {
       position: a.ranking.position,
       points: a.ranking.points,
       injured: a.status === "lesionado",
+      nationalTeam: a.nationalTeam || null,
       favorite: this.isFavoriteAthlete(a.id),
     };
   }
@@ -363,6 +369,7 @@ export class GameController {
         points: a.ranking.points,
         favorite: this.isFavoriteAthlete(a.id),
         injured: a.status === "lesionado",
+        nationalTeam: a.nationalTeam || null,
         delta,
       };
     });
@@ -391,6 +398,7 @@ export class GameController {
       age: yearOf(this.world.state.currentDate) - yearOf(a.birthDate),
       status: a.status,
       injuredUntil: a.condition?.injuredUntil ?? null,
+      nationalTeam: a.nationalTeam || null,
       position: a.ranking.position,
       points: a.ranking.points,
       favorite: this.isFavoriteAthlete(a.id),
@@ -452,7 +460,9 @@ export class GameController {
       if (field.has(athleteId)) {
         out.push({
           id: c.id, name: c.name, date: c.date, gRank: c.gRank,
-          location: c.location, championPoints: championPointsFor(c.gRank),
+          location: c.location,
+          championPoints: isSelective(c) ? 0 : championPointsFor(c.gRank),
+          selective: isSelective(c),
         });
         if (out.length >= limit) break;
       }
@@ -474,6 +484,19 @@ export class GameController {
     const cacheKey = `${competition.id}|${categoryId}|${limit ?? ""}`;
     const cached = this._fieldCache.get(cacheKey);
     if (cached) return cached;
+    // Seletiva Nacional: o campo é o do próprio país (não as travas normais).
+    if (isSelective(competition)) {
+      const out = selectiveParticipants(this.world, competition, categoryId).map((a, i) => {
+        const c = this._countryOf(a);
+        return {
+          id: a.id, seed: i + 1, name: a.fullName, ioc: c.code, flag: flagEmoji(c.code),
+          position: a.ranking.position, points: a.ranking.points,
+          wildcard: false, nationalTeam: a.nationalTeam || null,
+        };
+      });
+      this._fieldCache.set(cacheKey, out);
+      return out;
+    }
     const rules = classifyEvent(competition);
     let pool = athletesInCategory(this.world, categoryId).filter((a) =>
       isEligible(a, this.world, rules)
@@ -502,6 +525,7 @@ export class GameController {
         id: a.id, seed: i + 1, name: a.fullName, ioc: c.code, flag: flagEmoji(c.code),
         position: a.ranking.position, points: a.ranking.points,
         wildcard: wildcardIds.has(a.id),
+        nationalTeam: a.nationalTeam || null,
       };
     });
     this._fieldCache.set(cacheKey, out);
@@ -534,13 +558,15 @@ export class GameController {
       .slice(0, limit)
       .map((e) => {
         const c = this.world.competitions[e.competitionId];
+        const sel = isSelective(c);
         return {
           date: e.date,
           name: c.name,
           gRank: c.gRank,
-          gLabel: G_RANK_LABELS[c.gRank] || c.gRank,
+          gLabel: sel ? "Seletiva Nacional" : (G_RANK_LABELS[c.gRank] || c.gRank),
           location: c.location,
-          championPoints: championPointsFor(c.gRank),
+          championPoints: sel ? 0 : championPointsFor(c.gRank),
+          selective: sel,
         };
       });
   }
@@ -556,16 +582,20 @@ export class GameController {
     return Object.values(this.world.competitions)
       .filter((c) => yearOf(c.date) === y)
       .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
-      .map((c) => ({
-        id: c.id,
-        date: c.date,
-        name: c.name,
-        gRank: c.gRank,
-        gLabel: G_RANK_LABELS[c.gRank] || c.gRank,
-        location: c.location,
-        championPoints: championPointsFor(c.gRank),
-        done: c.status === "concluida" || c.date < today,
-      }));
+      .map((c) => {
+        const sel = isSelective(c);
+        return {
+          id: c.id,
+          date: c.date,
+          name: c.name,
+          gRank: c.gRank,
+          gLabel: sel ? "Seletiva Nacional" : (G_RANK_LABELS[c.gRank] || c.gRank),
+          location: c.location,
+          championPoints: sel ? 0 : championPointsFor(c.gRank),
+          selective: sel,
+          done: c.status === "concluida" || c.date < today,
+        };
+      });
   }
 
   /**
@@ -592,6 +622,7 @@ export class GameController {
             placement: p.placement, medal: p.medal,
             points: p.rankingPointsEarned ?? 0,
             wildcard: wildcardSet.has(p.athleteId),
+            nationalTeam: a?.nationalTeam || null,
           };
         });
         const matches = (c.matches || [])
@@ -605,11 +636,14 @@ export class GameController {
         field: this.projectedField(c, catId),
       };
     });
+    const selective = isSelective(c);
     return {
-      id: c.id, name: c.name, gRank: c.gRank, gLabel: G_RANK_LABELS[c.gRank] || c.gRank,
-      date: c.date, location: c.location, championPoints: championPointsFor(c.gRank),
-      done,
-      eligibility: {
+      id: c.id, name: c.name, gRank: c.gRank,
+      gLabel: selective ? "Seletiva Nacional" : (G_RANK_LABELS[c.gRank] || c.gRank),
+      date: c.date, location: c.location,
+      championPoints: selective ? 0 : championPointsFor(c.gRank),
+      done, selective,
+      eligibility: selective ? {} : {
         rankingLockTopN: rules.rankingLockTopN,
         continent: rules.continent,
         arabOnly: rules.arabOnly,
@@ -706,14 +740,16 @@ export class GameController {
         athleteId: h.champion,
         name: champ ? champ.fullName : "?",
         flag: flagEmoji(c.code),
+        nationalTeam: champ ? champ.nationalTeam || null : null,
       });
     }
-    // Lesões e recuperações.
+    // Lesões, recuperações e convocações para a seleção.
     for (const n of this.world.news) {
       const a = this.world.athletes[n.athleteId];
       const c = a ? this._countryOf(a) : { code: "??" };
+      const injured = n.type === "callup" ? this.world.athletes[n.injuredId] : null;
       feed.push({
-        type: n.type, // "injury" | "recovery"
+        type: n.type, // "injury" | "recovery" | "callup"
         date: n.date,
         athleteId: n.athleteId,
         name: a ? a.fullName : "?",
@@ -721,6 +757,8 @@ export class GameController {
         severity: n.severity,
         until: n.until,
         category: a ? getWeightCategory(a.weightCategoryId)?.name : null,
+        nationalTeam: a ? a.nationalTeam || null : null,
+        replacing: injured ? injured.fullName : null,
       });
     }
     feed.sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0));

@@ -20,7 +20,7 @@ import { applyCompetitionPoints, recomputeRankings, captureYearStartRanks } from
 import { recordCompetitionHistory } from "./history.js";
 import { processRecovery } from "./recovery.js";
 import { applyCompetitionInjuries } from "./injuries.js";
-import { newsInjury, newsRecovery } from "./news.js";
+import { newsInjury, newsRecovery, newsCallup } from "./news.js";
 import {
   rivalryIntensity,
   rivalryLevel,
@@ -34,6 +34,12 @@ import {
   grantPresidentsCupWildcards,
   consumeWildcards,
 } from "./wildcards.js";
+import {
+  isSelective,
+  selectiveParticipants,
+  assignNationalTeam,
+  promoteReserveOnInjury,
+} from "./nationalTeams.js";
 import { COMPETITION_STATUS } from "../entities/competition.js";
 import { addDays } from "../utils/dates.js";
 import { RandomSystem } from "../services/random.js";
@@ -124,10 +130,16 @@ export class SimulationDirector {
       }
     }
 
+    // Seletiva Nacional: campo restrito aos atletas do país. Evento oficial:
+    // seleção normal de participantes.
+    const participantsFor = isSelective(competition)
+      ? (categoryId) => selectiveParticipants(world, competition, categoryId)
+      : (categoryId) => selectParticipants(world, competition, categoryId, this.random);
+
     const { byCategory, allMatches } = simulateCompetition(
       this.random,
       competition,
-      (categoryId) => selectParticipants(world, competition, categoryId, this.random),
+      participantsFor,
       {
         // Rivalidade (0..1) entre dois atletas na data do evento → afeta a luta.
         rivalryLookup: (aId, bId) =>
@@ -163,6 +175,18 @@ export class SimulationDirector {
       };
     });
 
+    if (isSelective(competition)) {
+      // Seletiva Nacional: NÃO pontua no ranking, não conta medalhas/estatísticas
+      // nem histórico. Guarda a classificação (para consulta) e define a seleção.
+      for (const [categoryId, placements] of Object.entries(byCategory)) {
+        competition.results[categoryId] = placements;
+      }
+      assignNationalTeam(world, competition, byCategory);
+      competition.status = COMPETITION_STATUS.FINISHED;
+      this._emit("CompetitionFinished", { competitionId: competition.id });
+      return;
+    }
+
     // Ranking: credita os pontos no ledger (registro permanente). O ranking
     // materializado (posições/pontos visíveis) NÃO muda aqui — é recalculado no
     // dia 1 de cada mês (ver _monthlyRankingUpdate).
@@ -177,6 +201,9 @@ export class SimulationDirector {
         severity: inj.severity,
         until: inj.until,
       });
+      // Se um titular da seleção se lesiona, convoca um reserva (ele entra).
+      const promoted = promoteReserveOnInjury(world, inj.athleteId);
+      if (promoted) newsCallup(world, competition.date, promoted, inj.athleteId);
     }
     // Rivalidades: atualiza a partir das lutas decisivas (finais/semis) e poda
     // as que esfriaram. Feito APÓS as lutas, então o próximo evento já usa o
