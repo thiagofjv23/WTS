@@ -66,13 +66,18 @@ button.primary, .primary { background: var(--accent); border-color: var(--accent
   border-bottom: 1px solid var(--line);
   padding-top: env(safe-area-inset-top);
 }
-.topbar-date { display: flex; flex-direction: column; }
-.date-main { font-weight: 700; font-size: 17px; }
+.topbar-date { display: flex; flex-direction: column; flex: 0 0 auto; }
+.date-main { font-weight: 700; font-size: 16px; }
 .date-sub { font-size: 12px; color: var(--text-dim); }
-.topbar-actions { display: flex; gap: 8px; }
+.topbar-actions {
+  display: flex; gap: 6px; overflow-x: auto; min-width: 0;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.topbar-actions::-webkit-scrollbar { display: none; }
 .time-btn {
-  padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line);
-  background: var(--bg-elev2); color: var(--text); font-weight: 600; font-size: 13px;
+  flex: 0 0 auto; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--bg-elev2); color: var(--text); font-weight: 600; font-size: 12.5px;
+  white-space: nowrap;
 }
 .time-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 

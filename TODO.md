@@ -187,8 +187,12 @@ será retomado. Atualizado a cada passo do desenvolvimento.
 - ✅ **Ranking mostra todos os atletas** — feito (256/categoria).
 - ✅ **Ranking de início do campeonato nos confrontos** — feito.
 - 🟢 **Gráficos de evolução de ranking, filtros e tela de Configurações.**
-- 🟢 **Avanço longo em blocos** com barra de progresso (hoje é síncrono; rápido,
-  mas várias temporadas de uma vez poderiam travar a UI momentaneamente).
+- ✅ **Avanço mensal/anual** — feito (botões +1m/+1a; `advanceOneMonth`/
+  `advanceOneYear` com o mesmo critério de tempo dia a dia) + tela de fim de ano
+  (ranking de janeiro com variação vs início do ano anterior).
+- 🟢 **Barra de progresso no avanço longo** — hoje o avanço anual é síncrono
+  (rápido, ~1 temporada em ~1,3 s), mas várias temporadas de uma vez poderiam
+  travar a UI momentaneamente; avaliar processamento em blocos com feedback.
 - 🟡 **Retenção do save (Camada 1) — próximo passo.** O IndexedDB (feito) já
   removeu o teto de disco: 80 eventos = ~7,5 MB persistem sem erro. Mas o mundo
   vive em RAM e é serializado a cada flush; para rodar DÉCADAS ainda é preciso

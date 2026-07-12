@@ -9,6 +9,29 @@ Formato: `[Data] Área — Decisão`
 
 ---
 
+## [2026-07-12] Tempo/UI — Avanço mensal/anual e tela de fim de ano
+Contexto/pedido (testes): botões de simulação mensal e anual, sem alterar os
+existentes; e uma tela especial ao fim de cada ano.
+
+Decisão:
+- **Mesmo critério de tempo:** mês/ano usam o mesmo `advanceUntil` (dia a dia),
+  então ranking mensal, wildcards, rivalidades e lesões acontecem igual. Alvo:
+  `addMonths/addYears(currentDate, 1)`, processando ATÉ o alvo (cruza o dia 1 do
+  novo mês/ano, materializando o ranking daquele período).
+- **Não perder eventos:** avanço em bloco pode ultrapassar o calendário agendado,
+  então `_ensureScheduledUntilYear(ano-alvo)` agenda as temporadas necessárias
+  ANTES de avançar (os demais botões miram um evento já agendado, então não
+  precisavam disso).
+- **Fim de ano (a cada virada, por qualquer botão):** ao cruzar 1º/jan, guarda-se
+  o ranking de janeiro (ordem + pontos) em `world.yearRankSnapshots` (só 2 anos).
+  A tela mostra o ranking de janeiro do novo ano e o delta de posições vs janeiro
+  do ANO ANTERIOR (ex.: jan/2027 vs jan/2026). Reaproveita o indicador ▲/▼ do
+  ranking. Tem prioridade sobre o modal de resultados quando ambos ocorrem.
+- **Barra compacta:** com 4 botões em 390px, rótulos passam a `+1d/+1m/+1a` e
+  `▶ Evento` (tooltips com o texto completo); só apresentação, sem mudar ações.
+- **Escopo:** `advanceOneDay`/`advanceToNextEvent` só ganharam o campo `yearEnd`
+  no retorno; nada mais foi alterado.
+
 ## [2026-07-12] Wildcards — President's Cup → vaga extra no Continental
 Contexto/pedido: a President's Cup dá ao vencedor uma vaga direta para o
 Continental; o Continental leva 1 por país, então o wildcard é a única forma de um

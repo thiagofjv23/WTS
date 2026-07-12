@@ -680,7 +680,39 @@ Verificado no navegador: selo **WC** renderiza na classificação final; sem err
 
 ---
 
-## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards ✅
+## Passo 21 — Avanço mensal/anual + tela de fim de ano ✅
+
+**Pedido do usuário (para testes):** botões de simulação mensal e anual (mantendo
+o mesmo critério de passagem de tempo), sem mexer nos botões/funcionalidades
+existentes. E, ao fim de um ano, uma tela especial (estilo a de resultados) com o
+ranking de janeiro do novo ano e a variação de posições de cada atleta em relação
+ao início do ano anterior.
+
+**Feito:**
+- `utils/dates.js`: `addMonths`/`addYears` (com ajuste de fim de mês).
+- `gameController`: `advanceOneMonth`/`advanceOneYear` via `_advanceSpan`, que usa
+  o MESMO `advanceUntil` (processa dia a dia — ranking mensal, wildcards, etc.
+  idênticos). `_ensureScheduledUntilYear` agenda as temporadas até o alvo (avanço
+  em bloco não perde eventos). `getYearEndSummary` monta o ranking de janeiro
+  (top 30/cat) com o delta vs janeiro do ano anterior. `advanceOneDay`/
+  `advanceToNextEvent` ganham só o campo `yearEnd` (nada mais muda).
+- `ranking.js` + `simulationDirector`: `captureYearStartRanks` guarda o ranking de
+  janeiro (ordem + pontos) no recálculo mensal de janeiro; mantém 2 anos.
+- `core/world.js`: `yearRankSnapshots: {}`.
+- `ui/app.js`: botões **+1d / +1m / +1a** (os antigos seguem: +1d e ▶ Evento) e a
+  tela `showYearEnd` (modal com abas por categoria, seta ▲/▼ reaproveitando
+  `rankMovement`). `main.css`: barra de tempo compacta (cabe em 390px sem cortar).
+
+**Testado:** `npm test` → **169/169** (`tests/timeAdvance.test.mjs`, 8: datas;
+avanço mensal/anual; ano roda inteiro sem perder eventos; delta jan-novo vs
+jan-anterior; avanço anual do meio do ano; botões antigos mantêm `results` e
+ganham `yearEnd`; determinismo). Navegador: 4 botões cabem na barra; "+1a" abre a
+tela de fim de ano (Ranking de Janeiro de 2027, variação vs início de 2026, com
+▲/▼); sem erros.
+
+---
+
+## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

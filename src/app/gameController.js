@@ -20,7 +20,7 @@ import { StorageService } from "../services/storage.js";
 import { MEN_CATEGORIES, getWeightCategory } from "../config/weightCategories.js";
 import { championPointsFor, G_RANK_LABELS } from "../entities/competition.js";
 import { TECHNICAL, PHYSICAL, MENTAL } from "../config/attributes.js";
-import { yearOf } from "../utils/dates.js";
+import { yearOf, addMonths, addYears } from "../utils/dates.js";
 import { flagEmoji } from "../config/flags.js";
 import { continentOf } from "../config/continents.js";
 import { classifyEvent, isEligible, applyNationalLimit } from "../engine/eligibility.js";
@@ -31,6 +31,7 @@ import { athletesInCategory } from "../core/world.js";
 
 const SAVE_KEY = "world";
 const MEN_IDS = MEN_CATEGORIES.map((c) => c.id);
+const SEASON_BASE_YEAR = 2026; // 1ª temporada; offsets de temporada são relativos a ele
 
 /** Rótulo da rodada a partir do tamanho (2 = Final, 4 = Semifinal, …). */
 function roundLabel(roundSize) {
@@ -130,6 +131,19 @@ export class GameController {
     this.nextOffset += 1;
   }
 
+  /**
+   * Garante que todas as temporadas até (inclusive) `year` estejam agendadas.
+   * Necessário para avanços em bloco (mês/ano), que podem ultrapassar o
+   * calendário já agendado — sem isso, os eventos do período seriam perdidos.
+   */
+  _ensureScheduledUntilYear(year) {
+    let guard = 0;
+    while (SEASON_BASE_YEAR + this.nextOffset <= year && guard < 60) {
+      this._scheduleNextSeason();
+      guard += 1;
+    }
+  }
+
   /** Garante que exista pelo menos um evento futuro agendado. */
   _ensureUpcoming() {
     let guard = 0;
@@ -167,6 +181,7 @@ export class GameController {
     this._ensureUpcoming();
     const target = this._nextPendingDate();
     if (!target) return null;
+    const yearBefore = yearOf(this.world.state.currentDate);
     this._snapshotRankingPositions();
     const finished = [];
     const off = this.bus.on("CompetitionFinished", (ev) =>
@@ -176,11 +191,16 @@ export class GameController {
     off();
     this._fieldCache.clear(); // o mundo mudou: invalida os campos projetados
     this._ensureUpcoming();
-    return { date: target, results: finished.map((id) => this._competitionSummary(id)) };
+    return {
+      date: target,
+      results: finished.map((id) => this._competitionSummary(id)),
+      yearEnd: this._yearEndIfCrossed(yearBefore),
+    };
   }
 
   /** Avança um único dia. */
   advanceOneDay() {
+    const yearBefore = yearOf(this.world.state.currentDate);
     this._snapshotRankingPositions();
     const finished = [];
     const off = this.bus.on("CompetitionFinished", (ev) =>
@@ -193,7 +213,73 @@ export class GameController {
     return {
       date: this.world.state.currentDate,
       results: finished.map((id) => this._competitionSummary(id)),
+      yearEnd: this._yearEndIfCrossed(yearBefore),
     };
+  }
+
+  /** Avança um mês inteiro (mesmo processamento dia a dia dos demais avanços). */
+  advanceOneMonth() {
+    return this._advanceSpan(addMonths(this.world.state.currentDate, 1));
+  }
+
+  /** Avança um ano inteiro (mesmo processamento dia a dia dos demais avanços). */
+  advanceOneYear() {
+    return this._advanceSpan(addYears(this.world.state.currentDate, 1));
+  }
+
+  /**
+   * Avança em bloco até `targetDate` (processando cada dia). Não abre o modal de
+   * resultados por competição (seriam muitos); o destaque é a tela de fim de ano.
+   */
+  _advanceSpan(targetDate) {
+    this._ensureScheduledUntilYear(yearOf(targetDate));
+    const yearBefore = yearOf(this.world.state.currentDate);
+    this._snapshotRankingPositions();
+    this.director.advanceUntil(targetDate);
+    this._fieldCache.clear();
+    this._ensureUpcoming();
+    return {
+      date: this.world.state.currentDate,
+      results: [],
+      yearEnd: this._yearEndIfCrossed(yearBefore),
+    };
+  }
+
+  /** Se o avanço cruzou a virada de ano, devolve o resumo de fim de ano. */
+  _yearEndIfCrossed(yearBefore) {
+    const yearNow = yearOf(this.world.state.currentDate);
+    return yearNow > yearBefore ? this.getYearEndSummary(yearNow) : null;
+  }
+
+  /**
+   * Resumo de fim de ano: ranking de janeiro do `newYear` (top 30 por categoria)
+   * com a variação de posições em relação a janeiro do ano anterior.
+   */
+  getYearEndSummary(newYear, top = 30) {
+    const snaps = this.world.yearRankSnapshots || {};
+    const cur = snaps[String(newYear)];
+    if (!cur) return null;
+    const prev = snaps[String(newYear - 1)] || {};
+    const categories = MEN_CATEGORIES.map((cat) => {
+      const curList = cur[cat.id] || [];
+      const prevPos = new Map((prev[cat.id] || []).map(([id], i) => [id, i + 1]));
+      const rows = curList.slice(0, top).map(([id, pts], i) => {
+        const a = this.world.athletes[id];
+        const c = a ? this._countryOf(a) : { code: "??" };
+        const position = i + 1;
+        const pp = prevPos.get(id);
+        return {
+          id, position,
+          name: a ? a.fullName : "?",
+          ioc: c.code, flag: flagEmoji(c.code),
+          points: Math.round(pts * 100) / 100,
+          // delta > 0 = subiu posições; null = não estava no ranking do ano anterior.
+          delta: pp == null ? null : pp - position,
+        };
+      });
+      return { categoryId: cat.id, categoryName: cat.name, rows };
+    });
+    return { year: newYear, previousYear: newYear - 1, categories };
   }
 
   // ---- Favoritos -----------------------------------------------------------

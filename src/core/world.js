@@ -40,6 +40,7 @@ export function createWorld(opts = {}) {
     injuries: [], // lesões ativas: { athleteId, until, severity }
     rivalries: {}, // rivalidades por par: pairKey → { intensity, meetings, ... }
     wildcards: [], // vagas da President's Cup p/ o continental: { continent, categoryId, candidates, ... }
+    yearRankSnapshots: {}, // ranking de janeiro por ano: { [ano]: { [cat]: [[id, pontos], ...] } }
     favorites: { athletes: [], countries: [], competitions: [] },
     configuration: {},
     // Estados dos serviços (para salvamento determinístico).

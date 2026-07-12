@@ -16,7 +16,7 @@ import { eventsForDate, CALENDAR_STATUS } from "./calendar.js";
 import { simulateCompetition } from "./competitionSystem.js";
 import { selectParticipants } from "./participation.js";
 import { applyConsequences, recomputeCountryStatistics } from "./consequence.js";
-import { applyCompetitionPoints, recomputeRankings } from "./ranking.js";
+import { applyCompetitionPoints, recomputeRankings, captureYearStartRanks } from "./ranking.js";
 import { recordCompetitionHistory } from "./history.js";
 import { processRecovery } from "./recovery.js";
 import { applyCompetitionInjuries } from "./injuries.js";
@@ -207,6 +207,8 @@ export class SimulationDirector {
     if (date.slice(8, 10) !== "01") return;
     recomputeRankings(this.world, date);
     recomputeCountryStatistics(this.world);
+    // Em janeiro, guarda o ranking de início do ano (para a tela de fim de ano).
+    if (date.slice(5, 7) === "01") captureYearStartRanks(this.world);
     this._emit("RankingUpdated", { date });
   }
 

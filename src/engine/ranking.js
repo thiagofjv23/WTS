@@ -139,6 +139,23 @@ export function applyCompetitionPoints(world, competition, byCategory) {
 }
 
 /**
+ * Guarda o ranking de JANEIRO do ano corrente (ordem + pontos por categoria)
+ * para comparações anuais (tela de fim de ano). Mantém só os 2 anos mais
+ * recentes — suficiente para o delta "início do novo ano vs início do anterior".
+ * Chamado pelo Simulation Director no recálculo mensal de janeiro.
+ */
+export function captureYearStartRanks(world) {
+  const year = world.state.currentDate.slice(0, 4);
+  const snap = {};
+  for (const [categoryId, r] of Object.entries(world.rankings)) {
+    snap[categoryId] = r.athleteIds.map((id) => [id, world.athletes[id]?.ranking.points ?? 0]);
+  }
+  (world.yearRankSnapshots ||= {})[year] = snap;
+  const years = Object.keys(world.yearRankSnapshots).sort();
+  while (years.length > 2) delete world.yearRankSnapshots[years.shift()];
+}
+
+/**
  * Recalcula os pontos efetivos (com decaimento) e as posições por categoria.
  * Atualiza athlete.ranking.points/position e world.rankings[categoryId].
  */

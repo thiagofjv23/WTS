@@ -7,6 +7,7 @@
  */
 
 import { el, mount, fmtDate } from "./dom.js";
+import { rankMovement } from "./components.js";
 import { renderRanking } from "./pages/ranking.js";
 import { renderCalendar } from "./pages/calendar.js";
 import { renderCountries } from "./pages/countries.js";
@@ -95,8 +96,10 @@ export class App {
       ),
       el(
         "div.topbar-actions",
-        el("button.time-btn", { onClick: () => this.advance("day"), title: "Avançar 1 dia" }, "+1 dia"),
-        el("button.time-btn.primary", { onClick: () => this.advance("event"), title: "Avançar até o próximo evento" }, "▶ Próximo evento")
+        el("button.time-btn", { onClick: () => this.advance("day"), title: "Avançar 1 dia" }, "+1d"),
+        el("button.time-btn", { onClick: () => this.advance("month"), title: "Avançar 1 mês" }, "+1m"),
+        el("button.time-btn", { onClick: () => this.advance("year"), title: "Avançar 1 ano" }, "+1a"),
+        el("button.time-btn.primary", { onClick: () => this.advance("event"), title: "Avançar até o próximo evento" }, "▶ Evento")
       )
     );
   }
@@ -129,11 +132,71 @@ export class App {
 
   // ---- Comandos de tempo ---------------------------------------------------
   advance(kind) {
-    this.withLoading("Simulando…", () => {
-      const res = kind === "day" ? this.game.advanceOneDay() : this.game.advanceToNextEvent();
+    const label = kind === "year" ? "Simulando o ano…" : kind === "month" ? "Simulando o mês…" : "Simulando…";
+    this.withLoading(label, () => {
+      let res;
+      if (kind === "day") res = this.game.advanceOneDay();
+      else if (kind === "month") res = this.game.advanceOneMonth();
+      else if (kind === "year") res = this.game.advanceOneYear();
+      else res = this.game.advanceToNextEvent();
       this.renderShell();
-      if (res && res.results && res.results.length) this.showResults(res);
+      if (!res) return;
+      // A virada de ano tem prioridade: mostra a tela especial de fim de ano.
+      if (res.yearEnd) this.showYearEnd(res.yearEnd);
+      else if (res.results && res.results.length) this.showResults(res);
     });
+  }
+
+  /** Tela especial de fim de ano: ranking de janeiro + variação anual. */
+  showYearEnd(data) {
+    const state = { catIndex: 0 };
+    const body = el("div.yearend-body");
+    const tabs = el(
+      "div.tabs",
+      ...data.categories.map((c, i) =>
+        el(`button.tab${i === 0 ? ".active" : ""}`,
+          { onClick: () => { state.catIndex = i; rerender(); } }, c.categoryName)
+      )
+    );
+    const overlay = el("div.modal-overlay", { onClick: (e) => { if (e.target === overlay) overlay.remove(); } });
+    const content = el(
+      "div.modal-content.results.yearend",
+      el("div.modal-head",
+        el("div.modal-title",
+          el("h3", `Ranking de Janeiro de ${data.year}`),
+          el("div.modal-sub", `variação de posições desde o início de ${data.previousYear}`)
+        ),
+        el("button.icon-btn", { onClick: () => overlay.remove() }, "✕")
+      ),
+      tabs,
+      body
+    );
+
+    function rerender() {
+      [...tabs.children].forEach((b, i) => b.classList.toggle("active", i === state.catIndex));
+      const cat = data.categories[state.catIndex];
+      body.replaceChildren(
+        cat.rows.length
+          ? el("div.list.compact",
+              ...cat.rows.map((r) =>
+                el("div.row.yearend-row",
+                  el("span.pos", `${r.position}`),
+                  rankMovement(r.delta),
+                  el("span.flag.flag-lg", r.flag || "🏳"),
+                  el("span.row-main",
+                    el("span.row-name", r.name),
+                    el("span.row-sub", r.ioc)),
+                  el("span.pts", `${r.points}`)
+                )
+              )
+            )
+          : el("p.empty", "Sem ranking para comparar.")
+      );
+    }
+
+    rerender();
+    overlay.append(content);
+    this.root.append(overlay);
   }
 
   showResults(res) {

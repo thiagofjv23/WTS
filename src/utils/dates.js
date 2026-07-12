@@ -21,6 +21,22 @@ export function daysBetween(fromISO, toISO) {
   return Math.round((b - a) / 86400000);
 }
 
+/** Avança uma data ISO em `n` meses, ajustando o dia ao fim do mês se preciso. */
+export function addMonths(isoDate, n) {
+  const [y, m, d] = isoDate.split("-").map(Number);
+  const base = new Date(Date.UTC(y, m - 1 + n, 1));
+  const year = base.getUTCFullYear();
+  const month = base.getUTCMonth();
+  const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  const day = Math.min(d, lastDay);
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+/** Avança uma data ISO em `n` anos. */
+export function addYears(isoDate, n) {
+  return addMonths(isoDate, n * 12);
+}
+
 /** Meses inteiros decorridos de `fromISO` até `toISO` (>= 0). */
 export function monthsBetween(fromISO, toISO) {
   const [fy, fm, fd] = fromISO.split("-").map(Number);
