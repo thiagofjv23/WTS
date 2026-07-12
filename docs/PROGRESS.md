@@ -648,7 +648,39 @@ completo; poda do ledger > 4 anos; limitar `athlete.history`.
 
 ---
 
-## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB ✅
+## Passo 20 — Wildcards da President's Cup (lógica + UI + documento) ✅
+
+**Pedido do usuário:** a President's Cup dá ao vencedor uma vaga extra para o
+Campeonato Continental; como o continental leva 1 por país, o wildcard é a única
+forma de um país ter 2 atletas. Se o vencedor já é o nº 1 do país, a vaga passa ao
+vice, depois ao 3º que perdeu para o campeão, e assim por diante. President's Cups
+fechadas ao continente (facilidade para o observador). Documentar.
+
+**Feito:**
+- `src/engine/wildcards.js` (novo): `grantPresidentsCupWildcards` (concede ao fim
+  da Copa, guardando a ordem de classificação), `wildcardEntrantsFor` (resolve o
+  agraciado — 1º classificado que não seja o nº 1 do país), `consumeWildcards`
+  (remove/expira ao rodar o continental). Desempate de bronzes por "perdeu para o
+  mais bem colocado".
+- `src/core/world.js`: `wildcards: []` no estado.
+- `src/engine/simulationDirector.js`: resolve antes de montar o continental
+  (grava `competition.wildcards`), concede após a Copa, consome após o continental.
+- `src/engine/participation.js`: o agraciado entra ALÉM do limite de 1 por país.
+- `src/app/gameController.js`: marca `wildcard` no campo projetado e na
+  classificação final.
+- `src/ui/pages/competition.js` + `main.css`: selo **WC** (verde) ao lado do nome.
+- `docs/WILDCARDS.md` (novo): documento da mecânica.
+
+**Testado:** `npm test` → **161/161** (`tests/wildcards.test.mjs`, 7: detecção de
+evento; ordem de concessão com "perdeu para o campeão"; agraciado que não é o nº 1;
+passa adiante se for o nº 1; janela temporal; entra além do limite nacional;
+consumo). Integração (GameController) até 2027: as President's Cups de 2026
+concedem e os continentais de 2027 mostram o agraciado dando ao país um 2º atleta.
+Verificado no navegador: selo **WC** renderiza na classificação final; sem erros.
+
+---
+
+## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

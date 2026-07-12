@@ -27,6 +27,13 @@ import {
   updateRivalriesFromCompetition,
   pruneRivalries,
 } from "./rivalry.js";
+import {
+  isPresidentsCup,
+  isContinentalChampionship,
+  wildcardEntrantsFor,
+  grantPresidentsCupWildcards,
+  consumeWildcards,
+} from "./wildcards.js";
 import { COMPETITION_STATUS } from "../entities/competition.js";
 import { addDays } from "../utils/dates.js";
 import { RandomSystem } from "../services/random.js";
@@ -106,6 +113,17 @@ export class SimulationDirector {
     competition.status = COMPETITION_STATUS.RUNNING;
     this._emit("CompetitionStarted", { competitionId: competition.id });
 
+    // Continental: resolve os agraciados por wildcard da President's Cup ANTES
+    // de montar o campo, para o Participation incluí-los (além do 1 por país) e
+    // a UI marcar a vaga. Determinístico (baseado no ranking vigente).
+    if (isContinentalChampionship(competition)) {
+      competition.wildcards = {};
+      for (const categoryId of competition.categoryIds) {
+        const ids = wildcardEntrantsFor(world, competition, categoryId);
+        if (ids.length) competition.wildcards[categoryId] = ids;
+      }
+    }
+
     const { byCategory, allMatches } = simulateCompetition(
       this.random,
       competition,
@@ -165,6 +183,14 @@ export class SimulationDirector {
     // estado novo.
     updateRivalriesFromCompetition(world, competition, allMatches);
     pruneRivalries(world, competition.date);
+    // Wildcards da President's Cup: concede as vagas ao final da Copa do
+    // Presidente; consome/expira as pendentes ao rodar o continental.
+    if (isPresidentsCup(competition)) {
+      grantPresidentsCupWildcards(world, competition, byCategory, allMatches);
+    }
+    if (isContinentalChampionship(competition)) {
+      consumeWildcards(world, competition);
+    }
     // Histórico permanente.
     recordCompetitionHistory(world, competition, byCategory);
 

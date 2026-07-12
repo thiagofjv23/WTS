@@ -9,6 +9,37 @@ Formato: `[Data] Área — Decisão`
 
 ---
 
+## [2026-07-12] Wildcards — President's Cup → vaga extra no Continental
+Contexto/pedido: a President's Cup dá ao vencedor uma vaga direta para o
+Continental; o Continental leva 1 por país, então o wildcard é a única forma de um
+país ter DOIS atletas. As President's Cups ficam fechadas ao continente (já era
+assim no código — `eligibility.js` — o que também simplifica para o observador).
+
+Decisão:
+- **`src/engine/wildcards.js`** (novo): concede (`grantPresidentsCupWildcards`),
+  resolve (`wildcardEntrantsFor`) e consome (`consumeWildcards`) as vagas.
+- **Agraciado:** campeão da Copa; se ele já é o nº 1 do país (já entra como
+  representante nacional), passa ao vice, depois ao 3º **que perdeu para o
+  campeão**, e assim por diante até achar quem não seja o nº 1 do seu país. O
+  desempate de mesma colocação (dois bronzes) usa "quem perdeu para o mais bem
+  colocado vem antes" — honra o "perdeu para o campeão" e generaliza.
+- **"nº 1 do país" avaliado no continental** (ranking mensal vigente), pois é o
+  que define o representante nacional daquele evento.
+- **Ciclo:** no calendário real a Copa vem depois do continental do mesmo ano,
+  então a vaga vale para o continental do ANO SEGUINTE. Guardada em
+  `world.wildcards` (só a ordem de ids), consumida/expirada em ~1 ano (não
+  acumula). O agraciado do evento fica em `competition.wildcards[categoria]`.
+- **Pipeline:** grant na consequência da Copa; resolução antes de montar o campo
+  do continental (entra ALÉM do 1 por país, via `selectParticipants`); consumo na
+  consequência do continental.
+- **UI:** selo **WC** (verde) ao lado do nome no campo projetado e na
+  classificação final do continental.
+
+Verificado: President's Cups de 2026 concedem; continentais de 2027 mostram o
+agraciado dando ao país um 2º atleta (ex.: AUS com representante + wildcard no
+Oceania), com os demais países em 1; determinístico; selo renderiza; sem erros.
+Documento: `docs/WILDCARDS.md`.
+
 ## [2026-07-12] Persistência — Backend IndexedDB (síncrono por fora, assíncrono por dentro)
 Contexto: com o roster completo o save passa dos ~5 MB do localStorage já na 1ª
 temporada. Decisão do usuário: migrar para IndexedDB agora; a RETENÇÃO fica como

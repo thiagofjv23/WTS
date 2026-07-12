@@ -94,6 +94,13 @@ button.primary, .primary { background: var(--accent); border-color: var(--accent
 .vrow { position: absolute; left: 0; right: 0; height: 64px; } /* passo = 72 (64 + 8) */
 .vrow.rank-row .row-sub { margin-top: 2px; }
 
+/* Selo de vaga via Wildcard da President's Cup. */
+.wc-badge {
+  display: inline-block; margin-left: 6px; padding: 1px 5px; border-radius: 5px;
+  font-size: 10px; font-weight: 800; letter-spacing: .5px; vertical-align: middle;
+  background: var(--accent-2); color: #06231a; border: 1px solid var(--accent-2);
+}
+
 /* ---------- TABS ---------- */
 .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; }
 .tab {

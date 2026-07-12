@@ -7,8 +7,10 @@
  *
  * Regras:
  *  - Grand Prix Series (G-6): só top 32 do ranking; Final (G-10): só top 16.
- *  - Campeonatos continentais (G-4): só atletas do continente + 1 por país.
- *  - President's Cup (G-3): restrito ao continente do nome.
+ *  - Campeonatos continentais (G-4): só atletas do continente + 1 por país
+ *    (mais os agraciados por wildcard da President's Cup — ver wildcards.js).
+ *  - President's Cup (G-3): restrito ao continente do nome (fechada ao
+ *    continente); dá vaga extra (wildcard) para o continental — ver wildcards.js.
  *  - Eventos "Arab": só países árabes.
  *  - Mundial (G-14): 1 por país (sem trava de ranking).
  */

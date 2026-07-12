@@ -97,6 +97,10 @@ será retomado. Atualizado a cada passo do desenvolvimento.
 - ✅ **Travas de elegibilidade** — feito (eligibility.js + continents.js): lock
   de ranking do Grand Prix (top 32 / top 16), campeonatos continentais
   (continente + 1 por país), President's Cup por continente, Arab Cup.
+- ✅ **Wildcards da President's Cup** — feito (`engine/wildcards.js` +
+  `docs/WILDCARDS.md`): o vencedor da Copa ganha vaga extra no continental (a
+  única forma de um país ter 2 atletas); se já é o nº 1 do país, passa ao próximo
+  classificado elegível. Selo **WC** na tela do campeonato.
 - ✅ **Calendário completo** — importado de "2026 Events.txt" (67 eventos reais).
 
 ## Estrutura competitiva — pendências de LÓGICA

@@ -26,6 +26,7 @@ import { continentOf } from "../config/continents.js";
 import { classifyEvent, isEligible, applyNationalLimit } from "../engine/eligibility.js";
 import { enterProbability } from "../engine/participation.js";
 import { rivalsOf } from "../engine/rivalry.js";
+import { wildcardEntrantsFor } from "../engine/wildcards.js";
 import { athletesInCategory } from "../core/world.js";
 
 const SAVE_KEY = "world";
@@ -392,11 +393,20 @@ export class GameController {
       isEligible(a, this.world, rules)
     );
     if (rules.nationalLimit) pool = applyNationalLimit(pool, this.world, rules.nationalLimit);
+    // Wildcards da President's Cup: agraciados entram além do 1 por país.
+    // (evento concluído: usa o registro salvo; futuro: resolve pelo estado atual)
+    const wildcardIds = new Set(
+      competition.wildcards?.[categoryId] ?? wildcardEntrantsFor(this.world, competition, categoryId)
+    );
+    for (const id of wildcardIds) {
+      const a = this.world.athletes[id];
+      if (a && !pool.includes(a)) pool.push(a);
+    }
     // Opens: mantém apenas quem provavelmente se inscreve (a elite ignora
     // eventos pequenos). Eventos por convite: todos os elegíveis comparecem.
     if (!rules.invitational) {
       const catSize = this.world.rankings[categoryId]?.athleteIds.length || pool.length;
-      pool = pool.filter((a) => enterProbability(a, competition, catSize) >= 0.45);
+      pool = pool.filter((a) => enterProbability(a, competition, catSize) >= 0.45 || wildcardIds.has(a.id));
     }
     pool.sort((a, b) => b.ranking.points - a.ranking.points);
     const size = limit ?? competition.fieldSize ?? pool.length;
@@ -405,6 +415,7 @@ export class GameController {
       return {
         id: a.id, seed: i + 1, name: a.fullName, ioc: c.code, flag: flagEmoji(c.code),
         position: a.ranking.position, points: a.ranking.points,
+        wildcard: wildcardIds.has(a.id),
       };
     });
     this._fieldCache.set(cacheKey, out);
@@ -484,6 +495,7 @@ export class GameController {
     const categories = c.categoryIds.map((catId) => {
       const catName = getWeightCategory(catId)?.name || catId;
       if (done) {
+        const wildcardSet = new Set(c.wildcards?.[catId] || []);
         const placements = (c.results[catId] || []).map((p) => {
           const a = this.world.athletes[p.athleteId];
           const cc = a ? this._countryOf(a) : { code: "??" };
@@ -493,6 +505,7 @@ export class GameController {
             ioc: cc.code, flag: flagEmoji(cc.code),
             placement: p.placement, medal: p.medal,
             points: p.rankingPointsEarned ?? 0,
+            wildcard: wildcardSet.has(p.athleteId),
           };
         });
         const matches = (c.matches || [])

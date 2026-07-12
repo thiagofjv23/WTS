@@ -79,6 +79,20 @@ export function selectParticipants(world, competition, categoryId, random, opts 
   let eligible = pool.filter((a) => isEligible(a, world, rules));
   // 2. Limite nacional (1 por país nos continentais/mundial).
   if (rules.nationalLimit) eligible = applyNationalLimit(eligible, world, rules.nationalLimit);
+  // 2b. Wildcards da President's Cup (resolvidos pelo Director e gravados no
+  // evento): entram ALÉM do limite de 1 por país — única forma de um país ter
+  // dois atletas no continental.
+  const wildcardIds = competition.wildcards?.[categoryId];
+  if (wildcardIds?.length) {
+    const present = new Set(eligible.map((a) => a.id));
+    for (const id of wildcardIds) {
+      const a = world.athletes[id];
+      if (a && !present.has(id)) {
+        eligible.push(a);
+        present.add(id);
+      }
+    }
+  }
   if (eligible.length === 0) return [];
 
   let field;

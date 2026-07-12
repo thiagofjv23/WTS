@@ -6,6 +6,11 @@
 import { el, fmtDate } from "../dom.js";
 import { gRankBadge, medalIcon } from "../components.js";
 
+/** Selo de vaga conquistada via wildcard da President's Cup. */
+function wildcardBadge() {
+  return el("span.wc-badge", { title: "Vaga via Wildcard da President's Cup" }, "WC");
+}
+
 /** Traços de elegibilidade (travas) em chips legíveis. */
 function eligibilityTags(e) {
   const tags = [];
@@ -73,7 +78,8 @@ export function competitionModal(view, { onClose, onAthlete, state }) {
         el("button.row.entry-row", { onClick: () => onAthlete(a.id) },
           el("span.pos", `${a.seed}`),
           el("span.flag", a.flag || "🏳"),
-          el("span.row-main", el("span.row-name", a.name),
+          el("span.row-main",
+            el("span.row-name", a.name, a.wildcard ? wildcardBadge() : null),
             el("span.row-sub", a.position ? `ranking #${a.position}` : "sem ranking")),
           el("span.pts", `${a.points}`)
         )
@@ -88,7 +94,8 @@ export function competitionModal(view, { onClose, onAthlete, state }) {
         el("button.row.entry-row", { onClick: () => onAthlete(p.athleteId) },
           el("span.pos", `${p.placement}º`),
           el("span.flag", p.flag || "🏳"),
-          el("span.row-main", el("span.row-name", `${medalIcon(p.medal)} ${p.name}`)),
+          el("span.row-main",
+            el("span.row-name", `${medalIcon(p.medal)} ${p.name}`, p.wildcard ? wildcardBadge() : null)),
           el("span.pts", p.points ? `+${p.points}` : "")
         )
       )
