@@ -88,6 +88,12 @@ button.primary, .primary { background: var(--accent); border-color: var(--accent
 .list { display: flex; flex-direction: column; gap: 8px; }
 .list.compact { gap: 4px; }
 
+/* Lista virtualizada: o espaçador tem a altura total; as linhas visíveis são
+   posicionadas em absoluto pelo índice (ver src/ui/virtualList.js). */
+.vlist { position: relative; width: 100%; }
+.vrow { position: absolute; left: 0; right: 0; height: 64px; } /* passo = 72 (64 + 8) */
+.vrow.rank-row .row-sub { margin-top: 2px; }
+
 /* ---------- TABS ---------- */
 .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; }
 .tab {

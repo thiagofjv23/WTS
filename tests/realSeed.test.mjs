@@ -20,6 +20,14 @@ test("roster tem as 4 categorias masculinas com atletas", () => {
   }
 });
 
+test("roster inclui TODOS os rankeados (cauda longa, não só o topo)", () => {
+  const total = MEN_CATEGORIES.reduce((s, c) => s + REAL_ROSTER[c.id].length, 0);
+  // O ranking oficial masculino tem ~3.092 atletas; antes limitávamos a 256/cat
+  // (1.024). Agora incluímos todos — garante que a cauda longa entrou.
+  assert(total > 2500, `roster deveria conter a cauda longa inteira (tem ${total})`);
+  assert(REAL_ROSTER["WC-M-68"].length > 500, "categoria populosa deveria passar de 500");
+});
+
 test("entradas do roster têm nome, IOC e pontos", () => {
   const first = REAL_ROSTER["WC-M-58"][0];
   assert(first.name && first.ioc && typeof first.points === "number");

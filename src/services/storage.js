@@ -65,9 +65,24 @@ export class StorageService {
     return `${this._ns}:${key}`;
   }
 
-  /** Grava um valor serializando para JSON. */
+  /**
+   * Grava um valor serializando para JSON.
+   * NÃO propaga erro do backend (ex.: QuotaExceededError do localStorage): a
+   * simulação em memória segue viva mesmo se a persistência falhar. Retorna
+   * `true` em sucesso, `false` se o backend recusou (com aviso no console).
+   * A solução definitiva para o volume é retenção + IndexedDB (ver TODO).
+   */
   save(key, value) {
-    this._backend.set(this._key(key), JSON.stringify(value));
+    try {
+      this._backend.set(this._key(key), JSON.stringify(value));
+      return true;
+    } catch (err) {
+      if (!this._warnedSave) {
+        this._warnedSave = true;
+        console.warn(`StorageService: falha ao salvar "${key}" (${err?.name || "erro"}). A simulação continua em memória; o progresso pode não persistir.`);
+      }
+      return false;
+    }
   }
 
   /** Lê e desserializa um valor. Retorna fallback se ausente/corrompido. */

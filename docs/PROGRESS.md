@@ -579,7 +579,44 @@ vigente), mais performático (~12 recálculos/ano vs ~67) e mais simples de mant
 
 ---
 
-## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades ✅
+## Passo 18 — Roster completo (todos os rankeados) + UI virtualizada ✅
+
+**Pedido do usuário:** incluir na database TODOS os atletas rankeados (o custo de
+criar a database é baixo) e fazer as mudanças de UI necessárias para a
+performance não sofrer.
+
+**Feito:**
+- **Roster completo:** `LIMIT_PER_CATEGORY = Infinity` em `scripts/buildRoster.mjs`.
+  De 1.024 → **3.092 atletas** (M-58:992, M-68:1028, M-80:659, M+80:413), 176
+  países. `realRoster.js` gerado: ~283 KB (só build-time).
+- **Lista virtualizada** (`src/ui/virtualList.js`, novo): o ranking renderiza só a
+  janela visível (~24 linhas no DOM em vez de ~1.000) sobre um espaçador de altura
+  total; recalcula na rolagem via `requestAnimationFrame`, com referência no
+  viewport. `pages/ranking.js` usa o helper e descarta o listener anterior ao
+  trocar de categoria. CSS: `.vlist`/`.vrow` (passo de linha 72 px).
+- **Cache de campo projetado** (`gameController._fieldCache`): memoiza o campo por
+  (competição|categoria), invalidado a cada avanço. Abrir fichas deixou de
+  recalcular sobre ~1.000 atletas toda vez.
+- **Save não fatal** (`StorageService.save`): não propaga `QuotaExceededError`; a
+  simulação segue em memória e o Director emite `WorldSaveFailed`.
+
+**Medições (roster completo):** build 81 ms · 1 temporada 1,3 s · save inicial
+3,14 MB → 6,55 MB após 1 temporada (passa do limite do localStorage — reforça a
+retenção/IndexedDB do TODO). UI: `getRanking` categoria inteira ~1 ms; ficha
+fria ~70 ms, quente ~0,4 ms; DOM do ranking ~24 linhas.
+
+**Testado:** `npm test` → **152/152** (novo teste: roster inclui a cauda longa;
+setas de movimento já ajustadas à cadência mensal). Verificado no navegador
+(Chromium 390×844): badge "992", 24 linhas no DOM, rolagem mostra posições
+589–612 corretamente, sem erros de console.
+
+**Aviso registrado:** o save inicial (~3,1 MB) e o crescimento por temporada
+tornam a retenção + IndexedDB (TODO) agora **prioritária**; o save não fatal é só
+um paliativo para não quebrar a simulação.
+
+---
+
+## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

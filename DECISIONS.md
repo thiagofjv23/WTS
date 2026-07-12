@@ -9,6 +9,39 @@ Formato: `[Data] Área — Decisão`
 
 ---
 
+## [2026-07-12] Roster — Incluir TODOS os rankeados + UI virtualizada
+Contexto: antes limitávamos a TOP 256/categoria (1.024 atletas) por causa do
+save/mobile. Pedido do usuário: incluir a database inteira do ranking (todos os
+atletas rankeados), já que o custo de CRIAR a database é baixo, ajustando a UI
+para a performance não sofrer. As Diretrizes Técnicas preveem explicitamente
+"simulação eficiente mesmo com milhares de atletas".
+
+Decisão:
+1. **Roster completo:** `LIMIT_PER_CATEGORY = Infinity` em `buildRoster.mjs`.
+   O roster passou de 1.024 → **3.092 atletas** (M-58:992, M-68:1028, M-80:659,
+   M+80:413), 176 países. Arquivo gerado: ~283 KB (build-time; ~81 ms). Identidade
+   e pontos reais; idade/atributos seguem gerados.
+2. **UI — lista virtualizada** (`src/ui/virtualList.js`): o ranking pode ter ~1.000
+   linhas por categoria. Renderizamos só a janela visível (~24 linhas no DOM) sobre
+   um espaçador com a altura total; recalcula na rolagem (via rAF), referência no
+   viewport (a interface rola a janela do documento, não um container). Passo de
+   linha fixo (72 px = 64 + 8) no CSS. Sem dependências.
+3. **Perf de leitura** (`gameController._fieldCache`): o campo projetado por
+   (competição|categoria) é memoizado e invalidado a cada avanço de tempo (o
+   ranking é mensal, então entre avanços o campo é estável). Abrir a 1ª ficha de
+   uma categoria custa ~70 ms (frio); as seguintes ~0,4 ms. `getRanking` da
+   categoria inteira: ~1 ms.
+4. **Save não fatal** (`StorageService.save`): com o roster completo o save inicial
+   é ~3,1 MB e passa de ~5 MB (limite do localStorage) já na 1ª temporada. O save
+   passou a NÃO propagar erro (ex.: QuotaExceededError): a simulação segue viva em
+   memória e emite `WorldSaveFailed`. É paliativo — a solução real é retenção +
+   IndexedDB (TODO, prioritário; agora mais urgente).
+
+Combate e agenda NÃO ficam mais lentos (o nº de lutas depende do fieldSize, não do
+tamanho do plantel): 1 temporada completa roda em ~1,3 s com o roster inteiro.
+
+## [2026-07-09] Escopo — Iniciar apenas com categorias masculinas
+
 ## [2026-07-09] Escopo — Iniciar apenas com categorias masculinas
 Decisão do usuário. O núcleo (combate, chaves, ranking, pipeline) será validado
 só com masculino; feminino entra depois por extensão (ver TODO.md). Não há
@@ -92,6 +125,9 @@ de nascimento real fica como melhoria (TODO). O nameGenerator deixa de ser usado
 para atletas do seed (só servirá a futuros atletas gerados).
 
 ## [2026-07-09] Seed — Cap de atletas por categoria (mobile/localStorage)
+**SUPERSEDIDA em 2026-07-12** (ver entrada no topo: roster completo + UI
+virtualizada). Mantida para histórico do raciocínio.
+
 Contexto: o arquivo traz ~3.092 atletas masculinos (M-58:992, M-68:1028,
 M-80:659, M+80:413), com uma cauda longa de pontuadores mínimos (<1 pt).
 

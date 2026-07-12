@@ -31,10 +31,10 @@ será retomado. Atualizado a cada passo do desenvolvimento.
   ciclo. Adicionar manualmente ao calendário nos anos corretos (e a repescagem
   olímpica das §7). Também: filtrar eventos Junior num mundo de seniores.
 
-- 🟡 **Roster completo (cauda longa).** Usamos o TOP 256 por categoria (~1.024
-  atletas) por causa do alvo mobile/localStorage. Incluir os ~3.092 atletas
-  masculinos (ou permitir escolher o limite) é opção futura — ajustar
-  `LIMIT_PER_CATEGORY` em `scripts/buildRoster.mjs`.
+- ✅ **Roster completo (cauda longa).** Feito: `LIMIT_PER_CATEGORY = Infinity` em
+  `scripts/buildRoster.mjs` → **3.092 atletas** masculinos (todos os rankeados).
+  A UI foi virtualizada para aguentar (~1.000 linhas/categoria). Femininas e
+  seed gerado (~2.200) seguem como itens próprios abaixo.
 
 - 🟢 **Normalização de nomes reais.** O título simples erra siglas (ex.:
   "CJ NICKOLAS" → "Cj Nickolas"). Refinar regras (preservar siglas em maiúsculas,
@@ -184,9 +184,11 @@ será retomado. Atualizado a cada passo do desenvolvimento.
 - 🟢 **Gráficos de evolução de ranking, filtros e tela de Configurações.**
 - 🟢 **Avanço longo em blocos** com barra de progresso (hoje é síncrono; rápido,
   mas várias temporadas de uma vez poderiam travar a UI momentaneamente).
-- 🔴 **Retenção do save + IndexedDB (prioritário).** Confirmado em navegador: o
-  `localStorage` estoura a cota após **~1 temporada** com o histórico detalhado
-  de lutas (`competition.matches`). Plano combinado com o usuário:
+- 🔴 **Retenção do save + IndexedDB (AGORA CRÍTICO).** Com o roster completo
+  (3.092 atletas) o save INICIAL já é ~3,1 MB e passa dos ~5 MB do `localStorage`
+  ainda na 1ª temporada (~6,5 MB ao fim dela). O save ficou **não fatal** (a
+  simulação segue em memória e emite `WorldSaveFailed`), mas isso é só paliativo:
+  sem retenção + IndexedDB o progresso deixa de persistir cedo. Plano combinado:
   **Camada 1 (retenção)** — G-1/G-2 guardam só os medalhistas após 1 ano
   (apaga lutas/resultados); grandes eventos (G-4+, Mundiais, Grand Slam,
   Olimpíadas) mantêm histórico detalhado para sempre; sempre é possível ver os
@@ -195,8 +197,9 @@ será retomado. Atualizado a cada passo do desenvolvimento.
   substituem o log antigo para a narrativa (agregado ~90 KB permanente).
   **Camada 2** — migrar o arquivo permanente para **IndexedDB** (backend
   plugável no StorageService). A poda de lutas antigas é a Camada 1 deste item.
-- 🟢 **Ranking com 256 linhas por categoria** — funciona, mas ao acumular muitas
-  temporadas vale virtualizar a lista (render sob demanda) no alvo mobile.
+- ✅ **Virtualização da lista de ranking** — feito (`src/ui/virtualList.js`): com o
+  roster completo (~1.000/categoria) o ranking renderiza só a janela visível
+  (~24 linhas no DOM). Aplicável a outras listas longas se surgirem.
 
 ## Melhorias técnicas pendentes
 

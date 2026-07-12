@@ -22,7 +22,9 @@ const root = join(here, "..");
 const XLSX = join(root, "12. Olympic_Kyorugi_Rankings_June_2026.xlsx");
 
 // --- Configuração -----------------------------------------------------------
-const LIMIT_PER_CATEGORY = 256; // TOP N por categoria (ver DECISIONS.md)
+// Inclui TODOS os atletas rankeados por categoria (o ranking oficial inteiro).
+// Use um número finito para voltar a limitar por TOP N (ver DECISIONS.md).
+const LIMIT_PER_CATEGORY = Infinity;
 // aba (1-based) → categoryId do simulador
 const SHEETS = {
   1: "WC-M-58",
@@ -188,10 +190,13 @@ function build() {
       report.push(`${categoryId}: ${list.length} atletas (topo ${list[0]?.name} ${list[0]?.points})`);
     }
 
+    const scope = Number.isFinite(LIMIT_PER_CATEGORY)
+      ? `Top ${LIMIT_PER_CATEGORY} por categoria`
+      : "TODOS os atletas rankeados por categoria";
     const header = `/**
  * Roster REAL — GERADO por scripts/buildRoster.mjs. NÃO editar à mão.
  * Fonte: ranking oficial World Taekwondo (Olympic Kyorugi, junho/2026).
- * Top ${LIMIT_PER_CATEGORY} por categoria (masculino). Identidade e pontos reais;
+ * ${scope} (masculino). Identidade e pontos reais;
  * idade e atributos são gerados no seed (ver DECISIONS.md).
  */
 `;

@@ -89,10 +89,11 @@ export class SimulationDirector {
     if (this.random) world.rngState = this.random.getState();
     if (this.idGen) world.idState = this.idGen.getState();
 
-    // Salvamento (Save System — última etapa obrigatória).
+    // Salvamento (Save System — última etapa obrigatória). Não fatal: se o
+    // backend recusar (ex.: cota do localStorage), a simulação segue em memória.
     if (this.storage) {
-      this.storage.save("world", world);
-      this._emit("WorldSaved", { date });
+      const saved = this.storage.save("world", world);
+      this._emit(saved ? "WorldSaved" : "WorldSaveFailed", { date });
     }
 
     this._emit("DayFinished", { date });

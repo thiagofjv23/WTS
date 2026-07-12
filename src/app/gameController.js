@@ -52,6 +52,11 @@ export class GameController {
     this.random = null;
     this.idGen = null;
     this.director = null;
+    // Cache de campo projetado por (competição|categoria). O campo depende do
+    // ranking (mensal) e do plantel; com o roster completo (~1.028/categoria)
+    // recalcular a cada abertura de ficha custa caro, então memoizamos e
+    // limpamos a cada avanço de tempo. Ver DECISIONS.md.
+    this._fieldCache = new Map();
     // Próxima temporada a agendar = 2026 + offset. Começa em 0: a 1ª temporada
     // simulada é 2026 (o mundo inicia em 01/01/2026 e todos os eventos do ano
     // ficam à frente).
@@ -72,6 +77,7 @@ export class GameController {
     this.random = built.random;
     this.idGen = built.idGen;
     this.nextOffset = 0;
+    this._fieldCache.clear();
     this._makeDirector();
     this._scheduleNextSeason();
     this.save();
@@ -92,6 +98,7 @@ export class GameController {
     const years = Object.values(this.world.competitions).map((c) => yearOf(c.date));
     const maxYear = years.length ? Math.max(...years) : 2025;
     this.nextOffset = Math.max(0, maxYear - 2026 + 1);
+    this._fieldCache.clear();
     this._makeDirector();
     this._ensureUpcoming();
     this.bus.publish("GameLoaded", { fresh: false });
@@ -166,6 +173,7 @@ export class GameController {
     );
     this.director.advanceUntil(target);
     off();
+    this._fieldCache.clear(); // o mundo mudou: invalida os campos projetados
     this._ensureUpcoming();
     return { date: target, results: finished.map((id) => this._competitionSummary(id)) };
   }
@@ -179,6 +187,7 @@ export class GameController {
     );
     this.director.advanceDay();
     off();
+    this._fieldCache.clear(); // o mundo mudou: invalida os campos projetados
     this._ensureUpcoming();
     return {
       date: this.world.state.currentDate,
@@ -375,6 +384,9 @@ export class GameController {
    * convite (Grand Prix/continental); aproximação para Opens.
    */
   projectedField(competition, categoryId, limit = null) {
+    const cacheKey = `${competition.id}|${categoryId}|${limit ?? ""}`;
+    const cached = this._fieldCache.get(cacheKey);
+    if (cached) return cached;
     const rules = classifyEvent(competition);
     let pool = athletesInCategory(this.world, categoryId).filter((a) =>
       isEligible(a, this.world, rules)
@@ -388,13 +400,15 @@ export class GameController {
     }
     pool.sort((a, b) => b.ranking.points - a.ranking.points);
     const size = limit ?? competition.fieldSize ?? pool.length;
-    return pool.slice(0, size).map((a, i) => {
+    const out = pool.slice(0, size).map((a, i) => {
       const c = this._countryOf(a);
       return {
         id: a.id, seed: i + 1, name: a.fullName, ioc: c.code, flag: flagEmoji(c.code),
         position: a.ranking.position, points: a.ranking.points,
       };
     });
+    this._fieldCache.set(cacheKey, out);
+    return out;
   }
 
   getCountryTable(limit = 30) {
