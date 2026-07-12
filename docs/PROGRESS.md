@@ -616,7 +616,39 @@ um paliativo para não quebrar a simulação.
 
 ---
 
-## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo ✅
+## Passo 19 — Persistência em IndexedDB (fase 1 do save) ✅
+
+**Pedido do usuário:** migrar o save para IndexedDB (o roster completo estoura o
+localStorage). Retenção fica para o passo seguinte. Discutido: IndexedDB remove o
+teto de disco, mas RAM/serialização/décadas ainda pedem retenção.
+
+**Feito (sem tocar no motor, que é síncrono):**
+- `src/services/idb.js` (novo) — `IndexedDBBackend`: interface síncrona
+  (`get/set/remove/keys`) sobre um cache hidratado do IndexedDB em `init()`
+  (await no boot); gravações em segundo plano, não fatais.
+- `src/services/storage.js` — modo **adiado** (`deferMs`): agrupa o save de cada
+  dia de um "próximo evento" e serializa UMA vez no `flush` (debounce). Mata o
+  `JSON.stringify` por dia.
+- `src/main.js` — boot assíncrono com fallback IndexedDB → localStorage →
+  memória; migração única do save antigo do localStorage; `flush()` ao ocultar/
+  sair da página.
+- `tests/services.test.mjs` — +2 testes (agrupamento do modo adiado; remove
+  cancela pendente).
+
+**Testado:** `npm test` → **154/154.** Verificado no navegador (Chromium):
+- pior "próximo evento" **675 ms → 45 ms** (serializa 1×/burst, não por dia);
+- novo jogo grava só no **IndexedDB** (não no localStorage); reload → "Continuar"
+  retoma na mesma data;
+- 80 eventos (> 1 temporada, **7,55 MB**) sem estourar cota nem erros — onde o
+  localStorage quebrava perto de 5 MB.
+
+**Pendente (próximo):** retenção (Camada 1) para limitar RAM/serialização no
+longo prazo (décadas): G-1/G-2 só medalhistas após 1 ano; grandes eventos por
+completo; poda do ledger > 4 anos; limitar `athlete.history`.
+
+---
+
+## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

@@ -82,9 +82,10 @@ será retomado. Atualizado a cada passo do desenvolvimento.
   (15.12%). Para 17º+ (chaves de 32) estendemos com ×0.7 — confirmar os valores
   oficiais da World Taekwondo.
 
-- 🔴 **Persistência real (localStorage/IndexedDB).** Storage inicial é uma
-  camada abstrata com backend em memória/arquivo para testes em Node. O backend
-  localStorage entra junto com a UI no navegador.
+- ✅ **Persistência real (localStorage/IndexedDB).** Feito: backend localStorage
+  (UI) e agora **IndexedDB** (`src/services/idb.js`) com boot assíncrono, modo
+  adiado (agrupa a serialização por burst) e migração do save antigo. Remove o
+  teto de ~5 MB. A camada continua plugável e o motor segue síncrono.
 
 ## Realismo de temporada
 
@@ -184,11 +185,12 @@ será retomado. Atualizado a cada passo do desenvolvimento.
 - 🟢 **Gráficos de evolução de ranking, filtros e tela de Configurações.**
 - 🟢 **Avanço longo em blocos** com barra de progresso (hoje é síncrono; rápido,
   mas várias temporadas de uma vez poderiam travar a UI momentaneamente).
-- 🔴 **Retenção do save + IndexedDB (AGORA CRÍTICO).** Com o roster completo
-  (3.092 atletas) o save INICIAL já é ~3,1 MB e passa dos ~5 MB do `localStorage`
-  ainda na 1ª temporada (~6,5 MB ao fim dela). O save ficou **não fatal** (a
-  simulação segue em memória e emite `WorldSaveFailed`), mas isso é só paliativo:
-  sem retenção + IndexedDB o progresso deixa de persistir cedo. Plano combinado:
+- 🟡 **Retenção do save (Camada 1) — próximo passo.** O IndexedDB (feito) já
+  removeu o teto de disco: 80 eventos = ~7,5 MB persistem sem erro. Mas o mundo
+  vive em RAM e é serializado a cada flush; para rodar DÉCADAS ainda é preciso
+  limitar o crescimento (RAM + custo de serializar/carregar). Além disso, o
+  ponto de ranking só conta por 4 anos, então o detalhe antigo é peso morto.
+  Plano combinado:
   **Camada 1 (retenção)** — G-1/G-2 guardam só os medalhistas após 1 ano
   (apaga lutas/resultados); grandes eventos (G-4+, Mundiais, Grand Slam,
   Olimpíadas) mantêm histórico detalhado para sempre; sempre é possível ver os

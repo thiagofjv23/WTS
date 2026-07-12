@@ -9,6 +9,35 @@ Formato: `[Data] Área — Decisão`
 
 ---
 
+## [2026-07-12] Persistência — Backend IndexedDB (síncrono por fora, assíncrono por dentro)
+Contexto: com o roster completo o save passa dos ~5 MB do localStorage já na 1ª
+temporada. Decisão do usuário: migrar para IndexedDB agora; a RETENÇÃO fica como
+próximo passo (o IndexedDB remove o teto de disco, mas RAM/serialização/décadas
+ainda pedem retenção — ver TODO).
+
+Problema de projeto: o IndexedDB é ASSÍNCRONO, mas todo o motor é SÍNCRONO (o
+Save System grava no meio do pipeline diário). Reescrever para async violaria
+"extensão, não reescrita".
+
+Decisão (3 peças, todas sem dependências):
+1. **`IndexedDBBackend`** (`src/services/idb.js`): mantém a MESMA interface
+   síncrona (`get/set/remove/keys`) sobre um cache em memória hidratado do IDB em
+   `init()` (chamado uma vez no boot, com await). As gravações vão ao IDB em
+   SEGUNDO PLANO; se falharem, avisa e a simulação segue em memória. O motor não
+   muda nada.
+2. **Modo adiado no `StorageService`** (`deferMs`): as gravações de um burst (o
+   save de cada dia num "próximo evento") são AGRUPADAS e serializadas UMA vez no
+   `flush` (debounce). Elimina o `JSON.stringify` do mundo por dia — o pior
+   "próximo evento" caiu de ~675 ms para ~45 ms com o roster cheio. `flush()` é
+   chamado ao ocultar/sair da página.
+3. **Boot assíncrono + fallback** (`src/main.js`): IndexedDB → localStorage →
+   memória. Migra uma vez o save antigo do localStorage para o IDB (não perde
+   progresso de quem já jogava).
+
+Verificado no navegador: novo jogo grava só no IndexedDB (não no localStorage);
+reload oferece "Continuar" e retoma na mesma data; 80 eventos (> 1 temporada,
+7,55 MB) sem estourar cota nem erros — onde o localStorage quebrava perto de 5 MB.
+
 ## [2026-07-12] Roster — Incluir TODOS os rankeados + UI virtualizada
 Contexto: antes limitávamos a TOP 256/categoria (1.024 atletas) por causa do
 save/mobile. Pedido do usuário: incluir a database inteira do ranking (todos os

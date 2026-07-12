@@ -174,3 +174,32 @@ test("namespaces isolam chaves", () => {
   assertEqual(a.load("x"), 1);
   assertEqual(b.load("x"), 2);
 });
+
+// Backend que conta gravações (para provar o agrupamento do modo adiado).
+class CountingBackend extends MemoryBackend {
+  constructor() { super(); this.sets = 0; }
+  set(k, v) { this.sets += 1; super.set(k, v); }
+}
+
+test("modo adiado agrupa vários saves numa única serialização", () => {
+  const backend = new CountingBackend();
+  const s = new StorageService(backend, { deferMs: 50 });
+  for (let i = 0; i < 30; i++) s.save("world", { day: i }); // como um burst de dias
+  assertEqual(backend.sets, 0, "nada foi persistido ainda (adiado)");
+  // Antes do flush, load enxerga o último valor pendente.
+  assertEqual(s.load("world").day, 29);
+  assert(s.has("world"), "has() enxerga o pendente");
+  s.flush();
+  assertEqual(backend.sets, 1, "um único write para os 30 saves");
+  assertEqual(s.load("world").day, 29, "persistiu o último valor");
+});
+
+test("modo adiado: remove cancela o pendente", () => {
+  const backend = new CountingBackend();
+  const s = new StorageService(backend, { deferMs: 50 });
+  s.save("k", 1);
+  s.remove("k");
+  s.flush();
+  assert(!s.has("k"), "removido não deve existir");
+  assertEqual(backend.sets, 0, "não persiste o que foi removido antes do flush");
+});

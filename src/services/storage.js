@@ -54,11 +54,19 @@ export class LocalStorageBackend {
 export class StorageService {
   /**
    * @param {object} backend  Um dos backends acima (ou compatível).
-   * @param {string} [namespace]  Prefixo aplicado a todas as chaves.
+   * @param {string|object} [options]  Prefixo (compat.) ou `{ namespace, deferMs }`.
+   *   - `deferMs > 0` ativa o modo ADIADO: gravações sucessivas (ex.: o save de
+   *     cada dia num "próximo evento") são AGRUPADAS e serializadas UMA vez, ao
+   *     fim do burst. Elimina o custo de `JSON.stringify` por dia com o mundo
+   *     grande. Use com backend assíncrono (IndexedDB). Chame `flush()` ao sair.
    */
-  constructor(backend, namespace = "wts") {
+  constructor(backend, options = {}) {
+    if (typeof options === "string") options = { namespace: options };
     this._backend = backend;
-    this._ns = namespace;
+    this._ns = options.namespace ?? "wts";
+    this._deferMs = options.deferMs ?? 0;
+    this._pending = new Map(); // chave completa → valor vivo (ainda não serializado)
+    this._timer = null;
   }
 
   _key(key) {
@@ -66,20 +74,43 @@ export class StorageService {
   }
 
   /**
-   * Grava um valor serializando para JSON.
-   * NÃO propaga erro do backend (ex.: QuotaExceededError do localStorage): a
-   * simulação em memória segue viva mesmo se a persistência falhar. Retorna
-   * `true` em sucesso, `false` se o backend recusou (com aviso no console).
-   * A solução definitiva para o volume é retenção + IndexedDB (ver TODO).
+   * Grava um valor (serializando para JSON no modo imediato). NÃO propaga erro
+   * do backend (ex.: QuotaExceededError): a simulação em memória segue viva
+   * mesmo se a persistência falhar. Retorna `true` se aceito, `false` se o
+   * backend recusou (modo imediato).
+   * No modo adiado, apenas enfileira o valor (serialização acontece no `flush`).
    */
   save(key, value) {
+    const fk = this._key(key);
+    if (this._deferMs > 0) {
+      this._pending.set(fk, value);
+      if (!this._timer) {
+        this._timer = setTimeout(() => this.flush(), this._deferMs);
+        if (this._timer.unref) this._timer.unref(); // não segura o processo (Node/testes)
+      }
+      return true;
+    }
+    return this._writeNow(fk, value);
+  }
+
+  /** Persiste imediatamente tudo que estiver pendente (modo adiado). */
+  flush() {
+    if (this._timer) {
+      clearTimeout(this._timer);
+      this._timer = null;
+    }
+    for (const [fk, value] of this._pending) this._writeNow(fk, value);
+    this._pending.clear();
+  }
+
+  _writeNow(fullKey, value) {
     try {
-      this._backend.set(this._key(key), JSON.stringify(value));
+      this._backend.set(fullKey, JSON.stringify(value));
       return true;
     } catch (err) {
       if (!this._warnedSave) {
         this._warnedSave = true;
-        console.warn(`StorageService: falha ao salvar "${key}" (${err?.name || "erro"}). A simulação continua em memória; o progresso pode não persistir.`);
+        console.warn(`StorageService: falha ao salvar "${fullKey}" (${err?.name || "erro"}). A simulação continua em memória; o progresso pode não persistir.`);
       }
       return false;
     }
@@ -87,7 +118,10 @@ export class StorageService {
 
   /** Lê e desserializa um valor. Retorna fallback se ausente/corrompido. */
   load(key, fallback = null) {
-    const raw = this._backend.get(this._key(key));
+    const fk = this._key(key);
+    // Valor recém-gravado ainda não serializado: devolve uma cópia coerente.
+    if (this._pending.has(fk)) return JSON.parse(JSON.stringify(this._pending.get(fk)));
+    const raw = this._backend.get(fk);
     if (raw == null) return fallback;
     try {
       return JSON.parse(raw);
@@ -98,11 +132,14 @@ export class StorageService {
 
   /** Remove uma chave. */
   remove(key) {
-    this._backend.remove(this._key(key));
+    const fk = this._key(key);
+    this._pending.delete(fk);
+    this._backend.remove(fk);
   }
 
-  /** True se a chave existe. */
+  /** True se a chave existe (pendente ou já persistida). */
   has(key) {
-    return this._backend.get(this._key(key)) != null;
+    const fk = this._key(key);
+    return this._pending.has(fk) || this._backend.get(fk) != null;
   }
 }
