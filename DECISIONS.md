@@ -566,3 +566,27 @@ Curva observada no Passo 5 (nível uniforme, 1000 lutas por par):
 Coerente com athlete_attributes.md (diferença entre elite é pequena; a maioria
 dos confrontos intra-categoria fica em gaps < 12). A inclinação é ajustável pela
 constante `k` de `advantage()` em probability.js caso queiramos mais zebras.
+
+## [2026-07-13] Grand Slam — remodelado no formato real (Challenge + Finals + Mérito)
+Contexto: o Grand Slam era um invitational único (top 16, G-12). Na realidade são
+DOIS eventos de fim de ano com regras próprias.
+
+Decisão: remodelado em `src/engine/grandSlam.js` a partir de **2027** (quando o
+Mundial passa a existir e todos os classificados vêm da simulação — sem hardcode):
+- **Grand Slam Challenge (G-2, 10/dez):** seletiva ABERTA (`fieldSize = 0`), com
+  **disputa de 3º lugar** (bronze único, 4º distinto). Pontua no ranking normal.
+  Produz 2 qualificados por peso: campeão + próximo colocado **de outro país**
+  (regra de mesmo país escorrega 3º→4º… até um país diferente do campeão).
+- **Grand Slam Finals (12/dez):** só **10 válidos** por peso (campeão+vice das 3
+  etapas de GP + campeão do GP Final + Campeão Mundial vigente + 2 do Challenge),
+  dedup e completa até 10 pelo ranking; **lesão** → vaga passa ao 3º do Challenge.
+  Chave **16 com 6 byes**; campeão do GP Final e Campeão Mundial forçados aos
+  seeds 1–2 (byes garantidos). **Não pontua no ranking normal.**
+- **Ranking de Mérito Grand Slam** (`world.grandSlamMerit`): SEPARADO, só as
+  Finais (1000/600/360/216/151/106), **decaimento 50%/ano válido 2 anos** (não os
+  4 anos do ranking comum), exibido **apenas na tela da competição**.
+
+Motor de chave (`competitionSystem`): dois `opts` novos e genéricos —
+`thirdPlaceMatch` (disputa de bronze com round-sentinela 3) e `preseeded` (usa o
+seeding entregue, sem reordenar por ranking). Reaproveitáveis por futuros
+formatos (ex.: Olimpíadas).

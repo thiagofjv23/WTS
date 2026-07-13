@@ -42,6 +42,7 @@ export function createWorld(opts = {}) {
     wildcards: [], // vagas da President's Cup p/ o continental: { continent, categoryId, candidates, ... }
     yearRankSnapshots: {}, // ranking de janeiro por ano: { [ano]: { [cat]: [[id, pontos], ...] } }
     nationalTeams: {}, // seleções nacionais: { [ioc]: { [cat]: { titulares:[], reservas:[], year } } }
+    grandSlamMerit: [], // ledger do Ranking de Mérito Grand Slam: { date, athleteId, categoryId, points, competitionId }
     favorites: { athletes: [], countries: [], competitions: [] },
     configuration: {},
     // Estados dos serviços (para salvamento determinístico).

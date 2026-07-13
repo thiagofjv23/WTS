@@ -46,10 +46,12 @@ export function classifyEvent(competition) {
 
   if (g === "G-6") rules.rankingLockTopN = 32;
   else if (g === "G-10") rules.rankingLockTopN = 16;
-  else if (g === "G-14") rules.nationalLimit = 1; // Mundial (futuro)
+  else if (g === "G-14") rules.nationalLimit = 1; // Mundial
 
-  // Grand Slam Champions Series: convite, top 16 do ranking (independe do grau).
-  if (/grand slam/i.test(name)) rules.rankingLockTopN = 16;
+  // Grand Slam Finals: campo resolvido externamente (10 válidos) — por convite,
+  // sem trava de ranking. O Grand Slam Challenge é uma seletiva ABERTA (G-2, sem
+  // trava): comporta-se como um Open normal, então não recebe regra especial aqui.
+  const grandSlamFinals = /grand slam finals/i.test(name);
 
   if (/arab/i.test(name)) rules.arabOnly = true;
 
@@ -67,8 +69,10 @@ export function classifyEvent(competition) {
     if (c) rules.continent = c;
   }
 
-  // Eventos por convite/representação: elegíveis comparecem sem sorteio.
-  rules.invitational = rules.rankingLockTopN !== null || rules.nationalLimit !== null;
+  // Eventos por convite/representação: elegíveis comparecem sem sorteio. As
+  // Finais do Grand Slam também são por convite (campo dos 10 válidos).
+  rules.invitational =
+    rules.rankingLockTopN !== null || rules.nationalLimit !== null || grandSlamFinals;
   return rules;
 }
 

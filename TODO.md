@@ -126,8 +126,10 @@ será retomado. Atualizado a cada passo do desenvolvimento.
 - 🟡 **Olimpíadas (G-20)** com a classificação olímpica (top 5 do ranking + Grand
   Slam + qualificatórios continentais) e a repescagem (§7). Próximo grande passo
   do ciclo — o Grand Slam e o Mundial já dão vagas ao campeão (a implementar).
-- ✅ **Grand Slam** (invitational, top 16, G-12) — feito
-  (`engine/grandSlam.js` + `docs/GRAND_SLAM.md`): torneio anual de fim de ano.
+- ✅ **Grand Slam** (formato real: **Challenge G-2 + Finals**) — feito
+  (`engine/grandSlam.js` + `docs/GRAND_SLAM.md`): a partir de 2027, seletiva
+  aberta com disputa de bronze (2 wildcards, regra de mesmo país) + Finais com 10
+  válidos, chave 16/6 byes e **Ranking de Mérito** separado (50%/ano, 2 anos).
   Falta só a **vaga olímpica ao campeão**, que entra com o ciclo olímpico (G-20).
 - 🟢 **Calibração dos totais de pontos.** Com teto+travas os líderes ficam em
   ~450–600 pts (antes >1000); ainda acima do real (~250–350) por causa da

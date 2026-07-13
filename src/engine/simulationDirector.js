@@ -41,6 +41,13 @@ import {
   assignNationalTeam,
   promoteReserveOnInjury,
 } from "./nationalTeams.js";
+import {
+  isGrandSlamChallenge,
+  isGrandSlamFinals,
+  resolveGrandSlamFinalists,
+  grantGrandSlamChallengeQualifiers,
+  applyGrandSlamMerit,
+} from "./grandSlam.js";
 import { COMPETITION_STATUS } from "../entities/competition.js";
 import { addDays } from "../utils/dates.js";
 import { RandomSystem } from "../services/random.js";
@@ -131,10 +138,12 @@ export class SimulationDirector {
       }
     }
 
-    // Seletiva Nacional: campo restrito aos atletas do país. Evento oficial:
-    // seleção normal de participantes.
+    // Seletiva Nacional: campo restrito aos atletas do país. Grand Slam Finals:
+    // os 10 válidos (resolvidos das fontes do ano). Demais: seleção normal.
     const participantsFor = isSelective(competition)
       ? (categoryId) => selectiveParticipants(world, competition, categoryId)
+      : isGrandSlamFinals(competition)
+      ? (categoryId) => resolveGrandSlamFinalists(world, competition, categoryId)
       : (categoryId) => selectParticipants(world, competition, categoryId, this.random);
 
     const onMatch = (match) =>
@@ -152,6 +161,12 @@ export class SimulationDirector {
     const combatOpts = isSelective(competition)
       ? { onMatch, rivalryLookup, fightFn: selectiveFightFn(), applyForm: false }
       : { onMatch, rivalryLookup };
+    // Grand Slam: disputa de 3º lugar (bronze único). As Finais usam o seeding
+    // já resolvido (cabeças-de-chave forçados), então não reordenam por ranking.
+    if (isGrandSlamChallenge(competition) || isGrandSlamFinals(competition)) {
+      combatOpts.thirdPlaceMatch = true;
+    }
+    if (isGrandSlamFinals(competition)) combatOpts.preseeded = true;
 
     const { byCategory, allMatches } = simulateCompetition(
       this.random,
@@ -198,6 +213,26 @@ export class SimulationDirector {
       return;
     }
 
+    if (isGrandSlamFinals(competition)) {
+      // Grand Slam Finals: NÃO pontuam no ranking normal — alimentam o Ranking de
+      // Mérito Grand Slam (separado). Medalhas/estatísticas/histórico, lesões e
+      // rivalidades seguem como em qualquer evento oficial.
+      applyGrandSlamMerit(world, competition, byCategory);
+      applyConsequences(world, competition, byCategory, allMatches);
+      for (const inj of applyCompetitionInjuries(world, competition, allMatches, this.random, competition.date)) {
+        newsInjury(world, competition.date, inj.athleteId, inj.severity, inj.until);
+        this._emit("AthleteInjured", { athleteId: inj.athleteId, severity: inj.severity, until: inj.until });
+        const promoted = promoteReserveOnInjury(world, inj.athleteId);
+        if (promoted) newsCallup(world, competition.date, promoted, inj.athleteId);
+      }
+      updateRivalriesFromCompetition(world, competition, allMatches);
+      pruneRivalries(world, competition.date);
+      recordCompetitionHistory(world, competition, byCategory);
+      competition.status = COMPETITION_STATUS.FINISHED;
+      this._emit("CompetitionFinished", { competitionId: competition.id });
+      return;
+    }
+
     // Ranking: credita os pontos no ledger (registro permanente). O ranking
     // materializado (posições/pontos visíveis) NÃO muda aqui — é recalculado no
     // dia 1 de cada mês (ver _monthlyRankingUpdate).
@@ -228,6 +263,11 @@ export class SimulationDirector {
     }
     if (isContinentalChampionship(competition)) {
       consumeWildcards(world, competition);
+    }
+    // Grand Slam Challenge (seletiva aberta): resolve os 2 qualificados por peso
+    // (campeão + próximo de outro país) para as Finais lerem.
+    if (isGrandSlamChallenge(competition)) {
+      grantGrandSlamChallengeQualifiers(world, competition, byCategory);
     }
     // Histórico permanente.
     recordCompetitionHistory(world, competition, byCategory);

@@ -874,7 +874,41 @@ julho, 1/país, campeão +140). Custo: ano com Mundial ~+0,5 s.
 
 ---
 
-## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais + Grand Slam + Mundial ✅
+## Passo 25 — Grand Slam remodelado (Challenge + Finals + Ranking de Mérito)
+
+**Pedido:** o Grand Slam no formato real de **dois eventos**, a partir de **2027**
+(sem hardcode — participantes vêm da simulação):
+
+- **Grand Slam Challenge (G-2, 10/dez):** seletiva **aberta** (sem limite), com
+  **disputa de 3º lugar** (bronze único). Pontua no ranking normal. Dá 2
+  wildcards às Finais (campeão + próximo de **outro país** — regra de mesmo país).
+- **Grand Slam Finals (12/dez):** **10 válidos** por peso (campeão+vice das 3
+  etapas de GP + campeão do GP Final + Campeão Mundial + 2 do Challenge), chave
+  **16 com 6 byes** (GP Final e Mundial como cabeças). **Não** pontua no ranking.
+- **Ranking de Mérito Grand Slam:** separado (1000/600/360/216/151/106),
+  **50%/ano por 2 anos**, exibido **só na tela da competição**.
+
+**Feito:**
+- `engine/grandSlam.js` (reescrito): `scheduleGrandSlam` (par a partir de 2027),
+  `isGrandSlamChallenge/Finals`, `grandSlamChallengeQualifiers` (regra de mesmo
+  país), `resolveGrandSlamFinalists` (10 válidos + lesão → 3º do Challenge),
+  `applyGrandSlamMerit`, `grandSlamMeritRanking`, `meritDecayFactor`.
+- `competitionSystem`: `opts.thirdPlaceMatch` (bronze único + 4º) e
+  `opts.preseeded` (seeding pronto).
+- `simulationDirector`: ramos do Challenge (qualificados) e das Finais (mérito,
+  sem ranking). `world.grandSlamMerit`. `eligibility`: Challenge aberto, Finais
+  por convite. UI: rótulo/pontos de mérito, bloco "Ranking de Mérito" e "Disputa
+  de bronze".
+
+**Testado:** `npm test` → **192/192** (`tests/grandSlam.test.mjs` reescrito:
+agenda 2027, Challenge aberto/bronze único, regra de mesmo país, thirdPlaceMatch,
+Finais 10 válidos/mérito/sem ledger de ranking/byes). Verificado no navegador
+(modal das Finais com o Ranking de Mérito) e o decaimento entre anos (campeão de
+2027 com 1000 → 500 na tela de 2028). Custo: ano de Grand Slam ~2,2 s.
+
+---
+
+## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais + Grand Slam (Challenge+Finals+Mérito) + Mundial ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

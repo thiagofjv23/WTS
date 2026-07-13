@@ -28,7 +28,12 @@ import { enterProbability } from "../engine/participation.js";
 import { rivalsOf } from "../engine/rivalry.js";
 import { wildcardEntrantsFor } from "../engine/wildcards.js";
 import { scheduleNationalSelectives, isSelective, selectiveParticipants } from "../engine/nationalTeams.js";
-import { scheduleGrandSlam } from "../engine/grandSlam.js";
+import {
+  scheduleGrandSlam,
+  isGrandSlamFinals,
+  resolveGrandSlamFinalists,
+  grandSlamMeritRanking,
+} from "../engine/grandSlam.js";
 import { scheduleWorldChampionship } from "../engine/worldChampionship.js";
 import { athletesInCategory } from "../core/world.js";
 
@@ -38,6 +43,7 @@ const SEASON_BASE_YEAR = 2026; // 1ª temporada; offsets de temporada são relat
 
 /** Rótulo da rodada a partir do tamanho (2 = Final, 4 = Semifinal, …). */
 function roundLabel(roundSize) {
+  if (roundSize === 3) return "Disputa de bronze"; // sentinela da disputa de 3º
   if (roundSize === 2) return "Final";
   if (roundSize === 4) return "Semifinal";
   if (roundSize === 8) return "Quartas de final";
@@ -503,6 +509,19 @@ export class GameController {
       this._fieldCache.set(cacheKey, out);
       return out;
     }
+    // Grand Slam Finals: o campo são os 10 válidos (na ordem de seeding). Antes
+    // das fontes concluírem, o resolvedor completa pelo ranking. Sem cache: o
+    // campo evolui conforme GP/Mundial/Challenge terminam.
+    if (isGrandSlamFinals(competition)) {
+      return resolveGrandSlamFinalists(this.world, competition, categoryId).map((a, i) => {
+        const c = this._countryOf(a);
+        return {
+          id: a.id, seed: i + 1, name: a.fullName, ioc: c.code, flag: flagEmoji(c.code),
+          position: a.ranking.position, points: a.ranking.points,
+          wildcard: false, nationalTeam: a.nationalTeam || null,
+        };
+      });
+    }
     const rules = classifyEvent(competition);
     let pool = athletesInCategory(this.world, categoryId).filter((a) =>
       isEligible(a, this.world, rules)
@@ -613,6 +632,7 @@ export class GameController {
     const c = this.world.competitions[competitionId];
     if (!c) return null;
     const done = c.status === "concluida";
+    const gsFinals = isGrandSlamFinals(c);
     const rules = classifyEvent(c);
     const categories = c.categoryIds.map((catId) => {
       const catName = getWeightCategory(catId)?.name || catId;
@@ -626,7 +646,9 @@ export class GameController {
             name: a ? a.fullName : "?",
             ioc: cc.code, flag: flagEmoji(cc.code),
             placement: p.placement, medal: p.medal,
-            points: p.rankingPointsEarned ?? 0,
+            // Finais do Grand Slam: mostra os pontos de MÉRITO (não pontuam no
+            // ranking normal); demais eventos, os pontos de ranking.
+            points: gsFinals ? (p.meritPoints ?? 0) : (p.rankingPointsEarned ?? 0),
             wildcard: wildcardSet.has(p.athleteId),
             nationalTeam: a?.nationalTeam || null,
           };
@@ -634,7 +656,20 @@ export class GameController {
         const matches = (c.matches || [])
           .filter((m) => m.categoryId === catId)
           .map((m) => this._matchView(m));
-        return { categoryId: catId, categoryName: catName, placements, matches };
+        // Ranking de Mérito Grand Slam: SÓ na tela das Finais (2 anos, 50%/ano).
+        const meritRanking = gsFinals
+          ? grandSlamMeritRanking(this.world, catId, c.date).map((e) => {
+              const a = this.world.athletes[e.athleteId];
+              const cc = a ? this._countryOf(a) : { code: "??" };
+              return {
+                athleteId: e.athleteId,
+                name: a ? a.fullName : "?",
+                ioc: cc.code, flag: flagEmoji(cc.code),
+                points: e.points,
+              };
+            })
+          : null;
+        return { categoryId: catId, categoryName: catName, placements, matches, meritRanking };
       }
       return {
         categoryId: catId,
@@ -645,10 +680,16 @@ export class GameController {
     const selective = isSelective(c);
     return {
       id: c.id, name: c.name, gRank: c.gRank,
-      gLabel: selective ? "Seletiva Nacional" : (G_RANK_LABELS[c.gRank] || c.gRank),
+      gLabel: selective
+        ? "Seletiva Nacional"
+        : gsFinals
+        ? "Grand Slam Finals (Mérito)"
+        : (G_RANK_LABELS[c.gRank] || c.gRank),
       date: c.date, location: c.location,
-      championPoints: selective ? 0 : championPointsFor(c.gRank),
-      done, selective,
+      // Finais do Grand Slam: o "valor" do campeão é o mérito (1000), não pontos
+      // de ranking (que não são creditados).
+      championPoints: selective ? 0 : gsFinals ? 1000 : championPointsFor(c.gRank),
+      done, selective, grandSlamFinals: gsFinals,
       eligibility: selective ? {} : {
         rankingLockTopN: rules.rankingLockTopN,
         continent: rules.continent,

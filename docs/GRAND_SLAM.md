@@ -1,63 +1,99 @@
-# Grand Slam Champions Series
+# Grand Slam (Challenge + Finals)
 
-Documento da mecânica do Grand Slam.
+Documento da mecânica do Grand Slam no seu formato **real de dois eventos**.
 
 ## O que é
 
-O **Grand Slam Champions Series** é o torneio mais prestigiado do calendário: um
-evento **anual, de fim de ano e por CONVITE**, em que apenas os **melhores do
-ranking** disputam. No mundo real, o campeão do Grand Slam ganha uma **vaga
-olímpica** ("porta de entrada olímpica" — Estrutura Competitiva §7).
+O Grand Slam é o clímax da temporada, disputado em **dois eventos** de fim de ano:
 
-Com os dados que já temos (ranking, categorias, chaveamento e o sistema de
-travas), ele é montado como um **torneio de eliminação simples** normal — só que
-fechado à elite.
+1. **Grand Slam Challenge (G-2):** uma **seletiva ABERTA**, 2 dias antes das
+   Finais. Sem limite de atletas. O campeão e o vice ganham **wildcards** para as
+   Finais. Pontua no **ranking normal** (G-2).
+2. **Grand Slam Finals:** só **10 atletas válidos** por peso. Não pontua no
+   ranking normal — alimenta um **Ranking de Mérito Grand Slam** separado.
+
+Só a partir de **2027**: é quando o Mundial passa a existir (bienal) e todos os
+classificados vêm direto da simulação (sem hardcode).
 
 ---
 
-## Estrutura
+## Grand Slam Challenge (G-2)
 
 | Aspecto | Valor |
 |---|---|
-| Quando | **fim de dezembro** (clímax da temporada, após o Grand Prix Final) |
-| Formato | eliminação simples, todas as 4 categorias |
-| Convite | **top 16 do ranking** por categoria (`GRAND_SLAM_FIELD = 16`) |
-| Grau | **G-12** (campeão = 120 pts) |
-| Local | Wuxi, China (sede histórica) |
-| Combate | normal (forma + rivalidade) — é evento oficial |
+| Quando | **10 de dezembro** (2 dias antes das Finais) |
+| Campo | **aberto** — sem limite de atletas (`fieldSize = 0`) |
+| Formato | eliminação simples + **disputa de 3º lugar** (um único bronze, 4º distinto) |
+| Grau | **G-2** — pontua no ranking normal (campeão 20 pts) |
+| Produz | os **2 qualificados** de cada peso para as Finais |
 
-O **grau G-12** o posiciona **acima do Grand Prix Final (G-10)** e abaixo do
-Mundial (G-14): o evento invitational mais valioso do ano. Como todo evento
-oficial, **pontua no ranking** (120 ao campeão, 72 ao vice, etc., pela tabela de
-colocação §2).
+**Qualificados (regra de mesmo país).** As duas vagas vão ao **campeão** e ao
+próximo colocado **de outro país**: se o vice for do país do campeão, a 2ª vaga
+escorrega para o 3º, depois 4º… até achar um atleta de país diferente do campeão
+(`grandSlamChallengeQualifiers`).
+
+---
+
+## Grand Slam Finals
+
+| Aspecto | Valor |
+|---|---|
+| Quando | **12 de dezembro** |
+| Campo | **10 atletas válidos** por peso (`GRAND_SLAM_FINALS_FIELD = 10`) |
+| Chave | **16 com 6 byes** (`GRAND_SLAM_BRACKET = 16`) |
+| Cabeças-de-chave | **campeão do GP Final (seed 1)** e **Campeão Mundial (seed 2)** — byes garantidos |
+| Formato | eliminação simples + **disputa de 3º lugar** |
+| Pontuação | **Ranking de Mérito** (NÃO pontua no ranking normal) |
+
+**Os 10 válidos** por peso:
+
+- campeão **e** vice das **3 etapas do Grand Prix Series** do ano (6),
+- **campeão do Grand Prix Final** (1),
+- **Campeão Mundial** vigente (1),
+- os **2 qualificados do Grand Slam Challenge** (2).
+
+Deduplicados (um atleta pode acumular fontes) e, se sobrarem vagas, **completa
+até 10 pelo ranking**. **Lesão:** a vaga de um válido lesionado passa ao **3º do
+Challenge** (depois seguintes; por fim, o ranking).
+
+Como há **6 byes** para **10 atletas**, os **6 primeiros seeds** avançam direto;
+forçar o campeão do GP Final e o Campeão Mundial aos seeds 1–2 garante os byes
+deles. A 1ª rodada tem, portanto, **2 lutas** (os 4 piores seeds).
+
+### Ranking de Mérito Grand Slam
+
+Um ranking **SEPARADO**, que conta **apenas** os pontos das Finais e é exibido
+**só na tela da competição** (`world.grandSlamMerit`).
+
+| Colocação | 1º | 2º | 3º | 4º | 5º (×4) | 9º (×2) |
+|---|---|---|---|---|---|---|
+| Pontos | 1000 | 600 | 360 | 216 | 151 | 106 |
+
+**Decaimento: 50% ao ano, válido 2 anos** (diferente do ranking normal, de 4
+anos). Após 1 ano: 500 / 300 / 180 / 108 / 75,5 / 53. Após 2 anos: expira.
 
 ---
 
 ## Como funciona no pipeline
 
-1. **Agendamento** (`scheduleGrandSlam`): junto de cada temporada, o
-   GameController agenda um Grand Slam em `AAAA-12-12` com as 4 categorias.
-2. **Convite** (`eligibility.classifyEvent`): o evento é reconhecido pelo nome
-   ("grand slam") e recebe a trava `rankingLockTopN = 16` — só o top 16 do
-   ranking vigente entra, e por ser invitational todos os elegíveis comparecem
-   (sem sorteio de participação). Lesionados do top 16 ficam de fora (campo
-   menor), como em qualquer evento.
-3. **Torneio**: o Competition System monta o chaveamento (seeding por ranking,
-   byes aos melhores) e roda as lutas pelo Combat Engine normal.
-4. **Consequência**: pontos no ledger, medalhas, histórico, rivalidades — tudo
-   como um evento oficial.
-
-Nada de novo no núcleo: reaproveita o mesmo caminho dos demais torneios; só o
-agendamento e a trava de convite são específicos.
+1. **Agendamento** (`scheduleGrandSlam`): o par Challenge (10/dez) + Finals
+   (12/dez) é agendado a cada temporada **a partir de 2027**.
+2. **Challenge**: evento oficial G-2 aberto — participação voluntária normal,
+   com **disputa de 3º lugar** ligada (`thirdPlaceMatch`). Ao final,
+   `grantGrandSlamChallengeQualifiers` grava os 2 qualificados por peso.
+3. **Finais**: o campo são os 10 válidos (`resolveGrandSlamFinalists`), no
+   **seeding pronto** (`preseeded`), com disputa de 3º lugar. Em vez de pontos de
+   ranking, `applyGrandSlamMerit` credita o mérito. Medalhas, histórico, lesões e
+   rivalidades seguem como em qualquer evento oficial.
 
 ---
 
 ## Na interface
 
-Aparece no **Calendário** e na **tela de campeonato** como qualquer torneio:
-selo de grau **G-12**, rótulo **"Grand Slam Champions Series"**, chip de trava
-"Convite: top 16 do ranking", campo projetado (os 16 convidados) antes e a
-classificação + chaveamento depois.
+- **Challenge**: aparece como um Open G-2 comum (com disputa de bronze).
+- **Finais**: rótulo **"Grand Slam Finals (Mérito)"**, campeão valendo **1000**
+  de mérito, e um bloco **"Ranking de Mérito Grand Slam"** com o decaimento de
+  50%/ano — exibido **apenas** nessa tela.
 
 ---
 
@@ -67,16 +103,17 @@ Em `src/engine/grandSlam.js`:
 
 | Constante | Valor | Papel |
 |---|---|---|
-| `GRAND_SLAM_GRANK` | `"G-12"` | grau/pontos (campeão 120) |
-| `GRAND_SLAM_FIELD` | 16 | convidados por categoria (top N) |
+| `GRAND_SLAM_CHALLENGE_GRANK` | `"G-2"` | grau do Challenge (pontua no ranking) |
+| `GRAND_SLAM_FINALS_GRANK` | `"G-12"` | rótulo das Finais (não pontua no ranking) |
+| `GRAND_SLAM_FINALS_FIELD` | 10 | válidos por peso nas Finais |
+| `GRAND_SLAM_BRACKET` | 16 | tamanho da chave (10 + 6 byes) |
+| `GRAND_SLAM_FIRST_YEAR` | 2027 | 1ª edição do formato remodelado |
+| `GRAND_SLAM_MERIT_POINTS` | tabela | pontos de mérito por colocação |
 
 ---
 
 ## Pendente / futuro
 
-- **Vaga olímpica ao campeão:** a "porta de entrada olímpica" só faz sentido
-  quando existirem Olimpíadas (G-20) e a classificação olímpica (§7). Hoje o
-  Grand Slam é o torneio; a vaga entra junto com o ciclo olímpico (TODO).
-- **Calibração de pontos:** por concentrar 120 pts anuais na elite, o Grand Slam
-  reforça o topo do ranking (que já fica ~30% acima do real). Revisar junto da
-  calibração geral do topo (TODO).
+- **Vaga olímpica ao campeão:** a "porta de entrada olímpica" entra com o ciclo
+  olímpico (G-20) e a classificação (TODO).
+- **Feminino e 8 divisões de peso:** quando o jogo suportar mais categorias.

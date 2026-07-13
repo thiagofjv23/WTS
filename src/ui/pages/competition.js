@@ -112,7 +112,7 @@ export function competitionModal(view, { onClose, onAthlete, state }) {
       if (!byRound.has(m.roundLabel)) byRound.set(m.roundLabel, []);
       byRound.get(m.roundLabel).push(m);
     }
-    const order = ["Final", "Semifinal", "Quartas de final", "Oitavas de final"];
+    const order = ["Final", "Disputa de bronze", "Semifinal", "Quartas de final", "Oitavas de final"];
     const roundNames = [...byRound.keys()].sort(
       (a, b) => (order.indexOf(a) + 99 * (order.indexOf(a) < 0)) - (order.indexOf(b) + 99 * (order.indexOf(b) < 0))
     );
@@ -122,9 +122,27 @@ export function competitionModal(view, { onClose, onAthlete, state }) {
         ...byRound.get(rn).map((m) => matchRow(m))
       )
     );
+    // Ranking de Mérito Grand Slam (só nas Finais): exibido apenas aqui.
+    const merit = cat.meritRanking && cat.meritRanking.length
+      ? el("div",
+          el("h4.block-title", "Ranking de Mérito Grand Slam"),
+          el("p.hint", "Válido 2 anos, decai 50% ao ano — exibido só nesta tela."),
+          el("div.list.compact",
+            ...cat.meritRanking.map((r, i) =>
+              el("button.row.entry-row", { onClick: () => onAthlete(r.athleteId) },
+                el("span.pos", `${i + 1}º`),
+                el("span.flag", r.flag || "🏳"),
+                el("span.row-main", el("span.row-name", r.name)),
+                el("span.pts", `${r.points}`)
+              )
+            )
+          )
+        )
+      : null;
     return el("div",
       el("h4.block-title", "Classificação final"),
       podium,
+      merit,
       el("h4.block-title", "Resultados das lutas"),
       ...fights
     );
