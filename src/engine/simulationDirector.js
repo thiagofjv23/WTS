@@ -37,6 +37,7 @@ import {
 import {
   isSelective,
   selectiveParticipants,
+  selectiveFightFn,
   assignNationalTeam,
   promoteReserveOnInjury,
 } from "./nationalTeams.js";
@@ -136,21 +137,28 @@ export class SimulationDirector {
       ? (categoryId) => selectiveParticipants(world, competition, categoryId)
       : (categoryId) => selectParticipants(world, competition, categoryId, this.random);
 
+    const onMatch = (match) =>
+      this._emit("FightFinished", {
+        competitionId: competition.id,
+        categoryId: match.categoryId,
+        winnerId: match.winnerId,
+      });
+    // Seletiva: reduz as zebras — melhor de N lutas por confronto, SEM a forma do
+    // dia nem rivalidade (é uma peneira interna; o ranking/força deve prevalecer).
+    // Evento oficial: variância normal (forma + rivalidade), calibrada.
+    const combatOpts = isSelective(competition)
+      ? { onMatch, fightFn: selectiveFightFn(), applyForm: false }
+      : {
+          rivalryLookup: (aId, bId) =>
+            rivalryLevel(rivalryIntensity(world, aId, bId, competition.date)),
+          onMatch,
+        };
+
     const { byCategory, allMatches } = simulateCompetition(
       this.random,
       competition,
       participantsFor,
-      {
-        // Rivalidade (0..1) entre dois atletas na data do evento → afeta a luta.
-        rivalryLookup: (aId, bId) =>
-          rivalryLevel(rivalryIntensity(world, aId, bId, competition.date)),
-        onMatch: (match) =>
-          this._emit("FightFinished", {
-            competitionId: competition.id,
-            categoryId: match.categoryId,
-            winnerId: match.winnerId,
-          }),
-      }
+      combatOpts
     );
 
     // Persiste as lutas (compacto) para consulta na interface. O ranking só é

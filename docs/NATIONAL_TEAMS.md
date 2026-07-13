@@ -27,10 +27,27 @@ categorias em que o país tem atletas. Janeiro estava livre no calendário real
 (os eventos oficiais começam em fevereiro), então as seletivas o preenchem.
 
 ### Campo e resultado
-O campo da seletiva são os **atletas do próprio país** naquela categoria (os
-melhores por ranking, até 32). As lutas rodam pelo Combat Engine normal — com
-forma e zebras —, então **um top do ranking pode ficar de fora da seleção** se
-tropeçar (é o drama da seletiva).
+O campo da seletiva são **todos os atletas do país** naquela categoria (sem teto:
+a seletiva é a exceção que pode ter **mais de 32** — ex.: KOR -68 tem 57).
+Ordenados por ranking para o **seeding** do chaveamento (melhores em lados
+opostos; bye quando o campo não é potência de dois).
+
+### Menos zebras (melhor de N)
+Uma seletiva é uma **peneira interna**: o ranking/força deve prevalecer. Por isso
+o combate é **menos aleatório** que num evento oficial:
+
+- cada confronto é resolvido em **melhor de N lutas** (`SELECTIVE_BEST_OF = 5`) —
+  o mais forte vence a maioria com mais confiabilidade;
+- **sem a "forma do dia"** e **sem rivalidade** (fontes de variância extra).
+
+Medido: com isso o **nº 1 do país entra na seleção ~93%** das vezes (era ~85%).
+Ainda há drama: o campeão da seletiva não é garantido (a final nº1×nº2 é
+apertada), então zebras acontecem — só que bem menos.
+
+Nota de projeto: testamos a ideia de "melhores entram em fases mais próximas da
+final" (byes/seeding), mas **medimos que ela não reduz as zebras** — num
+chaveamento menor o favorito pega adversários fortes mais cedo, e os efeitos se
+cancelam. O que funciona é reduzir a variância por confronto (melhor de N).
 
 ### Seleção (`assignNationalTeam`)
 Da classificação: 1º/2º → **titulares**; os dois 3º → **reservas**. A designação
@@ -102,13 +119,14 @@ Em `src/engine/nationalTeams.js`:
 | Constante | Valor | Papel |
 |---|---|---|
 | `SELECTIVE_MIN_ATHLETES` | 20 | país precisa de MAIS de 20 atletas |
-| `SELECTIVE_FIELD` | 32 | máximo de inscritos por categoria na seletiva |
+| `SELECTIVE_BEST_OF` | 5 | lutas por confronto na seletiva (menos zebras) |
 
 ---
 
 ## Custo
 
-As seletivas rodam só o bracket + a designação (pulam pontos/estatísticas/
-histórico/lesões), então o custo é baixo: ~40 seletivas por ano adicionam
-≈ 35 ms/ano ao tempo de simulação (medido). ~20% do plantel fica marcado como
-Seleção Nacional (titulares + reservas).
+As seletivas pulam pontos/estatísticas/histórico/lesões, mas o **melhor de 5**
+sobre o **campo cheio** multiplica as lutas de janeiro: ~40 seletivas custam
+≈ 700 ms uma vez por ano (o mês de janeiro). Um ano completo passou de ~1,3 s
+para ~2,1 s — aceitável para um avanço de teste. ~20% do plantel fica marcado
+como Seleção Nacional (titulares + reservas).

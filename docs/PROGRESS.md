@@ -778,6 +778,30 @@ top do ranking pode ficar fora da seleção após zebra na seletiva.
 
 ---
 
+## Ajuste — Menos zebras nas seletivas (melhor de N) + campo > 32 ✅
+
+**Pergunta/pedido do usuário:** reduzir zebras nas seletivas (ideia: melhores
+entram em fases mais próximas da final); e se algum país tem >32 numa categoria,
+a seletiva ser exceção com mais de 32.
+
+**Investigação (medida):**
+- **>32 existe:** 10 casos (máx. KOR -68 = 57). A seletiva passou a **não ter
+  teto** (`selectiveParticipants` devolve o campo cheio, ordenado por ranking).
+- **Seeding/byes não reduz zebras** (medido caps 8/16/32 → nº 1 na equipe ~85–88%
+  nos três): num chaveamento menor o favorito pega adversários fortes mais cedo.
+- **A alavanca é a variância por confronto:** a seletiva virou peneira interna com
+  **melhor de N lutas** (`SELECTIVE_BEST_OF = 5`), **sem forma do dia nem
+  rivalidade**. Mantém o combate e o placar; só reduz a aleatoriedade.
+
+**Resultado:** nº 1 do país na seleção **~85% → ~93%** (campeão da seletiva
+~46%, ainda com drama). Eventos oficiais inalterados. Custo: janeiro ~700 ms;
+1 ano ~1,3 s → ~2,1 s.
+
+**Testado:** `npm test` → **179/179** (novos testes: melhor-de-N reduz zebras;
+campo da seletiva sem teto). Verificado no navegador.
+
+---
+
 ## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e

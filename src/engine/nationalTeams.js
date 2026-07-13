@@ -17,6 +17,7 @@ import { createCompetition } from "../entities/competition.js";
 import { scheduleCompetition } from "./calendar.js";
 import { athletesInCategory } from "../core/world.js";
 import { combatRating } from "./combat/probability.js";
+import { simulateFight } from "./combat/fightManager.js";
 import { MEN_CATEGORIES } from "../config/weightCategories.js";
 import { yearOf } from "../utils/dates.js";
 
@@ -24,8 +25,33 @@ const MEN_IDS = MEN_CATEGORIES.map((c) => c.id);
 
 /** Limiar de atletas para um país realizar seletiva (MAIS de 20). */
 export const SELECTIVE_MIN_ATHLETES = 20;
-/** Máximo de inscritos por categoria na seletiva (melhores do país por ranking). */
-const SELECTIVE_FIELD = 32;
+/**
+ * A seletiva é resolvida em "melhor de N" lutas por confronto: reduz as zebras
+ * (o mais forte prevalece com mais confiabilidade) sem trocar o modelo de
+ * combate nem perder o placar das lutas. Calibrado em teste: com melhor-de-5 o
+ * nº 1 do país entra na seleção ~93% das vezes (era ~85% com uma luta só).
+ */
+export const SELECTIVE_BEST_OF = 5;
+
+/**
+ * fightFn "melhor de N" para as seletivas: roda a luta N vezes e o vencedor é a
+ * maioria. Devolve uma luta representativa (a 1ª vencida pelo vencedor) para
+ * exibir um placar coerente.
+ */
+export function selectiveFightFn(bestOf = SELECTIVE_BEST_OF) {
+  return (random, a, b, ctx) => {
+    let winsA = 0;
+    const results = [];
+    for (let i = 0; i < bestOf; i++) {
+      const res = simulateFight(random, a, b, ctx);
+      if (res.winnerId === a.id) winsA += 1;
+      results.push(res);
+    }
+    const winnerId = winsA > bestOf / 2 ? a.id : b.id;
+    const rep = results.find((r) => r.winnerId === winnerId) || results[results.length - 1];
+    return { ...rep, winnerId };
+  };
+}
 
 /** É uma Seletiva Nacional? */
 export function isSelective(competition) {
@@ -44,14 +70,19 @@ function byRanking(a, b) {
   return combatRating(b.attributes) - combatRating(a.attributes);
 }
 
-/** Atletas ativos de um país numa categoria (inscritos da seletiva). */
+/**
+ * Atletas ativos de um país numa categoria (inscritos da seletiva), ordenados
+ * por ranking (para o seeding do chaveamento — os melhores ficam em lados
+ * opostos e recebem bye quando o campo não é potência de dois). SEM teto: a
+ * seletiva é a exceção que pode ter mais de 32 (ex.: KOR -68 tem 57).
+ */
 export function selectiveParticipants(world, competition, categoryId) {
   const code = competition.selectiveCountry;
   const pool = athletesInCategory(world, categoryId).filter(
     (a) => world.countries[a.countryId]?.code === code
   );
   pool.sort(byRanking);
-  return pool.slice(0, competition.fieldSize ?? SELECTIVE_FIELD);
+  return pool;
 }
 
 /**
@@ -82,7 +113,7 @@ export function scheduleNationalSelectives(world, idGen, opts = {}) {
       date,
       categoryIds: cats,
       location: country.name,
-      fieldSize: SELECTIVE_FIELD,
+      fieldSize: null, // sem teto: a seletiva pode ter mais de 32 (exceção)
       type: "selective",
       selectiveCountry: country.code,
     });

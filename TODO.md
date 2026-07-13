@@ -105,8 +105,10 @@ será retomado. Atualizado a cada passo do desenvolvimento.
   (`engine/nationalTeams.js` + `docs/NATIONAL_TEAMS.md`): países com >20 atletas
   fazem seletivas em janeiro; finalistas = titulares, terceiros = reservas
   (convocados por lesão). Selo **SN** em todas as telas. Seletivas não pontuam.
-  Futuro possível: a Seleção Nacional passar a definir quem representa o país nos
-  continentais (hoje é por ranking + wildcard; a seleção é só marcação).
+  **Menos zebras:** confronto em melhor de 5, sem forma/rivalidade (nº 1 do país
+  na seleção ~93%); campo **sem teto** (pode ter >32). Futuro possível: a Seleção
+  Nacional definir quem representa o país nos continentais (hoje: ranking +
+  wildcard; a seleção é só marcação).
 - ✅ **Calendário completo** — importado de "2026 Events.txt" (67 eventos reais).
 
 ## Estrutura competitiva — pendências de LÓGICA

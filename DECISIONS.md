@@ -9,6 +9,29 @@ Formato: `[Data] Área — Decisão`
 
 ---
 
+## [2026-07-13] Seletivas — Menos zebras (melhor de N) + campo > 32
+Pergunta do usuário: dá para reduzir zebras fazendo os melhores rankeados entrarem
+em fases mais próximas da final, mesmo com nº de participantes diferente por país?
+E algum país tem >32 numa categoria (aí a seletiva seria exceção)?
+
+Investigação (medida):
+- **>32 existe:** 10 casos país+categoria; máximo KOR -68 = 57. → a seletiva
+  passou a **não ter teto** (`selectiveParticipants` devolve o campo cheio),
+  ordenado por ranking p/ o seeding.
+- **Seeding/byes NÃO reduz zebras:** medi caps 8/16/32 (campeão luta 3/4/5) e o
+  nº 1 entra na equipe ~85–88% nos três — num chaveamento menor o favorito pega
+  adversários fortes mais cedo e os efeitos se cancelam. O bracket já semeava por
+  ranking com byes; manter, mas não é a alavanca.
+- **A alavanca é a variância por confronto.** Decisão: a seletiva vira uma peneira
+  interna com combate **menos aleatório** — cada confronto em **melhor de N lutas**
+  (`SELECTIVE_BEST_OF = 5`) e **sem forma do dia nem rivalidade**. Mantém o modelo
+  de combate e o placar das lutas; só reduz a variância. Medido: nº 1 do país na
+  seleção **~85% → ~93%** (campeão da seletiva ~40% → ~46%, ainda com drama).
+- Eventos oficiais **não** mudam (mantêm forma + rivalidade calibradas).
+
+Custo: campo cheio × melhor de 5 encarece janeiro (~700 ms uma vez/ano); 1 ano
+passou de ~1,3 s → ~2,1 s. Aceitável para avanço de teste.
+
 ## [2026-07-12] Seleções Nacionais — Seletivas de janeiro
 Pedido: países com >20 atletas fazem seletivas em janeiro; os 2 finalistas viram
 Seleção Nacional (titulares) e os 2 terceiros, reservas (entram quando um titular

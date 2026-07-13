@@ -11,11 +11,15 @@ import { ALL_ATTRIBUTES } from "../src/config/attributes.js";
 import {
   qualifyingCountries,
   scheduleNationalSelectives,
+  selectiveParticipants,
+  selectiveFightFn,
   assignNationalTeam,
   promoteReserveOnInjury,
   isSelective,
   SELECTIVE_MIN_ATHLETES,
 } from "../src/engine/nationalTeams.js";
+import { RandomSystem } from "../src/services/random.js";
+import { simulateFight } from "../src/engine/combat/fightManager.js";
 
 function newGame(seed = 20260101) {
   const g = new GameController({ storage: new StorageService(new MemoryBackend()) });
@@ -23,9 +27,9 @@ function newGame(seed = 20260101) {
   return g;
 }
 
-function ath(id, countryId) {
+function ath(id, countryId, level = 70) {
   const attributes = {};
-  for (const k of ALL_ATTRIBUTES) attributes[k] = 70;
+  for (const k of ALL_ATTRIBUTES) attributes[k] = level;
   const a = createAthlete({
     id, forename: id, surname: "T", countryId, gender: "M",
     birthDate: "2000-01-01", weightCategoryId: "WC-M-58", attributes,
@@ -89,6 +93,36 @@ test("nova seletiva limpa a designação do ano anterior", () => {
   assertEqual(world.athletes.A.nationalTeam, "titular");
   assertEqual(world.athletes.B.nationalTeam ?? null, null, "quem saiu perde a marcação");
   assertEqual(world.athletes.D.nationalTeam ?? null, null);
+});
+
+suite("Seletivas — menos zebras e campo sem teto");
+
+test("melhor de N reduz zebras (o mais forte vence mais)", () => {
+  const strong = ath("S", "C", 78);
+  const weak = ath("W", "C", 66);
+  const N = 400;
+  const r1 = new RandomSystem(1);
+  const r2 = new RandomSystem(1);
+  let single = 0;
+  for (let i = 0; i < N; i++) if (simulateFight(r1, strong, weak).winnerId === "S") single++;
+  const bo5 = selectiveFightFn(5);
+  let best = 0;
+  for (let i = 0; i < N; i++) if (bo5(r2, strong, weak, {}).winnerId === "S") best++;
+  assert(best > single, `melhor de 5 (${best}) deveria dar mais vitórias ao forte que 1 luta (${single})`);
+  assert(best / N > 0.5, "o favorito ainda leva vantagem");
+});
+
+test("a seletiva não tem teto: mais de 32 participantes", () => {
+  const world = { athletes: {}, countries: {} };
+  const ids = [];
+  for (let i = 0; i < 40; i++) {
+    const a = ath(`A${i}`, "C-BIG");
+    world.athletes[a.id] = a;
+    ids.push(a.id);
+  }
+  world.countries["C-BIG"] = { id: "C-BIG", code: "BIG", name: "Big", athleteIds: ids };
+  const field = selectiveParticipants(world, { selectiveCountry: "BIG", fieldSize: null }, "WC-M-58");
+  assertEqual(field.length, 40, "todos os 40 entram (sem teto de 32)");
 });
 
 suite("Seletivas — agendamento");
