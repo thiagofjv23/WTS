@@ -9,6 +9,22 @@ Formato: `[Data] Área — Decisão`
 
 ---
 
+## [2026-07-13] Mundial — Campeonato Mundial G-14, bienal (anos ímpares desde 2027)
+Pedido: criar o Mundial (julho, Astana), bienal a partir de 2027; regras baseadas
+no Mundial de 2025 (Wuxi), pesquisadas na internet.
+
+Pesquisa (Wuxi 2025): eliminação simples (melhor de 3), 1 atleta por país por
+categoria, aberto às federações do mundo todo; o Mundial é o evento de maior grau
+depois das Olimpíadas → **G-14** (campeão 140). 8 divisões de peso na realidade;
+a simulação usa as 4 olímpicas masculinas (escopo do jogo).
+
+Decisão (`src/engine/worldChampionship.js` + `docs/WORLD_CHAMPIONSHIP.md`):
+- Agendado só em anos de Mundial (`isWorldsYear`: ímpares ≥ 2027), 18/jul, Astana.
+- Grau G-14 → `classifyEvent` já aplica `nationalLimit=1` (1/país, sem continente,
+  sem lock); invitational (representantes nacionais comparecem). Campo até 128/cat.
+- Pontua no ranking normal (140 ao campeão), como evento oficial. O campeão é uma
+  das vagas válidas do Grand Slam Finals.
+
 ## [2026-07-13] Grand Slam — Torneio invitational de fim de ano (G-12, top 16)
 Pergunta do usuário: dá para estruturar o Grand Slam com os dados que temos? Se
 sim, fazê-lo como torneio.

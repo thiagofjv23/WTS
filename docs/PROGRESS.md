@@ -851,7 +851,30 @@ entra com o ciclo olímpico (G-20); e a calibração de pontos do topo.
 
 ---
 
-## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais + Grand Slam ✅
+## Passo 24 — Campeonato Mundial (G-14, bienal) ✅
+
+**Pedido do usuário:** criar o Mundial (julho, Astana), bienal a partir de 2027,
+com regras pesquisadas na internet (referência: Mundial de 2025, Wuxi).
+
+**Pesquisa (Wuxi 2025):** eliminação simples (melhor de 3), 1 por país por
+categoria, maior grau depois das Olimpíadas → **G-14** (campeão 140).
+
+**Feito:**
+- `src/engine/worldChampionship.js` (novo): `scheduleWorldChampionship`
+  (só em anos ímpares ≥ 2027, 18/jul, Astana), `isWorldsYear`,
+  `isWorldChampionship`, `WORLDS_GRANK="G-14"`, `WORLDS_FIELD=128`.
+- `eligibility`: G-14 já aplica `nationalLimit=1` (1/país). `competition.js`:
+  rótulo `G-14 = "Campeonato Mundial"`. `gameController`: agenda no calendário.
+- Pontua no ranking normal (140 ao campeão). O campeão é vaga válida do Grand
+  Slam Finals (próximo passo).
+
+**Testado:** `npm test` → **187/187** (`tests/worldChampionship.test.mjs`:
+bienalidade; travas G-14; integração — 2026 sem Mundial, 2027 com Mundial em
+julho, 1/país, campeão +140). Custo: ano com Mundial ~+0,5 s.
+
+---
+
+## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais + Grand Slam + Mundial ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

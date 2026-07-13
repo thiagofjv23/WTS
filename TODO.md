@@ -121,10 +121,11 @@ será retomado. Atualizado a cada passo do desenvolvimento.
   também o campo projetado exibido na UI.
 
 
-- 🟡 **Campeonato Mundial (G-14, bienal)** e **Olimpíadas (G-20)** com a
-  classificação olímpica (top 5 do ranking + Grand Slam + qualificatórios
-  continentais). Ainda não há evento G-14/G-20 no calendário 2026; adicionar nos
-  anos certos junto com a repescagem (§7).
+- ✅ **Campeonato Mundial (G-14, bienal)** — feito (`engine/worldChampionship.js`
+  + `docs/WORLD_CHAMPIONSHIP.md`): julho, Astana, anos ímpares ≥ 2027, 1/país.
+- 🟡 **Olimpíadas (G-20)** com a classificação olímpica (top 5 do ranking + Grand
+  Slam + qualificatórios continentais) e a repescagem (§7). Próximo grande passo
+  do ciclo — o Grand Slam e o Mundial já dão vagas ao campeão (a implementar).
 - ✅ **Grand Slam** (invitational, top 16, G-12) — feito
   (`engine/grandSlam.js` + `docs/GRAND_SLAM.md`): torneio anual de fim de ano.
   Falta só a **vaga olímpica ao campeão**, que entra com o ciclo olímpico (G-20).
