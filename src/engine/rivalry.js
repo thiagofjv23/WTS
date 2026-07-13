@@ -6,6 +6,11 @@
  * A intensidade cresce mais em GRANDES eventos (Mundial/Olimpíadas valem muito
  * mais que um Open) e ESFRIA com o tempo (decaimento por meia-vida).
  *
+ * Uma rivalidade SE CONSTRÓI COM O TEMPO: um par só é rivalidade após pelo menos
+ * 3 encontros decisivos (finais/semifinais) — antes disso está "em formação" e
+ * não conta. Encontros em SELETIVAS NACIONAIS também contam (finais/semis do
+ * torneio nacional constroem rivalidades entre compatriotas).
+ *
  * Quando dois rivais se enfrentam, ambos entram com mais "gana": maior confiança
  * inicial e MAIOR variância no combate — clássicos de rivalidade são mais
  * imprevisíveis (o azarão cresce). Ver docs/RIVALRIES.md.
@@ -24,15 +29,24 @@ const EVENT_DIVISOR = 10;
 const HALF_LIFE_MONTHS = 30;
 // Intensidade que corresponde a "rivalidade máxima" (normalização 0..1).
 const FULL_INTENSITY = 40;
-// Abaixo disto, a rivalidade é considerada irrelevante (poda). Calibrado para
-// que um único encontro em evento pequeno (G-1/G-2 semi) NÃO vire rivalidade —
-// só encontros grandes ou repetidos permanecem.
+// Abaixo disto, o par decaiu e é esquecido (poda). Calibrado para que encontros
+// pequenos/antigos não fiquem acumulados no save.
 const MIN_INTENSITY = 4;
+// Uma rivalidade SE CONSTRÓI COM O TEMPO: só vira rivalidade de fato após pelo
+// menos ESTE número de encontros decisivos (finais/semifinais). Antes disso o
+// par é apenas "em formação" — é contabilizado, mas não conta como rivalidade
+// (não afeta o combate nem aparece na UI).
+const RIVALRY_MIN_MEETINGS = 3;
 // ----------------------------------------------------------------------------
 
 /** Chave canônica de um par (independe da ordem dos ids). */
 export function pairKey(aId, bId) {
   return aId < bId ? `${aId}|${bId}` : `${bId}|${aId}`;
+}
+
+/** True se o par já acumulou encontros decisivos suficientes para ser rivalidade. */
+export function isRivalry(r) {
+  return !!r && r.decisive >= RIVALRY_MIN_MEETINGS;
 }
 
 /** Fator de decaimento por meia-vida em `months`. */
@@ -41,10 +55,14 @@ function decay(months) {
   return Math.pow(0.5, months / HALF_LIFE_MONTHS);
 }
 
-/** Intensidade da rivalidade decaída até `atDate` (0 se não houver). */
+/**
+ * Intensidade da rivalidade decaída até `atDate`. Retorna 0 enquanto o par ainda
+ * NÃO é rivalidade (menos de RIVALRY_MIN_MEETINGS encontros decisivos) — a
+ * rivalidade se constrói com o tempo.
+ */
 export function rivalryIntensity(world, aId, bId, atDate) {
   const r = world.rivalries[pairKey(aId, bId)];
-  if (!r) return 0;
+  if (!isRivalry(r)) return 0;
   return r.intensity * decay(monthsBetween(r.lastDate, atDate));
 }
 
@@ -101,6 +119,7 @@ export function rivalsOf(world, athleteId, atDate, limit = 6) {
   const out = [];
   for (const r of Object.values(world.rivalries)) {
     if (r.aId !== athleteId && r.bId !== athleteId) continue;
+    if (!isRivalry(r)) continue; // pares "em formação" (< 3 encontros) não contam
     const oppId = r.aId === athleteId ? r.bId : r.aId;
     const intensity = r.intensity * decay(monthsBetween(r.lastDate, atDate));
     if (intensity < MIN_INTENSITY) continue;

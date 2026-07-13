@@ -802,6 +802,29 @@ campo da seletiva sem teto). Verificado no navegador.
 
 ---
 
+## Ajuste — Rivalidade se constrói com o tempo (≥3 encontros) + conta nas seletivas ✅
+
+**Pedido do usuário:** rivalidade só nasce com **pelo menos 3 lutas** em
+finais/semifinais entre os atletas ("se constrói com o tempo"); e as seletivas
+devem contar para as rivalidades.
+
+**Feito:**
+- `engine/rivalry.js`: `RIVALRY_MIN_MEETINGS = 3` + `isRivalry(r)`. O par acumula
+  desde o 1º encontro, mas só é rivalidade com 3+ encontros decisivos —
+  `rivalryIntensity` devolve 0 e `rivalsOf` ignora enquanto "em formação". Não
+  afeta combate nem UI até virar rivalidade.
+- `simulationDirector.js`: seletivas voltam a usar `rivalryLookup` e rodam
+  `updateRivalriesFromCompetition` + `pruneRivalries` (contam para rivalidade),
+  mantendo melhor-de-5 + sem forma.
+- `docs/RIVALRIES.md`: regra dos 3 encontros e "seletivas contam" documentadas.
+
+**Testado:** `npm test` → **181/181** (rivalry.test: novos casos — 3 encontros
+para virar rivalidade; seletivas contam; testes de peso/decaimento ajustados p/
+3 encontros). Integração: rivalidades nascidas em seletivas aparecem após vários
+anos.
+
+---
+
 ## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e

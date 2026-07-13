@@ -39,16 +39,28 @@ test("só finais/semifinais criam rivalidade", () => {
   assertEqual(Object.keys(w.rivalries).length, 1, "final cria rivalidade");
 });
 
-test("grandes eventos pesam muito mais", () => {
+test("uma rivalidade se constrói com o tempo (≥3 encontros decisivos)", () => {
+  const w = { rivalries: {} };
+  updateRivalriesFromCompetition(w, comp("G-20", "2027-01-01"), [match("A", "B", "A", 2)]);
+  assertEqual(rivalryIntensity(w, "A", "B", "2027-01-01"), 0, "1 encontro não é rivalidade");
+  assertEqual(rivalsOf(w, "A", "2027-01-01").length, 0, "não aparece na UI ainda");
+  updateRivalriesFromCompetition(w, comp("G-20", "2027-02-01"), [match("A", "B", "A", 2)]);
+  assertEqual(rivalryIntensity(w, "A", "B", "2027-02-01"), 0, "2 encontros ainda não");
+  updateRivalriesFromCompetition(w, comp("G-20", "2027-03-01"), [match("A", "B", "A", 2)]);
+  assert(rivalryIntensity(w, "A", "B", "2027-03-01") > 0, "3 encontros → vira rivalidade");
+  assertEqual(rivalsOf(w, "A", "2027-03-01").length, 1);
+});
+
+test("grandes eventos pesam muito mais (após virar rivalidade)", () => {
   const w1 = { rivalries: {} };
-  updateRivalriesFromCompetition(w1, comp("G-1"), [match("A", "B", "A", 2)]);
   const w2 = { rivalries: {} };
-  updateRivalriesFromCompetition(w2, comp("G-20"), [match("A", "B", "A", 2)]);
-  const i1 = rivalryIntensity(w1, "A", "B", "2027-06-01");
-  const i2 = rivalryIntensity(w2, "A", "B", "2027-06-01");
-  // G-1 final = 3×1 = 3; G-20 final = 3×20 = 60.
-  assertEqual(i1, 3);
-  assertEqual(i2, 60);
+  for (let i = 0; i < 3; i++) {
+    updateRivalriesFromCompetition(w1, comp("G-1"), [match("A", "B", "A", 2)]);
+    updateRivalriesFromCompetition(w2, comp("G-20"), [match("A", "B", "A", 2)]);
+  }
+  const i1 = rivalryIntensity(w1, "A", "B", "2027-06-01"); // 3×(3×1) = 9
+  const i2 = rivalryIntensity(w2, "A", "B", "2027-06-01"); // 3×(3×20) = 180
+  assert(i1 > 0 && i2 > 0, "3 encontros → rivalidade ativa nos dois");
   assert(i2 > i1 * 15, "Olimpíada deveria pesar muito mais que um G-1");
 });
 
@@ -56,20 +68,36 @@ test("retrospecto e nº de encontros acumulam", () => {
   const w = { rivalries: {} };
   updateRivalriesFromCompetition(w, comp("G-4", "2027-01-01"), [match("A", "B", "A", 2)]);
   updateRivalriesFromCompetition(w, comp("G-4", "2027-06-01"), [match("A", "B", "B", 4)]);
-  const rivals = rivalsOf(w, "A", "2027-06-01");
-  assertEqual(rivals[0].meetings, 2);
-  assertEqual(rivals[0].wins, 1);
+  updateRivalriesFromCompetition(w, comp("G-4", "2027-09-01"), [match("A", "B", "A", 2)]);
+  const rivals = rivalsOf(w, "A", "2027-09-01");
+  assertEqual(rivals[0].meetings, 3);
+  assertEqual(rivals[0].wins, 2);
   assertEqual(rivals[0].losses, 1);
+});
+
+test("seletivas contam para a rivalidade (mesma regra dos 3 encontros)", () => {
+  const w = { rivalries: {} };
+  const sel = createCompetition({
+    id: "SEL", name: "Seletiva Nacional — Korea", gRank: "G-1",
+    date: "2027-01-05", categoryIds: MEN, type: "selective", selectiveCountry: "KOR",
+  });
+  for (let i = 0; i < 2; i++) updateRivalriesFromCompetition(w, sel, [match("A", "B", "A", 2)]);
+  assertEqual(rivalryIntensity(w, "A", "B", "2027-01-05"), 0, "2 finais de seletiva: ainda não");
+  updateRivalriesFromCompetition(w, sel, [match("A", "B", "A", 2)]);
+  assert(rivalryIntensity(w, "A", "B", "2027-01-05") > 0, "3 finais de seletiva formam rivalidade");
 });
 
 suite("Rivalry — decaimento e poda");
 
 test("intensidade esfria com o tempo", () => {
   const w = { rivalries: {} };
-  updateRivalriesFromCompetition(w, comp("G-20", "2027-01-01"), [match("A", "B", "A", 2)]);
-  const now = rivalryIntensity(w, "A", "B", "2027-01-01"); // 60
+  // 3 encontros no mesmo dia para virar rivalidade sem decaimento entre eles.
+  for (let i = 0; i < 3; i++) {
+    updateRivalriesFromCompetition(w, comp("G-20", "2027-01-01"), [match("A", "B", "A", 2)]);
+  }
+  const now = rivalryIntensity(w, "A", "B", "2027-01-01"); // 180
   const later = rivalryIntensity(w, "A", "B", "2029-07-01"); // ~30 meses → metade
-  assertClose(later, now * 0.5, 3, "meia-vida ~30 meses");
+  assertClose(later, now * 0.5, 5, "meia-vida ~30 meses");
 });
 
 test("rivalryLevel normaliza 0..1", () => {

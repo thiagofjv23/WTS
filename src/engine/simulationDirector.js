@@ -143,16 +143,15 @@ export class SimulationDirector {
         categoryId: match.categoryId,
         winnerId: match.winnerId,
       });
-    // Seletiva: reduz as zebras — melhor de N lutas por confronto, SEM a forma do
-    // dia nem rivalidade (é uma peneira interna; o ranking/força deve prevalecer).
-    // Evento oficial: variância normal (forma + rivalidade), calibrada.
+    // Rivalidade (0..1) do par na data do evento → afeta a luta. Vale também nas
+    // seletivas (rivalidades entre compatriotas contam).
+    const rivalryLookup = (aId, bId) =>
+      rivalryLevel(rivalryIntensity(world, aId, bId, competition.date));
+    // Seletiva: reduz as zebras — melhor de N lutas por confronto e SEM a forma
+    // do dia (peneira interna). Evento oficial: variância normal (forma).
     const combatOpts = isSelective(competition)
-      ? { onMatch, fightFn: selectiveFightFn(), applyForm: false }
-      : {
-          rivalryLookup: (aId, bId) =>
-            rivalryLevel(rivalryIntensity(world, aId, bId, competition.date)),
-          onMatch,
-        };
+      ? { onMatch, rivalryLookup, fightFn: selectiveFightFn(), applyForm: false }
+      : { onMatch, rivalryLookup };
 
     const { byCategory, allMatches } = simulateCompetition(
       this.random,
@@ -190,6 +189,10 @@ export class SimulationDirector {
         competition.results[categoryId] = placements;
       }
       assignNationalTeam(world, competition, byCategory);
+      // Rivalidades TAMBÉM contam nas seletivas: finais/semis nacionais constroem
+      // rivalidades entre compatriotas (que só viram rivalidade com 3+ encontros).
+      updateRivalriesFromCompetition(world, competition, allMatches);
+      pruneRivalries(world, competition.date);
       competition.status = COMPETITION_STATUS.FINISHED;
       this._emit("CompetitionFinished", { competitionId: competition.id });
       return;

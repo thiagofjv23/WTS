@@ -54,6 +54,23 @@ Ou seja, **os grandes eventos pesam muito mais**: uma única final olímpica
 (3 × 20 = 60) vale mais que 20 finais de G-1 (3 × 1 = 3 cada). Foi o pedido
 explícito do projeto — rivalidades nascem principalmente onde vale mais.
 
+### Constrói-se com o tempo (≥ 3 encontros decisivos)
+
+Um par **só vira rivalidade** depois de **pelo menos 3 encontros decisivos**
+(finais/semifinais) — `RIVALRY_MIN_MEETINGS = 3`. Antes disso o par está **"em
+formação"**: o agregado é contabilizado (encontros, intensidade, retrospecto),
+mas **não conta como rivalidade** — `rivalryIntensity` devolve 0, não afeta o
+combate e não aparece na UI. "Uma rivalidade se constrói com o tempo": uma única
+final, por maior que seja o evento, não basta.
+
+### As Seletivas Nacionais também contam
+
+Finais e semifinais das **Seletivas Nacionais** entram na mesma regra: dois
+compatriotas que decidem a seletiva repetidamente (3+ vezes) constroem uma
+rivalidade nacional. A seletiva usa peso de evento pequeno (dummy G-1 → fator 1),
+então são necessários vários anos de finais nacionais — o que é justamente
+"construir com o tempo".
+
 A intensidade **esfria com o tempo** (meia-vida de 30 meses): se os dois não se
 cruzam, a rivalidade decai e acaba podada (`MIN_INTENSITY`). Rivalidades vivas
 são as reacesas por encontros recentes/importantes.
@@ -91,6 +108,8 @@ Consequence phase:
 
 A atualização é feita DEPOIS das lutas, então o **próximo** evento já usa o
 estado novo (a rivalidade construída hoje influencia os confrontos de amanhã).
+As **Seletivas Nacionais** rodam o mesmo par `updateRivalriesFromCompetition` +
+`pruneRivalries` — apesar de não pontuarem no ranking, contam para as rivalidades.
 
 ---
 
@@ -112,9 +131,10 @@ Em `src/engine/rivalry.js`:
 |---|---|---|
 | `ROUND_FACTOR` | final 3, semi 2 | importância da fase |
 | `EVENT_DIVISOR` | 10 | peso do evento = championPoints/10 |
+| `RIVALRY_MIN_MEETINGS` | 3 | encontros decisivos p/ VIRAR rivalidade |
 | `HALF_LIFE_MONTHS` | 30 | rapidez com que a rivalidade esfria |
 | `FULL_INTENSITY` | 40 | intensidade → nível 1.0 |
-| `MIN_INTENSITY` | 4 | abaixo disto, poda (não é rivalidade) |
+| `MIN_INTENSITY` | 4 | abaixo disto, o par decai e é podado |
 | `RIVALRY_ATTR_STD` | 8 | variância extra no combate (%) |
 
 Todos ajustáveis sem tocar em outros sistemas.

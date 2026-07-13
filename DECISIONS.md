@@ -9,6 +9,24 @@ Formato: `[Data] Área — Decisão`
 
 ---
 
+## [2026-07-13] Rivalidades — Constroem-se com o tempo (≥3 encontros) + contam nas seletivas
+Pedido: rivalidade só deve nascer com **pelo menos 3 lutas** entre os atletas em
+finais/semifinais ("se constrói com o tempo"); e as **seletivas** devem contar.
+
+Decisão (`src/engine/rivalry.js` + `docs/RIVALRIES.md`):
+- **`RIVALRY_MIN_MEETINGS = 3`:** o par acumula o agregado desde o 1º encontro
+  decisivo, mas só **vira rivalidade** com 3+ encontros. Antes disso está "em
+  formação": `rivalryIntensity` devolve 0 (não afeta o combate) e `rivalsOf` o
+  ignora (não aparece na UI). Helper `isRivalry(r)` = `decisive >= 3`. A poda por
+  intensidade continua para esquecer pares antigos/fracos.
+- **Seletivas contam:** o combate das seletivas voltou a usar `rivalryLookup`, e o
+  Director roda `updateRivalriesFromCompetition` + `pruneRivalries` também no ramo
+  da seletiva. Como a seletiva usa peso de evento pequeno (dummy G-1 → fator 1),
+  são precisos vários anos de finais nacionais para formar uma rivalidade — o que
+  é justamente "construir com o tempo". Mantém melhor-de-5 + sem forma (zebras
+  baixas); a rivalidade só pesa após virar rivalidade (3+), então o impacto nas
+  zebras é pequeno.
+
 ## [2026-07-13] Seletivas — Menos zebras (melhor de N) + campo > 32
 Pergunta do usuário: dá para reduzir zebras fazendo os melhores rankeados entrarem
 em fases mais próximas da final, mesmo com nº de participantes diferente por país?
