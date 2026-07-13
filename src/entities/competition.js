@@ -17,6 +17,7 @@ export const G_RANK_LABELS = {
   "G-6": "Grand Prix Series",
   "G-8": "Mundial / Copa por Equipes",
   "G-10": "Grand Prix Final",
+  "G-12": "Grand Slam Champions Series",
   "G-20": "Jogos Olímpicos",
 };
 

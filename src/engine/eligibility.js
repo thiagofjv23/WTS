@@ -48,6 +48,9 @@ export function classifyEvent(competition) {
   else if (g === "G-10") rules.rankingLockTopN = 16;
   else if (g === "G-14") rules.nationalLimit = 1; // Mundial (futuro)
 
+  // Grand Slam Champions Series: convite, top 16 do ranking (independe do grau).
+  if (/grand slam/i.test(name)) rules.rankingLockTopN = 16;
+
   if (/arab/i.test(name)) rules.arabOnly = true;
 
   // Campeonatos/Jogos continentais (G-4): continente + limite nacional.

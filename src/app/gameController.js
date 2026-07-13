@@ -28,6 +28,7 @@ import { enterProbability } from "../engine/participation.js";
 import { rivalsOf } from "../engine/rivalry.js";
 import { wildcardEntrantsFor } from "../engine/wildcards.js";
 import { scheduleNationalSelectives, isSelective, selectiveParticipants } from "../engine/nationalTeams.js";
+import { scheduleGrandSlam } from "../engine/grandSlam.js";
 import { athletesInCategory } from "../core/world.js";
 
 const SAVE_KEY = "world";
@@ -132,6 +133,8 @@ export class GameController {
     });
     // Seletivas Nacionais de janeiro (países com mais de 20 atletas).
     scheduleNationalSelectives(this.world, this.idGen, { year, categoryFilter: MEN_IDS });
+    // Grand Slam Champions Series (fim de dezembro, top 16 por convite).
+    scheduleGrandSlam(this.world, this.idGen, { year, categoryFilter: MEN_IDS });
     this.nextOffset += 1;
   }
 

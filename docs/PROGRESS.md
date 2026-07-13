@@ -825,7 +825,33 @@ anos.
 
 ---
 
-## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais ✅
+## Passo 23 — Grand Slam Champions Series (torneio invitational) ✅
+
+**Pergunta/pedido do usuário:** dá para estruturar o Grand Slam com os dados que
+temos? Se sim, fazê-lo como torneio e documentar.
+
+**Feito (sim, com o que já temos):**
+- `src/engine/grandSlam.js` (novo): `scheduleGrandSlam` cria um torneio ANUAL de
+  fim de ano (12/dez, todas as categorias); `isGrandSlam`; constantes
+  `GRAND_SLAM_GRANK = "G-12"` (campeão 120), `GRAND_SLAM_FIELD = 16`.
+- `eligibility.classifyEvent`: reconhece "grand slam" no nome → `rankingLockTopN
+  = 16` (convite, invitational).
+- `entities/competition.js`: rótulo do grau `G-12` = "Grand Slam Champions Series".
+- `gameController._scheduleNextSeason`: agenda o Grand Slam junto da temporada.
+- Reaproveita o núcleo: chaveamento (seeding + byes), combate normal (forma +
+  rivalidade), pontos/medalhas/histórico/rivalidades como qualquer evento oficial.
+
+**Testado:** `npm test` → **184/184** (`tests/grandSlam.test.mjs`: detecção +
+trava top 16; agendamento em dezembro; integração — só o top 16 disputa, campeão
+recebe +120 no ledger). Verificação: Grand Slam 2026 rodou com 16/categoria,
+campeões coroados (+120), chaveamento só com convidados #1–16.
+
+**Pendente (documentado em `docs/GRAND_SLAM.md`):** a vaga olímpica ao campeão
+entra com o ciclo olímpico (G-20); e a calibração de pontos do topo.
+
+---
+
+## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais + Grand Slam ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

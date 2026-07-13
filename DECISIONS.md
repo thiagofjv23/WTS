@@ -9,6 +9,22 @@ Formato: `[Data] Área — Decisão`
 
 ---
 
+## [2026-07-13] Grand Slam — Torneio invitational de fim de ano (G-12, top 16)
+Pergunta do usuário: dá para estruturar o Grand Slam com os dados que temos? Se
+sim, fazê-lo como torneio.
+
+Decisão (`src/engine/grandSlam.js` + `docs/GRAND_SLAM.md`): sim — reaproveita
+ranking + chaveamento + travas. É um torneio ANUAL, de FIM DE ANO (12/dez), por
+CONVITE (top 16 do ranking por categoria), eliminação simples, grau **G-12**
+(campeão 120 pts; acima do GP Final G-10, abaixo do Mundial G-14). Combate normal
+(forma + rivalidade); pontua no ranking como qualquer evento oficial.
+- Agendado junto da temporada (`scheduleGrandSlam`, como as seletivas).
+- Trava por nome em `classifyEvent` (`/grand slam/i` → `rankingLockTopN = 16`),
+  invitational. Reconhecido por `isGrandSlam`. Grau novo `G-12` em G_RANK_LABELS.
+- Nada de novo no núcleo: passa pelo mesmo caminho dos demais torneios.
+Pendente (documentado): a VAGA OLÍMPICA ao campeão (§7) entra com o ciclo olímpico
+(G-20); e a calibração de pontos do topo (o Grand Slam concentra 120/ano na elite).
+
 ## [2026-07-13] Rivalidades — Constroem-se com o tempo (≥3 encontros) + contam nas seletivas
 Pedido: rivalidade só deve nascer com **pelo menos 3 lutas** entre os atletas em
 finais/semifinais ("se constrói com o tempo"); e as **seletivas** devem contar.

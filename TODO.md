@@ -125,7 +125,9 @@ será retomado. Atualizado a cada passo do desenvolvimento.
   classificação olímpica (top 5 do ranking + Grand Slam + qualificatórios
   continentais). Ainda não há evento G-14/G-20 no calendário 2026; adicionar nos
   anos certos junto com a repescagem (§7).
-- 🟡 **Grand Slam** (formato especial, invitational) — porta de entrada olímpica.
+- ✅ **Grand Slam** (invitational, top 16, G-12) — feito
+  (`engine/grandSlam.js` + `docs/GRAND_SLAM.md`): torneio anual de fim de ano.
+  Falta só a **vaga olímpica ao campeão**, que entra com o ciclo olímpico (G-20).
 - 🟢 **Calibração dos totais de pontos.** Com teto+travas os líderes ficam em
   ~450–600 pts (antes >1000); ainda acima do real (~250–350) por causa da
   dominância do favorito no combate (inclinação `k` em probability.js). Rever
