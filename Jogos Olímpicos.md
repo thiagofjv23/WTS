@@ -122,7 +122,7 @@ No ciclo de Paris 2024 classificaram-se diretamente:
 
 - os 5 melhores atletas do Ranking Olímpico em cada categoria.
 
-Foi considerada a publicação oficial do Ranking Olímpico da World Taekwondo utilizada para definição das vagas.
+Foi considerada a publicação oficial do Ranking Olímpico publicado em janeiro de 2024 (ano da Olimpíada, no jogo será o ranking que será publicado na virada do ano Olímpico).
 
 Após garantir vaga:
 
