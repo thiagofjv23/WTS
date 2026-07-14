@@ -41,6 +41,7 @@ import {
   isOlympicContinentalQual,
   isOlympicRankingQual,
   isOlympicGrandSlamQual,
+  isOlympicFinalCheck,
   isOlympicQualification,
   categoryQuotas,
   quotaMethodOf,
@@ -55,6 +56,7 @@ const SEASON_BASE_YEAR = 2026; // 1ª temporada; offsets de temporada são relat
 
 /** Rótulo da rodada a partir do tamanho (2 = Final, 4 = Semifinal, …). */
 function roundLabel(roundSize) {
+  if (roundSize === 103) return "Repescagem"; // sentinela da 1ª rodada de repescagem
   if (roundSize === 3) return "Disputa de bronze"; // sentinela da disputa de 3º
   if (roundSize === 2) return "Final";
   if (roundSize === 4) return "Semifinal";
@@ -538,7 +540,9 @@ export class GameController {
       });
     }
     // Etapas classificatórias olímpicas "de papel": sem campo de inscritos.
-    if (isOlympicRankingQual(competition) || isOlympicGrandSlamQual(competition)) return [];
+    if (isOlympicRankingQual(competition) || isOlympicGrandSlamQual(competition) || isOlympicFinalCheck(competition)) {
+      return [];
+    }
     // Jogos (classificados até o momento) e torneios continentais olímpicos.
     if (isOlympics(competition) || isOlympicContinentalQual(competition)) {
       const list = isOlympics(competition)
@@ -665,7 +669,10 @@ export class GameController {
     const done = c.status === "concluida";
     const gsFinals = isGrandSlamFinals(c);
     const olympics = isOlympics(c);
-    const olympicPaper = isOlympicRankingQual(c) || isOlympicGrandSlamQual(c);
+    const finalCheck = isOlympicFinalCheck(c);
+    // Eventos "de papel" que listam vagas (sem lutas): ranking, Grand Slam e a
+    // Confirmação Olímpica (esta lista o campo fechado de 16, todos os métodos).
+    const olympicPaper = isOlympicRankingQual(c) || isOlympicGrandSlamQual(c) || finalCheck;
     const olympicMethod = isOlympicRankingQual(c) ? "ranking" : isOlympicGrandSlamQual(c) ? "grandslam" : null;
     const showQuota = olympics || isOlympicContinentalQual(c);
     const oYear = c.olympicYear;
@@ -682,7 +689,7 @@ export class GameController {
         // lista os atletas que travaram vaga por aquele método.
         if (olympicPaper) {
           const placements = categoryQuotas(this.world, oYear, catId)
-            .filter((q) => q.method === olympicMethod)
+            .filter((q) => !olympicMethod || q.method === olympicMethod)
             .map((q, i) => ({
               athleteId: q.athleteId, ...athleteRow(q.athleteId),
               placement: i + 1, medal: null, points: 0,
@@ -746,6 +753,8 @@ export class GameController {
       ? "Classificação Olímpica — Grand Slam"
       : isOlympicContinentalQual(c)
       ? "Torneio Classificatório Continental"
+      : finalCheck
+      ? "Confirmação Olímpica (campo + lesões)"
       : (G_RANK_LABELS[c.gRank] || c.gRank);
     return {
       id: c.id, name: c.name, gRank: c.gRank,
@@ -856,22 +865,25 @@ export class GameController {
         nationalTeam: champ ? champ.nationalTeam || null : null,
       });
     }
-    // Lesões, recuperações e convocações para a seleção.
+    // Lesões, recuperações, convocações e vagas olímpicas (perda/herança).
     for (const n of this.world.news) {
       const a = this.world.athletes[n.athleteId];
       const c = a ? this._countryOf(a) : { code: "??" };
-      const injured = n.type === "callup" ? this.world.athletes[n.injuredId] : null;
+      // "callup" refere o titular lesionado; "olympic-replacement" o substituído.
+      const otherId = n.type === "callup" ? n.injuredId : n.type === "olympic-replacement" ? n.replacedId : null;
+      const other = otherId ? this.world.athletes[otherId] : null;
       feed.push({
-        type: n.type, // "injury" | "recovery" | "callup"
+        type: n.type, // injury | recovery | callup | olympic-forfeit | olympic-replacement
         date: n.date,
         athleteId: n.athleteId,
         name: a ? a.fullName : "?",
         flag: flagEmoji(c.code),
         severity: n.severity,
         until: n.until,
-        category: a ? getWeightCategory(a.weightCategoryId)?.name : null,
+        category: getWeightCategory(n.categoryId || a?.weightCategoryId)?.name || null,
         nationalTeam: a ? a.nationalTeam || null : null,
-        replacing: injured ? injured.fullName : null,
+        replacing: other ? other.fullName : null,
+        via: n.via || null,
       });
     }
     feed.sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0));

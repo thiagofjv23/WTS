@@ -27,6 +27,7 @@ import { continentOf } from "../config/continents.js";
 import { grandSlamMeritRanking } from "./grandSlam.js";
 import { ATHLETE_STATUS } from "../entities/athlete.js";
 import { MEN_CATEGORIES } from "../config/weightCategories.js";
+import { pushNews } from "./news.js";
 import {
   getOlympicConfig,
   isOlympicYear,
@@ -50,13 +51,23 @@ export function isOlympicGrandSlamQual(competition) {
 export function isOlympicContinentalQual(competition) {
   return competition?.type === "olympic-continental-qual";
 }
+/** Evento (de papel) que fecha o campo e faz a verificação de lesões (15 dias antes). */
+export function isOlympicFinalCheck(competition) {
+  return competition?.type === "olympic-final-check";
+}
 /** Qualquer etapa classificatória "de papel" ou torneio continental olímpico. */
 export function isOlympicQualification(competition) {
   return (
     isOlympicRankingQual(competition) ||
     isOlympicGrandSlamQual(competition) ||
-    isOlympicContinentalQual(competition)
+    isOlympicContinentalQual(competition) ||
+    isOlympicFinalCheck(competition)
   );
+}
+
+/** Encontra os Jogos de um ano (para marcar o campo como fechado). */
+export function findOlympicsGames(world, year) {
+  return Object.values(world.competitions).find((c) => isOlympics(c) && c.olympicYear === year) || null;
 }
 
 // ---- Ledger de vagas ----------------------------------------------------------
@@ -196,6 +207,17 @@ export function scheduleOlympics(world, idGen, opts = {}) {
       scheduleCompetition(world, idGen, comp);
       created.push(comp);
     }
+    // Verificação final (15 dias antes dos Jogos): fecha o campo (país-sede +
+    // Comissão Tripartite) e faz a substituição de lesionados.
+    created.push(
+      scheduleQualPaper(world, idGen, {
+        type: "olympic-final-check",
+        name: `Confirmação Olímpica ${year}`,
+        date: `${year}-07-15`,
+        categoryIds: categoryFilter,
+        olympicYear: year,
+      })
+    );
     const games = createCompetition({
       id: idGen.next("COMP"),
       name: cfg.gamesName,
@@ -223,6 +245,9 @@ export function runOlympicRankingQual(world, competition) {
     const ranked = athletesInCategory(world, cat)
       .filter((a) => a.status === ATHLETE_STATUS.ACTIVE)
       .sort(byRanking);
+    // Congela a ORDEM do ranking em 3/dez do ano anterior — usada como último
+    // critério na substituição por lesão.
+    (((world.olympicRankingSnapshot ||= {})[year] ||= {})[cat] = ranked.map((a) => a.id));
     let taken = 0;
     for (const a of ranked) {
       if (taken >= cfg.ranking.qualifiers) break;
@@ -378,4 +403,99 @@ export function resolveOlympicEntrants(world, competition, categoryId) {
 /** Método de classificação de um atleta (para exibição), ou null. */
 export function quotaMethodOf(world, year, categoryId, athleteId) {
   return categoryQuotas(world, year, categoryId).find((q) => q.athleteId === athleteId)?.method || null;
+}
+
+// ---- Substituição por lesão (15 dias antes dos Jogos) -------------------------
+
+const OLYMPIC_TOP_RANK = 20; // "Top-20" para herdar a vaga pela seleção nacional
+
+/**
+ * Encontra o substituto de uma vaga perdida por lesão:
+ *  1) Seleção Nacional do país (campeão da seletiva → vice → reservas), se
+ *     Top-20 do ranking, ativo e ainda não classificado;
+ *  2) senão, o melhor do ranking de 3/dez do ano anterior que não se classificou
+ *     e cujo país não tem atleta classificado na categoria.
+ * @returns {{ athleteId: string, via: string }|null}
+ */
+function findOlympicReplacement(world, year, categoryId, injuredId) {
+  const code = countryCodeOf(world, injuredId);
+  const eligible = (id) =>
+    world.athletes[id] &&
+    id !== injuredId &&
+    world.athletes[id].status === ATHLETE_STATUS.ACTIVE &&
+    !isQualifiedInCategory(world, year, categoryId, id);
+
+  // 1) Seleção Nacional (titulares e depois reservas), Top-20.
+  const team = world.nationalTeams?.[code]?.[categoryId];
+  if (team) {
+    for (const id of [...(team.titulares || []), ...(team.reservas || [])]) {
+      if (!eligible(id)) continue;
+      if ((world.athletes[id].ranking?.position ?? Infinity) > OLYMPIC_TOP_RANK) continue;
+      return { athleteId: id, via: "national" };
+    }
+  }
+
+  // 2) Melhor do ranking de 3/dez que não classificou e de país sem vaga.
+  const order =
+    world.olympicRankingSnapshot?.[year]?.[categoryId] ||
+    athletesInCategory(world, categoryId).sort(byRanking).map((a) => a.id);
+  for (const id of order) {
+    if (!eligible(id)) continue;
+    if (countryHasQuota(world, year, categoryId, countryCodeOf(world, id))) continue;
+    return { athleteId: id, via: "ranking" };
+  }
+  return null;
+}
+
+/**
+ * Verificação de lesões dos classificados (15 dias antes dos Jogos): um
+ * classificado lesionado que não se recupera até a data perde a vaga (gera
+ * notícia); a vaga é herdada pelo substituto (gera notícia). Ver docs/OLYMPICS.md.
+ * @returns {Array} eventos { type, athleteId, categoryId } para o Director emitir.
+ */
+export function runOlympicInjuryReplacement(world, competition) {
+  const year = competition.olympicYear;
+  const cfg = getOlympicConfig(year);
+  const date = competition.date; // 15 dias antes dos Jogos (o prazo de recuperação)
+  const events = [];
+
+  for (const cat of competition.categoryIds) {
+    const bucket = categoryQuotas(world, year, cat);
+    for (const q of [...bucket]) {
+      const a = world.athletes[q.athleteId];
+      // Lesionado e sem recuperação até o prazo (15 dias antes) → perde a vaga.
+      const injured =
+        a &&
+        a.status === ATHLETE_STATUS.INJURED &&
+        a.condition?.injuredUntil &&
+        a.condition.injuredUntil > date;
+      if (!injured) continue;
+
+      const idx = bucket.findIndex((x) => x.athleteId === q.athleteId);
+      if (idx >= 0) bucket.splice(idx, 1);
+      pushNews(world, {
+        type: "olympic-forfeit",
+        date,
+        athleteId: q.athleteId,
+        categoryId: cat,
+        competitionName: cfg.gamesName,
+      });
+      events.push({ type: "forfeit", athleteId: q.athleteId, categoryId: cat });
+
+      const rep = findOlympicReplacement(world, year, cat, q.athleteId);
+      if (rep && addQuota(world, year, cat, rep.athleteId, "replacement", cfg)) {
+        pushNews(world, {
+          type: "olympic-replacement",
+          date,
+          athleteId: rep.athleteId,
+          replacedId: q.athleteId,
+          categoryId: cat,
+          via: rep.via,
+          competitionName: cfg.gamesName,
+        });
+        events.push({ type: "replacement", athleteId: rep.athleteId, categoryId: cat });
+      }
+    }
+  }
+  return events;
 }

@@ -938,7 +938,30 @@ campeões +200 no ledger; continentais sem pontos. Custo: ~2028→2036 ~32 s.
 
 ---
 
-## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais + Grand Slam (Challenge+Finals+Mérito) + Mundial + JOGOS OLÍMPICOS ✅
+## Passo 27 — Olimpíadas: repescagem e substituição por lesão
+
+**Pedido:** completar os Jogos com a **repescagem** (dois bronzes, formato WT) e a
+**substituição de classificados lesionados**.
+
+**Feito:**
+- **Repescagem** (`competitionSystem` `opts.repechage`): resgata os derrotados
+  pelos dois finalistas; 1ª rodada (oitavas × quartas do mesmo finalista);
+  semifinalistas folgam; **bronze cruzado** → dois bronzes. Colocações
+  {1,2,3,5,9}. Rounds-sentinela 103 (repescagem) e 3 (bronze). Ligada nos Jogos.
+- **Substituição por lesão** (`olympics.js`): novo evento **Confirmação Olímpica**
+  (15/jul) que fecha o campo (país-sede + Tripartite) e verifica lesões — quem não
+  se recupera até o prazo perde a vaga; herança pela **Seleção Nacional** (Top-20)
+  ou pelo **ranking de 3/dez** congelado (`world.olympicRankingSnapshot`). Notícias
+  `olympic-forfeit`/`olympic-replacement` (UI + feed).
+
+**Testado:** `tests/olympics.test.mjs`: repescagem (2 bronzes, {1,2,3,5,9}, rounds
+cruzados), substituição por lesão (perda + herança + notícias + campo dos Jogos),
+herança pela Seleção Nacional (Top-20). 3 ciclos mantêm 16/cat, 16 países e 2
+bronzes. Verificado por script (lesão de classificado → substituto entra).
+
+---
+
+## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais + Grand Slam (Challenge+Finals+Mérito) + Mundial + JOGOS OLÍMPICOS (repescagem + lesões) ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

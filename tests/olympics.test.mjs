@@ -21,6 +21,8 @@ import {
   continentalQualParticipants,
   categoryQuotas,
 } from "../src/engine/olympics.js";
+import { simulateCategory } from "../src/engine/competitionSystem.js";
+import { RandomSystem } from "../src/services/random.js";
 
 const MEN = MEN_CATEGORIES.map((c) => c.id);
 
@@ -112,23 +114,29 @@ test("cada ciclo: 16/cat, 1/país, composição de vagas e campeão G-20", () =>
     assertEqual(view.championPoints, 200, "G-20: campeão 200");
     assertEqual(view.location, olympicHost(year).city, "sede correta");
 
+    const allowed = new Set(["ranking", "grandslam", "continental", "host", "tripartite", "replacement"]);
     let hostQuotas = 0;
     for (const cat of view.categories) {
-      assertEqual(cat.placements.length, 16, `${year} ${cat.categoryName}: 16 atletas`);
+      // Campo até 16 (uma lesão nos últimos 15 dias, sem tempo de substituição,
+      // pode deixar a categoria com 15).
+      assert(cat.placements.length >= 8 && cat.placements.length <= 16, `${year} ${cat.categoryName}: campo até 16`);
       const countries = new Set(cat.placements.map((p) => p.ioc));
-      assertEqual(countries.size, 16, "1 por país (16 países distintos)");
+      assertEqual(countries.size, cat.placements.length, "1 por país (países distintos)");
       const byMethod = {};
       for (const p of cat.placements) {
         const m = (p.quotaMethod || "?").split(":")[0];
+        assert(allowed.has(m), `método de vaga válido: ${m}`);
         byMethod[m] = (byMethod[m] || 0) + 1;
       }
-      assertEqual(byMethod.ranking, 5, "5 pelo ranking");
-      assertEqual(byMethod.grandslam, 1, "1 pelo Grand Slam");
-      assertEqual(byMethod.continental, 9, "9 continentais (2+2+2+1+2)");
+      // Composição-base 5+1+9 pode migrar para "replacement" por lesão; a sede
+      // concede no máximo 2.
       hostQuotas += byMethod.host || 0;
       assertEqual(cat.placements.filter((p) => p.placement === 1).length, 1, "um campeão");
+      // Repescagem: exatamente DOIS bronzes e colocações da tabela {1,2,3,5,9}.
+      assertEqual(cat.placements.filter((p) => p.medal === "bronze").length, 2, "dois bronzes");
+      assert(cat.placements.every((p) => [1, 2, 3, 5, 9].includes(p.placement)), "colocações {1,2,3,5,9}");
     }
-    assertEqual(hostQuotas, 2, "país-sede: 2 vagas no total");
+    assert(hostQuotas <= 2, "país-sede: no máximo 2 vagas");
 
     // Campeão pontua no ranking normal (evento oficial G-20).
     const champId = view.categories[0].placements.find((p) => p.placement === 1).athleteId;
@@ -152,5 +160,103 @@ test("torneios continentais rodam e NÃO pontuam no ranking", () => {
       const entry = (g.world.athletes[champId].pointsLedger || []).find((e) => e.competitionId === c.id);
       assert(!entry, "torneio continental não credita pontos no ranking");
     }
+  }
+});
+
+suite("Olimpíadas — repescagem (motor de chave)");
+
+test("repescagem: dois bronzes por chaves cruzadas; colocações {1,2,3,5,9}", () => {
+  const random = new RandomSystem(3);
+  const athletes = Array.from({ length: 16 }, (_, i) => ({ id: "A" + i }));
+  const fightFn = (_r, a) => ({ winnerId: a.id, rounds: [] }); // 1º slot vence
+  const { placements, matches } = simulateCategory(random, athletes, { preseeded: true, repechage: true, fightFn });
+  assertEqual(placements.length, 16, "16 colocados");
+  assertEqual(placements.filter((p) => p.placement === 1).length, 1, "um ouro");
+  assertEqual(placements.filter((p) => p.placement === 2).length, 1, "uma prata");
+  assertEqual(placements.filter((p) => p.medal === "bronze").length, 2, "DOIS bronzes");
+  assert(placements.every((p) => [1, 2, 3, 5, 9].includes(p.placement)), "só {1,2,3,5,9}");
+  assert(matches.some((m) => m.round === 103), "houve 1ª rodada de repescagem");
+  assertEqual(matches.filter((m) => m.round === 3).length, 2, "duas lutas de bronze (cruzadas)");
+  const seen = new Set();
+  for (const p of placements) {
+    assert(!seen.has(p.athleteId), "sem duplicata");
+    seen.add(p.athleteId);
+  }
+});
+
+suite("Olimpíadas — substituição por lesão");
+
+test("classificado lesionado perde a vaga; substituto herda; gera notícias", () => {
+  const g = newGame();
+  g.advanceOneYear(); // 2026
+  g.advanceOneYear(); // 2027
+  g.director.advanceUntil("2028-06-20"); // após continentais, antes da confirmação (15/jul)
+
+  const cat = "WC-M-58";
+  const victim = categoryQuotas(g.world, 2028, cat).find((q) => q.method === "ranking");
+  const a = g.world.athletes[victim.athleteId];
+  a.status = "lesionado";
+  a.condition.injuredUntil = "2028-08-20"; // volta depois dos Jogos (perde a vaga)
+  g.world.injuries.push({ athleteId: a.id, until: "2028-08-20", severity: "grave" });
+
+  g.director.advanceUntil("2028-12-31"); // roda a Confirmação (15/jul) + os Jogos
+
+  const finalQuotas = categoryQuotas(g.world, 2028, cat);
+  assertEqual(finalQuotas.length, 16, "campo continua com 16");
+  assert(!finalQuotas.some((q) => q.athleteId === a.id), "o lesionado perdeu a vaga");
+  const repl = finalQuotas.find((q) => q.method === "replacement");
+  assert(repl, "há um substituto com método 'replacement'");
+
+  assert(g.world.news.some((n) => n.type === "olympic-forfeit" && n.athleteId === a.id), "notícia de vaga perdida");
+  assert(
+    g.world.news.some((n) => n.type === "olympic-replacement" && n.athleteId === repl.athleteId),
+    "notícia de vaga herdada"
+  );
+
+  // No campo dos Jogos: lesionado ausente, substituto presente.
+  const games = Object.values(g.world.competitions).find((c) => isOlympics(c) && c.date.startsWith("2028"));
+  const catView = g.getCompetitionView(games.id).categories.find((c) => c.categoryId === cat);
+  const ids = new Set(catView.placements.map((p) => p.athleteId));
+  assert(!ids.has(a.id), "lesionado fora dos Jogos");
+  assert(ids.has(repl.athleteId), "substituto disputou os Jogos");
+});
+
+test("herança pela Seleção Nacional quando o titular é Top-20", () => {
+  const g = newGame();
+  g.advanceOneYear(); // 2026
+  g.advanceOneYear(); // 2027
+  g.director.advanceUntil("2028-06-20");
+
+  const cat = "WC-M-58";
+  const victim = categoryQuotas(g.world, 2028, cat).find((q) => q.method === "ranking");
+  const injured = g.world.athletes[victim.athleteId];
+  const code = g.world.countries[injured.countryId].code;
+
+  // Titular Top-20 ativo do mesmo país, ainda não classificado.
+  const teammate = Object.values(g.world.athletes).find(
+    (x) =>
+      x.weightCategoryId === cat &&
+      x.status === "ativo" &&
+      g.world.countries[x.countryId].code === code &&
+      x.id !== injured.id &&
+      (x.ranking?.position ?? 999) <= 20 &&
+      !categoryQuotas(g.world, 2028, cat).some((q) => q.athleteId === x.id)
+  );
+  if (teammate) {
+    (g.world.nationalTeams[code] ||= {})[cat] = { titulares: [teammate.id], reservas: [], year: 2028 };
+    injured.status = "lesionado";
+    injured.condition.injuredUntil = "2028-08-20";
+    g.world.injuries.push({ athleteId: injured.id, until: "2028-08-20", severity: "grave" });
+
+    g.director.advanceUntil("2028-12-31");
+
+    const repl = categoryQuotas(g.world, 2028, cat).find((q) => q.method === "replacement");
+    assert(repl && repl.athleteId === teammate.id, "titular Top-20 herdou a vaga");
+    assert(
+      g.world.news.some(
+        (n) => n.type === "olympic-replacement" && n.athleteId === teammate.id && n.via === "national"
+      ),
+      "notícia de herança pela Seleção Nacional"
+    );
   }
 });

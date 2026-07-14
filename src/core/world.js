@@ -44,6 +44,7 @@ export function createWorld(opts = {}) {
     nationalTeams: {}, // seleções nacionais: { [ioc]: { [cat]: { titulares:[], reservas:[], year } } }
     grandSlamMerit: [], // ledger do Ranking de Mérito Grand Slam: { date, athleteId, categoryId, points, competitionId }
     olympicQuotas: {}, // vagas olímpicas por ano: { [ano]: { [cat]: [{ athleteId, method, countryCode }] } }
+    olympicRankingSnapshot: {}, // ordem do ranking em 3/dez do ano anterior: { [ano]: { [cat]: [athleteId,...] } }
     favorites: { athletes: [], countries: [], competitions: [] },
     configuration: {},
     // Estados dos serviços (para salvamento determinístico).

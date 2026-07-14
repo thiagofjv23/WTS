@@ -53,11 +53,14 @@ import {
   isOlympicRankingQual,
   isOlympicGrandSlamQual,
   isOlympicContinentalQual,
+  isOlympicFinalCheck,
   runOlympicRankingQual,
   runOlympicGrandSlamQual,
   continentalQualParticipants,
   assignContinentalQuotas,
   finalizeOlympicField,
+  runOlympicInjuryReplacement,
+  findOlympicsGames,
   resolveOlympicEntrants,
 } from "./olympics.js";
 import { COMPETITION_STATUS } from "../entities/competition.js";
@@ -152,10 +155,26 @@ export class SimulationDirector {
       this._emit("CompetitionFinished", { competitionId: competition.id });
       return;
     }
+    // Confirmação Olímpica (15 dias antes): fecha o campo (país-sede + Comissão
+    // Tripartite) e faz a substituição de classificados lesionados.
+    if (isOlympicFinalCheck(competition)) {
+      finalizeOlympicField(world, competition, this.random);
+      for (const ev of runOlympicInjuryReplacement(world, competition)) {
+        this._emit(ev.type === "forfeit" ? "OlympicForfeit" : "OlympicReplacement", {
+          athleteId: ev.athleteId,
+          categoryId: ev.categoryId,
+        });
+      }
+      const games = findOlympicsGames(world, competition.olympicYear);
+      if (games) games.quotasFinalized = true;
+      competition.status = COMPETITION_STATUS.FINISHED;
+      this._emit("CompetitionFinished", { competitionId: competition.id });
+      return;
+    }
 
-    // Jogos Olímpicos: fecha o campo (país-sede + Comissão Tripartite) ANTES de
-    // montar as chaves — o campo são exatamente os 16 classificados por categoria.
-    if (isOlympics(competition)) {
+    // Jogos Olímpicos: garante o campo fechado (caso a Confirmação não tenha
+    // rodado — ex.: jogo iniciado após 15/jul) antes de montar as chaves.
+    if (isOlympics(competition) && !competition.quotasFinalized) {
       finalizeOlympicField(world, competition, this.random);
     }
 
@@ -204,6 +223,8 @@ export class SimulationDirector {
       combatOpts.thirdPlaceMatch = true;
     }
     if (isGrandSlamFinals(competition)) combatOpts.preseeded = true;
+    // Jogos Olímpicos: repescagem (dois bronzes por chaves cruzadas).
+    if (isOlympics(competition)) combatOpts.repechage = true;
 
     const { byCategory, allMatches } = simulateCompetition(
       this.random,
@@ -272,15 +293,14 @@ export class SimulationDirector {
 
     if (isOlympicContinentalQual(competition)) {
       // Torneio Classificatório Continental: NÃO pontua no ranking nem conta
-      // medalhas — existe só para conceder vagas olímpicas aos finalistas. Guarda
-      // os resultados, atualiza rivalidades e registra o histórico do campeão.
+      // medalhas/histórico — existe só para conceder vagas olímpicas aos
+      // finalistas. Guarda os resultados (visíveis na tela) e as rivalidades.
       for (const [categoryId, placements] of Object.entries(byCategory)) {
         competition.results[categoryId] = placements;
       }
       assignContinentalQuotas(world, competition, byCategory);
       updateRivalriesFromCompetition(world, competition, allMatches);
       pruneRivalries(world, competition.date);
-      recordCompetitionHistory(world, competition, byCategory);
       competition.status = COMPETITION_STATUS.FINISHED;
       this._emit("CompetitionFinished", { competitionId: competition.id });
       return;

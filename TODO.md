@@ -130,8 +130,8 @@ será retomado. Atualizado a cada passo do desenvolvimento.
   hardcode). Pendências abaixo (sorteio de sedes, repescagem, feminino).
   - 🟡 **Sorteio de sedes olímpicas.** Hoje `OLYMPIC_HOSTS` é uma lista fixa
     (2028 LA … 2100 Athens); trocar por sorteio determinístico das sedes futuras.
-  - 🟡 **Repescagem olímpica** (dois bronzes por chaves separadas) e
-    **substituição de lesionados** entre a classificação e os Jogos.
+  - ✅ **Repescagem olímpica** (dois bronzes por chaves cruzadas) e
+    **substituição de lesionados** (Confirmação Olímpica 15 dias antes) — feito.
 - ✅ **Grand Slam** (formato real: **Challenge G-2 + Finals**) — feito
   (`engine/grandSlam.js` + `docs/GRAND_SLAM.md`): a partir de 2027, seletiva
   aberta com disputa de bronze (2 wildcards, regra de mesmo país) + Finais com 10

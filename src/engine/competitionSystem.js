@@ -49,15 +49,80 @@ function seedByRanking(athletes) {
 
 /** Round-sentinela da disputa de 3º lugar (não é potência de dois). */
 export const THIRD_PLACE_ROUND = 3;
+/** Round-sentinela da 1ª rodada da repescagem olímpica. */
+export const REPECHAGE_ROUND = 103;
+
+/** O perdedor de uma luta registrada em `matches`. */
+function loserOfMatch(m) {
+  return m.winnerId === m.athleteAId ? m.athleteBId : m.athleteAId;
+}
+
+/**
+ * Repescagem olímpica (chave cheia de 16, formato World Taekwondo). Já rodou a
+ * chave principal (rounds 16/8/4/2 em `matches`) e o campeão está definido.
+ *  - Resgata quem cada finalista derrotou (oitavas=16, quartas=8, semi=4).
+ *  - 1ª rodada por lado: perdedor das oitavas × perdedor das quartas (do mesmo
+ *    finalista). O semifinalista folga e vai direto à luta de bronze.
+ *  - Bronze CRUZADO: o sobrevivente de um lado enfrenta o semifinalista do lado
+ *    oposto — dois vencedores, duas medalhas de bronze.
+ * Colocações usadas: 1, 2, 3 (×2), 5 e 9 (mantém a tabela padrão de pontos).
+ */
+function runRepechage({ matches, placements, champion, byId, runFight }) {
+  const finalMatch = matches.find((m) => m.round === 2);
+  const runnerId = loserOfMatch(finalMatch);
+  placements.push({ athleteId: runnerId, placement: 2, medal: "prata" });
+
+  // Quem cada finalista derrotou, por rodada (16=oitavas, 8=quartas, 4=semi).
+  const victimsOf = (finId) => {
+    const v = {};
+    for (const m of matches) {
+      if (m.round !== 2 && m.winnerId === finId) v[m.round] = loserOfMatch(m);
+    }
+    return v;
+  };
+  const v1 = victimsOf(finalMatch.athleteAId);
+  const v2 = victimsOf(finalMatch.athleteBId);
+  const obj = (id) => byId.get(id);
+
+  // 1ª rodada da repescagem (por lado): oitavas × quartas do mesmo finalista.
+  const fr1 = runFight(obj(v1[16]), obj(v1[8]), REPECHAGE_ROUND);
+  const fr2 = runFight(obj(v2[16]), obj(v2[8]), REPECHAGE_ROUND);
+  placements.push({ athleteId: fr1.loser.id, placement: 5, medal: null });
+  placements.push({ athleteId: fr2.loser.id, placement: 5, medal: null });
+
+  // Bronze CRUZADO: sobrevivente de um lado × semifinalista do lado oposto.
+  const b1 = runFight(fr1.winner, obj(v2[4]), THIRD_PLACE_ROUND);
+  const b2 = runFight(fr2.winner, obj(v1[4]), THIRD_PLACE_ROUND);
+  placements.push({ athleteId: b1.winner.id, placement: 3, medal: "bronze" });
+  placements.push({ athleteId: b2.winner.id, placement: 3, medal: "bronze" });
+  placements.push({ athleteId: b1.loser.id, placement: 5, medal: null });
+  placements.push({ athleteId: b2.loser.id, placement: 5, medal: null });
+
+  // Demais derrotados NÃO resgatados: quartas → 5º; oitavas → 9º.
+  const rescued16 = new Set([v1[16], v2[16]]);
+  const rescued8 = new Set([v1[8], v2[8]]);
+  for (const m of matches) {
+    if (m.round === 16 || m.round === 8) {
+      const loser = loserOfMatch(m);
+      if (m.round === 16 && !rescued16.has(loser)) {
+        placements.push({ athleteId: loser, placement: 9, medal: null });
+      } else if (m.round === 8 && !rescued8.has(loser)) {
+        placements.push({ athleteId: loser, placement: 5, medal: null });
+      }
+    }
+  }
+}
 
 /**
  * Simula uma categoria inteira (uma chave).
  * @param {object} random  RandomSystem
  * @param {Array} athletes atletas inscritos na categoria
- * @param {object} [opts] { fightFn, onMatch, preseeded, thirdPlaceMatch }
+ * @param {object} [opts] { fightFn, onMatch, preseeded, thirdPlaceMatch, repechage }
  *   - preseeded: usa a ORDEM recebida como seeding (não reordena por ranking).
  *   - thirdPlaceMatch: joga a disputa de bronze entre os semifinalistas
  *     derrotados (um único 3º e um 4º distinto), em vez dos dois bronzes padrão.
+ *   - repechage: repescagem olímpica (chave cheia de 16) — resgata os
+ *     derrotados pelos dois finalistas e cruza as chaves para DOIS bronzes.
  * @returns {{ placements: Array, matches: Array }}
  */
 export function simulateCategory(random, athletes, opts = {}) {
@@ -84,6 +149,11 @@ export function simulateCategory(random, athletes, opts = {}) {
   // pelo ranking vigente.
   const ranked = opts.preseeded ? [...athletes] : seedByRanking(athletes);
   const { slots } = buildBracket(ranked);
+  const byId = new Map(athletes.map((a) => [a.id, a]));
+
+  // Repescagem olímpica: só na chave CHEIA de 16 (sem byes). Fora disso, cai no
+  // padrão (dois bronzes pelos semifinalistas).
+  const doRepechage = !!opts.repechage && slots.length === 16 && slots.every(Boolean);
 
   const placements = [];
   const matches = [];
@@ -117,9 +187,12 @@ export function simulateCategory(random, athletes, opts = {}) {
 
       if (a && b) {
         const { winner, loser } = runFight(a, b, roundSize);
-        // Semifinal (roundSize 4) com disputa de bronze: segura os perdedores
-        // para o playoff em vez de dar dois bronzes diretos.
-        if (thirdPlaceMatch && roundSize === 4) {
+        // Repescagem: as colocações dos perdedores só são definidas depois (a
+        // partir do caminho dos finalistas). Aqui não pontua nada.
+        if (doRepechage) {
+          // nada: a repescagem decide as colocações no fim.
+        } else if (thirdPlaceMatch && roundSize === 4) {
+          // Semifinal com disputa de bronze: segura os perdedores para o playoff.
           semifinalLosers.push(loser);
         } else {
           placements.push({
@@ -141,6 +214,14 @@ export function simulateCategory(random, athletes, opts = {}) {
   // Campeão.
   const champion = current[0];
   placements.push({ athleteId: champion.id, placement: 1, medal: "ouro" });
+
+  // Repescagem olímpica (chave cheia de 16): resgata os derrotados pelos dois
+  // finalistas ao longo do dia e cruza as chaves para DOIS bronzes.
+  if (doRepechage) {
+    runRepechage({ matches, placements, champion, byId, runFight });
+    placements.sort((x, y) => x.placement - y.placement);
+    return { placements, matches };
+  }
 
   // Disputa de 3º lugar: os dois semifinalistas derrotados jogam; vencedor = 3º
   // (bronze único), perdedor = 4º. Só dispara com exatamente dois semifinalistas.

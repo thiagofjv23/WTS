@@ -624,3 +624,26 @@ Config: dois campos distintos para a sede — `host` = { city, country } (local)
 Verificado: 3 ciclos (2028 LA, 2032 Brisbane, 2036 Munich) fecham 16/categoria
 com 16 países distintos, composição 5+1+9 + 2 país-sede (total) + tripartite, e
 campeões com +200 no ledger.
+
+## [2026-07-14] Olimpíadas — repescagem e substituição por lesão
+Repescagem (formato World Taekwondo, chave cheia de 16): ao definir os dois
+finalistas, resgata quem eles derrotaram (oitavas/quartas/semi). 1ª rodada por
+lado (oitavas × quartas do mesmo finalista); semifinalistas folgam e vão à luta
+de bronze. **Bronze cruzado** (sobrevivente de um lado × semifinalista do lado
+oposto) → dois bronzes. Implementado como `opts.repechage` no `competitionSystem`
+(sentinela de round 103 para a 1ª rodada; reaproveita o round 3 do bronze).
+Colocações {1,2,3,5,9} para manter a tabela de pontos válida (evita tiers
+fracionários). Só na chave cheia de 16 sem byes; senão, cai no padrão de 2
+bronzes.
+
+Substituição por lesão: verificação na **Confirmação Olímpica** (evento de papel
+15 dias antes, 15/jul), que também fecha o campo (país-sede + Tripartite) — assim
+todas as 16 vagas existem antes da checagem. Um classificado lesionado cuja lesão
+termina depois do prazo perde a vaga (notícia `olympic-forfeit`). Herança: (1)
+Seleção Nacional do país/categoria (titular→vice→reservas) se Top-20; (2) senão,
+melhor do ranking congelado de 3/dez que não classificou e de país sem vaga
+(notícia `olympic-replacement`, via national/ranking). O ranking de 3/dez é
+congelado em `world.olympicRankingSnapshot` no evento de ranking. Rodar a checagem
+na data-prazo (15/jul) é necessário: como a recuperação reativa o atleta na data
+de volta, ler o status depois perderia a informação; no dia 15/jul, todo
+lesionado tem `injuredUntil` > prazo.

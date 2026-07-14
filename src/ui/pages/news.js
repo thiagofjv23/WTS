@@ -40,6 +40,32 @@ function card(n, onOpen, onAthlete) {
         el("span.news-champ", n.replacing ? `convocado à Seleção Nacional no lugar de ${n.replacing}` : "convocado à Seleção Nacional"))
     );
   }
+  // Vaga olímpica perdida por lesão.
+  if (n.type === "olympic-forfeit") {
+    return el(
+      "button.card.news-card.news-med",
+      { onClick: () => onAthlete && n.athleteId && onAthlete(n.athleteId) },
+      el("div.news-head", el("span.news-date", fmtDate(n.date)), el("span.badge.g-open", "VAGA PERDIDA")),
+      el("div.news-title", `✚ ${n.flag || ""} ${n.name}`, nt(n.nationalTeam)),
+      el("div.news-body",
+        el("span.news-cat", n.category || ""),
+        el("span.news-champ", "lesionado — perdeu a vaga olímpica"))
+    );
+  }
+  // Vaga olímpica herdada (substituição).
+  if (n.type === "olympic-replacement") {
+    const viaTxt = n.via === "national" ? "pela Seleção Nacional" : "pelo ranking";
+    return el(
+      "button.card.news-card.news-med",
+      { onClick: () => onAthlete && n.athleteId && onAthlete(n.athleteId) },
+      el("div.news-head", el("span.news-date", fmtDate(n.date)), el("span.badge.g-champ", "VAGA OLÍMPICA")),
+      el("div.news-title", `🎟️ ${n.flag || ""} ${n.name}`, nt(n.nationalTeam)),
+      el("div.news-body",
+        el("span.news-cat", n.category || ""),
+        el("span.news-champ",
+          n.replacing ? `herdou a vaga de ${n.replacing} (${viaTxt})` : `herdou uma vaga olímpica (${viaTxt})`))
+    );
+  }
   // lesão / recuperação
   const injury = n.type === "injury";
   return el(

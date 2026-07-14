@@ -126,7 +126,7 @@ export function competitionModal(view, { onClose, onAthlete, state }) {
       if (!byRound.has(m.roundLabel)) byRound.set(m.roundLabel, []);
       byRound.get(m.roundLabel).push(m);
     }
-    const order = ["Final", "Disputa de bronze", "Semifinal", "Quartas de final", "Oitavas de final"];
+    const order = ["Final", "Disputa de bronze", "Repescagem", "Semifinal", "Quartas de final", "Oitavas de final"];
     const roundNames = [...byRound.keys()].sort(
       (a, b) => (order.indexOf(a) + 99 * (order.indexOf(a) < 0)) - (order.indexOf(b) + 99 * (order.indexOf(b) < 0))
     );
