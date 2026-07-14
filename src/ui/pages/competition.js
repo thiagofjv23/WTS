@@ -11,6 +11,20 @@ function wildcardBadge() {
   return el("span.wc-badge", { title: "Vaga via Wildcard da President's Cup" }, "WC");
 }
 
+/** Selo de como o atleta conquistou a vaga olímpica. */
+function quotaBadge(method) {
+  if (!method) return null;
+  const kind = method.split(":")[0];
+  const label = {
+    ranking: "Ranking",
+    grandslam: "Grand Slam",
+    continental: "Continental",
+    host: "País-sede",
+    tripartite: "Tripartite",
+  }[kind] || kind;
+  return el("span.quota-badge", { title: `Vaga olímpica: ${label}` }, label);
+}
+
 function ntMark(a) {
   return a.nationalTeam ? nationalTeamMark(a.nationalTeam) : null;
 }
@@ -101,7 +115,7 @@ export function competitionModal(view, { onClose, onAthlete, state }) {
           el("span.pos", `${p.placement}º`),
           el("span.flag", p.flag || "🏳"),
           el("span.row-main",
-            el("span.row-name", `${medalIcon(p.medal)} ${p.name}`, ntMark(p), p.wildcard ? wildcardBadge() : null)),
+            el("span.row-name", `${medalIcon(p.medal)} ${p.name}`, ntMark(p), p.wildcard ? wildcardBadge() : null, quotaBadge(p.quotaMethod))),
           el("span.pts", p.points ? `+${p.points}` : "")
         )
       )

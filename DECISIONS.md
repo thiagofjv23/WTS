@@ -590,3 +590,37 @@ Motor de chave (`competitionSystem`): dois `opts` novos e genéricos —
 `thirdPlaceMatch` (disputa de bronze com round-sentinela 3) e `preseeded` (usa o
 seeding entregue, sem reordenar por ranking). Reaproveitáveis por futuros
 formatos (ex.: Olimpíadas).
+
+## [2026-07-14] Jogos Olímpicos e classificação olímpica (config-driven)
+Contexto: o principal torneio do ecossistema. Dois docs de diretriz definiram o
+formato (16/categoria, 1/país, G-20) e a classificação em etapas.
+
+Decisões (perguntadas ao usuário antes de implementar):
+- **Vaga do Grand Slam**: existe, 1/categoria, ao líder do Ranking de Mérito do
+  ANO ANTERIOR; escorrega ao próximo do mérito se já classificado. Fecha 16 =
+  5 (ranking) + 1 (Grand Slam) + 9 (continental) + 1 (sede/tripartite).
+- **"Ranking Olímpico"** = o nosso ranking mundial normal (lido em 3/dez do ano
+  anterior); não criamos um ranking separado.
+- **Data dos Jogos**: 30/jul do ano olímpico (não consta nos docs).
+- **Torneios continentais**: só concedem VAGA — NÃO pontuam no ranking (como as
+  seletivas). Campo = atletas do continente ainda não classificados, 1/país.
+
+Arquitetura **sem hardcode** (exigência do doc): toda a lógica lê de
+`src/config/olympics.js` (`getOlympicConfig(year)`, `OLYMPIC_HOSTS`,
+`OLYMPIC_OVERRIDES`). Datas por mês/dia; anos por regra (ranking/Grand Slam = ano
+anterior; continentais/Jogos = ano olímpico). Sedes em inglês, reutilizando os
+códigos IOC já existentes no roster.
+
+Modelagem: cada etapa é um evento agendado (calendário = fonte da verdade). As
+etapas por ranking e Grand Slam são eventos "de papel" (sem lutas) que travam
+vagas; os continentais são torneios de chave real (sem pontos); os Jogos rodam
+como evento oficial G-20. As vagas ficam em `world.olympicQuotas[ano][cat]`.
+
+TODO registrado: trocar a **lista fixa de sedes por sorteio**.
+
+Config: dois campos distintos para a sede — `host` = { city, country } (local) e
+`hostRule` = { quota } (regra das 2 vagas) — para não colidirem no mesmo objeto.
+
+Verificado: 3 ciclos (2028 LA, 2032 Brisbane, 2036 Munich) fecham 16/categoria
+com 16 países distintos, composição 5+1+9 + 2 país-sede (total) + tripartite, e
+campeões com +200 no ledger.

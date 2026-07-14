@@ -908,7 +908,37 @@ Finais 10 válidos/mérito/sem ledger de ranking/byes). Verificado no navegador
 
 ---
 
-## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais + Grand Slam (Challenge+Finals+Mérito) + Mundial ✅
+## Passo 26 — Jogos Olímpicos e classificação olímpica (config-driven)
+
+**Pedido:** o principal torneio do ecossistema, seguindo 2 docs de diretriz —
+16/categoria, 1/país, G-20, a cada 4 anos (2028…), com classificação em etapas e
+arquitetura **sem hardcode** (config por ciclo).
+
+**Decisões (perguntadas antes):** vaga do Grand Slam = 1/categoria (líder do
+Mérito do ano anterior, escorrega se já classificado); "Ranking Olímpico" = nosso
+ranking mundial (3/dez do ano anterior); Jogos em 30/jul; continentais só dão
+vaga (sem pontos). Fecha 16 = 5 (ranking) + 1 (GS) + 9 (continental) + 1
+(sede/tripartite).
+
+**Feito:**
+- `config/olympics.js`: `getOlympicConfig(year)`, `OLYMPIC_HOSTS` (sedes em
+  inglês até 2100, códigos IOC do roster), `isOlympicYear`, `OLYMPIC_OVERRIDES`.
+- `engine/olympics.js`: agendamento (etapas de papel + 5 continentais + Jogos),
+  ledger `world.olympicQuotas`, `runOlympicRankingQual`, `runOlympicGrandSlamQual`,
+  `continentalQualParticipants`/`assignContinentalQuotas`, `finalizeOlympicField`
+  (país-sede + Comissão Tripartite), `resolveOlympicEntrants`.
+- `simulationDirector`: ramos das etapas de papel, dos torneios continentais
+  (sem pontos) e dos Jogos (G-20, caminho oficial). `gameController` agenda por
+  temporada; `getCompetitionView`/`projectedField` mostram vagas e método.
+
+**Testado:** `npm test` (`tests/olympics.test.mjs`): config/sedes; Etapa 1
+(top-5 países distintos); exclusão nos continentais; **3 ciclos (2028/2032/2036)**
+fechando 16/categoria com 16 países, composição 5+1+9 + 2 país-sede + tripartite,
+campeões +200 no ledger; continentais sem pontos. Custo: ~2028→2036 ~32 s.
+
+---
+
+## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais + Grand Slam (Challenge+Finals+Mérito) + Mundial + JOGOS OLÍMPICOS ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

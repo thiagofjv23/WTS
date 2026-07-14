@@ -48,6 +48,18 @@ import {
   grantGrandSlamChallengeQualifiers,
   applyGrandSlamMerit,
 } from "./grandSlam.js";
+import {
+  isOlympics,
+  isOlympicRankingQual,
+  isOlympicGrandSlamQual,
+  isOlympicContinentalQual,
+  runOlympicRankingQual,
+  runOlympicGrandSlamQual,
+  continentalQualParticipants,
+  assignContinentalQuotas,
+  finalizeOlympicField,
+  resolveOlympicEntrants,
+} from "./olympics.js";
 import { COMPETITION_STATUS } from "../entities/competition.js";
 import { addDays } from "../utils/dates.js";
 import { RandomSystem } from "../services/random.js";
@@ -127,6 +139,26 @@ export class SimulationDirector {
     competition.status = COMPETITION_STATUS.RUNNING;
     this._emit("CompetitionStarted", { competitionId: competition.id });
 
+    // Classificação olímpica "de papel" (sem lutas): trava vagas e encerra.
+    if (isOlympicRankingQual(competition)) {
+      runOlympicRankingQual(world, competition);
+      competition.status = COMPETITION_STATUS.FINISHED;
+      this._emit("CompetitionFinished", { competitionId: competition.id });
+      return;
+    }
+    if (isOlympicGrandSlamQual(competition)) {
+      runOlympicGrandSlamQual(world, competition);
+      competition.status = COMPETITION_STATUS.FINISHED;
+      this._emit("CompetitionFinished", { competitionId: competition.id });
+      return;
+    }
+
+    // Jogos Olímpicos: fecha o campo (país-sede + Comissão Tripartite) ANTES de
+    // montar as chaves — o campo são exatamente os 16 classificados por categoria.
+    if (isOlympics(competition)) {
+      finalizeOlympicField(world, competition, this.random);
+    }
+
     // Continental: resolve os agraciados por wildcard da President's Cup ANTES
     // de montar o campo, para o Participation incluí-los (além do 1 por país) e
     // a UI marcar a vaga. Determinístico (baseado no ranking vigente).
@@ -138,12 +170,17 @@ export class SimulationDirector {
       }
     }
 
-    // Seletiva Nacional: campo restrito aos atletas do país. Grand Slam Finals:
-    // os 10 válidos (resolvidos das fontes do ano). Demais: seleção normal.
+    // Campo por tipo de evento: Seletiva (país), Grand Slam Finals (10 válidos),
+    // Jogos (16 classificados), torneio continental olímpico (continente, não
+    // classificados, 1/país) ou seleção normal.
     const participantsFor = isSelective(competition)
       ? (categoryId) => selectiveParticipants(world, competition, categoryId)
       : isGrandSlamFinals(competition)
       ? (categoryId) => resolveGrandSlamFinalists(world, competition, categoryId)
+      : isOlympics(competition)
+      ? (categoryId) => resolveOlympicEntrants(world, competition, categoryId)
+      : isOlympicContinentalQual(competition)
+      ? (categoryId) => continentalQualParticipants(world, competition, categoryId)
       : (categoryId) => selectParticipants(world, competition, categoryId, this.random);
 
     const onMatch = (match) =>
@@ -225,6 +262,22 @@ export class SimulationDirector {
         const promoted = promoteReserveOnInjury(world, inj.athleteId);
         if (promoted) newsCallup(world, competition.date, promoted, inj.athleteId);
       }
+      updateRivalriesFromCompetition(world, competition, allMatches);
+      pruneRivalries(world, competition.date);
+      recordCompetitionHistory(world, competition, byCategory);
+      competition.status = COMPETITION_STATUS.FINISHED;
+      this._emit("CompetitionFinished", { competitionId: competition.id });
+      return;
+    }
+
+    if (isOlympicContinentalQual(competition)) {
+      // Torneio Classificatório Continental: NÃO pontua no ranking nem conta
+      // medalhas — existe só para conceder vagas olímpicas aos finalistas. Guarda
+      // os resultados, atualiza rivalidades e registra o histórico do campeão.
+      for (const [categoryId, placements] of Object.entries(byCategory)) {
+        competition.results[categoryId] = placements;
+      }
+      assignContinentalQuotas(world, competition, byCategory);
       updateRivalriesFromCompetition(world, competition, allMatches);
       pruneRivalries(world, competition.date);
       recordCompetitionHistory(world, competition, byCategory);

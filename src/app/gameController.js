@@ -35,6 +35,18 @@ import {
   grandSlamMeritRanking,
 } from "../engine/grandSlam.js";
 import { scheduleWorldChampionship } from "../engine/worldChampionship.js";
+import {
+  scheduleOlympics,
+  isOlympics,
+  isOlympicContinentalQual,
+  isOlympicRankingQual,
+  isOlympicGrandSlamQual,
+  isOlympicQualification,
+  categoryQuotas,
+  quotaMethodOf,
+  resolveOlympicEntrants,
+  continentalQualParticipants,
+} from "../engine/olympics.js";
 import { athletesInCategory } from "../core/world.js";
 
 const SAVE_KEY = "world";
@@ -144,6 +156,9 @@ export class GameController {
     scheduleWorldChampionship(this.world, this.idGen, { year, categoryFilter: MEN_IDS });
     // Grand Slam Champions Series (fim de dezembro, top 16 por convite).
     scheduleGrandSlam(this.world, this.idGen, { year, categoryFilter: MEN_IDS });
+    // Jogos Olímpicos e classificação (a cada 4 anos ≥ 2028): etapas por ranking/
+    // Grand Slam (dez do ano anterior), continentais (fev–abr) e os Jogos (jul).
+    scheduleOlympics(this.world, this.idGen, { year, categoryFilter: MEN_IDS });
     this.nextOffset += 1;
   }
 
@@ -522,6 +537,22 @@ export class GameController {
         };
       });
     }
+    // Etapas classificatórias olímpicas "de papel": sem campo de inscritos.
+    if (isOlympicRankingQual(competition) || isOlympicGrandSlamQual(competition)) return [];
+    // Jogos (classificados até o momento) e torneios continentais olímpicos.
+    if (isOlympics(competition) || isOlympicContinentalQual(competition)) {
+      const list = isOlympics(competition)
+        ? resolveOlympicEntrants(this.world, competition, categoryId)
+        : continentalQualParticipants(this.world, competition, categoryId);
+      return list.map((a, i) => {
+        const c = this._countryOf(a);
+        return {
+          id: a.id, seed: i + 1, name: a.fullName, ioc: c.code, flag: flagEmoji(c.code),
+          position: a.ranking.position, points: a.ranking.points,
+          wildcard: false, nationalTeam: a.nationalTeam || null,
+        };
+      });
+    }
     const rules = classifyEvent(competition);
     let pool = athletesInCategory(this.world, categoryId).filter((a) =>
       isEligible(a, this.world, rules)
@@ -633,10 +664,32 @@ export class GameController {
     if (!c) return null;
     const done = c.status === "concluida";
     const gsFinals = isGrandSlamFinals(c);
+    const olympics = isOlympics(c);
+    const olympicPaper = isOlympicRankingQual(c) || isOlympicGrandSlamQual(c);
+    const olympicMethod = isOlympicRankingQual(c) ? "ranking" : isOlympicGrandSlamQual(c) ? "grandslam" : null;
+    const showQuota = olympics || isOlympicContinentalQual(c);
+    const oYear = c.olympicYear;
     const rules = classifyEvent(c);
+    const athleteRow = (id) => {
+      const a = this.world.athletes[id];
+      const cc = a ? this._countryOf(a) : { code: "??" };
+      return { name: a ? a.fullName : "?", ioc: cc.code, flag: flagEmoji(cc.code), nationalTeam: a?.nationalTeam || null };
+    };
     const categories = c.categoryIds.map((catId) => {
       const catName = getWeightCategory(catId)?.name || catId;
       if (done) {
+        // Etapas classificatórias "de papel" (ranking / Grand Slam): sem lutas —
+        // lista os atletas que travaram vaga por aquele método.
+        if (olympicPaper) {
+          const placements = categoryQuotas(this.world, oYear, catId)
+            .filter((q) => q.method === olympicMethod)
+            .map((q, i) => ({
+              athleteId: q.athleteId, ...athleteRow(q.athleteId),
+              placement: i + 1, medal: null, points: 0,
+              wildcard: false, quotaMethod: q.method,
+            }));
+          return { categoryId: catId, categoryName: catName, placements, matches: [], meritRanking: null };
+        }
         const wildcardSet = new Set(c.wildcards?.[catId] || []);
         const placements = (c.results[catId] || []).map((p) => {
           const a = this.world.athletes[p.athleteId];
@@ -650,6 +703,8 @@ export class GameController {
             // ranking normal); demais eventos, os pontos de ranking.
             points: gsFinals ? (p.meritPoints ?? 0) : (p.rankingPointsEarned ?? 0),
             wildcard: wildcardSet.has(p.athleteId),
+            // Jogos/continental: como o atleta se classificou (badge de vaga).
+            quotaMethod: showQuota ? quotaMethodOf(this.world, oYear, catId, p.athleteId) : null,
             nationalTeam: a?.nationalTeam || null,
           };
         });
@@ -678,18 +733,29 @@ export class GameController {
       };
     });
     const selective = isSelective(c);
+    const olympicQual = isOlympicQualification(c);
+    const gLabel = selective
+      ? "Seletiva Nacional"
+      : gsFinals
+      ? "Grand Slam Finals (Mérito)"
+      : olympics
+      ? "Jogos Olímpicos"
+      : isOlympicRankingQual(c)
+      ? "Classificação Olímpica — Ranking"
+      : isOlympicGrandSlamQual(c)
+      ? "Classificação Olímpica — Grand Slam"
+      : isOlympicContinentalQual(c)
+      ? "Torneio Classificatório Continental"
+      : (G_RANK_LABELS[c.gRank] || c.gRank);
     return {
       id: c.id, name: c.name, gRank: c.gRank,
-      gLabel: selective
-        ? "Seletiva Nacional"
-        : gsFinals
-        ? "Grand Slam Finals (Mérito)"
-        : (G_RANK_LABELS[c.gRank] || c.gRank),
+      gLabel,
       date: c.date, location: c.location,
-      // Finais do Grand Slam: o "valor" do campeão é o mérito (1000), não pontos
-      // de ranking (que não são creditados).
-      championPoints: selective ? 0 : gsFinals ? 1000 : championPointsFor(c.gRank),
+      // Finais do Grand Slam: o "valor" do campeão é o mérito (1000). Etapas
+      // classificatórias olímpicas não pontuam; os Jogos são G-20 (200).
+      championPoints: selective || olympicQual ? 0 : gsFinals ? 1000 : championPointsFor(c.gRank),
       done, selective, grandSlamFinals: gsFinals,
+      olympics, olympicQualification: olympicQual,
       eligibility: selective ? {} : {
         rankingLockTopN: rules.rankingLockTopN,
         continent: rules.continent,

@@ -123,14 +123,21 @@ será retomado. Atualizado a cada passo do desenvolvimento.
 
 - ✅ **Campeonato Mundial (G-14, bienal)** — feito (`engine/worldChampionship.js`
   + `docs/WORLD_CHAMPIONSHIP.md`): julho, Astana, anos ímpares ≥ 2027, 1/país.
-- 🟡 **Olimpíadas (G-20)** com a classificação olímpica (top 5 do ranking + Grand
-  Slam + qualificatórios continentais) e a repescagem (§7). Próximo grande passo
-  do ciclo — o Grand Slam e o Mundial já dão vagas ao campeão (a implementar).
+- ✅ **Olimpíadas (G-20)** com a classificação olímpica — feito
+  (`config/olympics.js` + `engine/olympics.js` + `docs/OLYMPICS.md`): a cada 4
+  anos (2028…), 16/categoria, 1/país; etapas ranking (5) + Grand Slam (1) +
+  continentais (9) + país-sede (2) + Comissão Tripartite. Config-driven (sem
+  hardcode). Pendências abaixo (sorteio de sedes, repescagem, feminino).
+  - 🟡 **Sorteio de sedes olímpicas.** Hoje `OLYMPIC_HOSTS` é uma lista fixa
+    (2028 LA … 2100 Athens); trocar por sorteio determinístico das sedes futuras.
+  - 🟡 **Repescagem olímpica** (dois bronzes por chaves separadas) e
+    **substituição de lesionados** entre a classificação e os Jogos.
 - ✅ **Grand Slam** (formato real: **Challenge G-2 + Finals**) — feito
   (`engine/grandSlam.js` + `docs/GRAND_SLAM.md`): a partir de 2027, seletiva
   aberta com disputa de bronze (2 wildcards, regra de mesmo país) + Finais com 10
   válidos, chave 16/6 byes e **Ranking de Mérito** separado (50%/ano, 2 anos).
-  Falta só a **vaga olímpica ao campeão**, que entra com o ciclo olímpico (G-20).
+  O líder do Ranking de Mérito já concede **vaga olímpica** (Etapa 2 da
+  classificação — ver Olimpíadas).
 - 🟢 **Calibração dos totais de pontos.** Com teto+travas os líderes ficam em
   ~450–600 pts (antes >1000); ainda acima do real (~250–350) por causa da
   dominância do favorito no combate (inclinação `k` em probability.js). Rever
