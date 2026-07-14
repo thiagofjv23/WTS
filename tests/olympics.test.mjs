@@ -17,6 +17,7 @@ import {
 import {
   isOlympics,
   isOlympicContinentalQual,
+  isOlympicQualification,
   runOlympicRankingQual,
   continentalQualParticipants,
   categoryQuotas,
@@ -219,6 +220,30 @@ test("classificado lesionado perde a vaga; substituto herda; gera notícias", ()
   const ids = new Set(catView.placements.map((p) => p.athleteId));
   assert(!ids.has(a.id), "lesionado fora dos Jogos");
   assert(ids.has(repl.athleteId), "substituto disputou os Jogos");
+});
+
+suite("Olimpíadas — blackout de 15 dias");
+
+test("classificados não disputam outras competições nos 15 dias antes dos Jogos", () => {
+  const g = newGame();
+  for (let y = 2026; y <= 2028; y++) g.advanceOneYear();
+
+  const qids = new Set();
+  for (const cat of MEN) for (const q of categoryQuotas(g.world, 2028, cat)) qids.add(q.athleteId);
+  assert(qids.size > 0, "há classificados em 2028");
+
+  // Competições comuns na janela (16–29/jul), fora as olímpicas.
+  const windowed = Object.values(g.world.competitions).filter(
+    (c) => c.date > "2028-07-15" && c.date < "2028-07-30" && !isOlympics(c) && !isOlympicQualification(c)
+  );
+  assert(windowed.length > 0, "há competições comuns na janela de 15 dias");
+  for (const c of windowed) {
+    for (const cat of c.categoryIds) {
+      for (const p of c.results[cat] || []) {
+        assert(!qids.has(p.athleteId), `classificado não deveria disputar ${c.name}`);
+      }
+    }
+  }
 });
 
 test("herança pela Seleção Nacional quando o titular é Top-20", () => {

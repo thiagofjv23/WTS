@@ -28,6 +28,7 @@ import { grandSlamMeritRanking } from "./grandSlam.js";
 import { ATHLETE_STATUS } from "../entities/athlete.js";
 import { MEN_CATEGORIES } from "../config/weightCategories.js";
 import { pushNews } from "./news.js";
+import { addDays } from "../utils/dates.js";
 import {
   getOlympicConfig,
   isOlympicYear,
@@ -68,6 +69,33 @@ export function isOlympicQualification(competition) {
 /** Encontra os Jogos de um ano (para marcar o campo como fechado). */
 export function findOlympicsGames(world, year) {
   return Object.values(world.competitions).find((c) => isOlympics(c) && c.olympicYear === year) || null;
+}
+
+/** Dias de "blackout" antes dos Jogos (= prazo da verificação de lesões). */
+export const OLYMPIC_BLACKOUT_DAYS = 15;
+
+/**
+ * IDs dos classificados que NÃO podem disputar outra competição por cair na
+ * janela de blackout — os 15 dias ENTRE o prazo de verificação de lesões e os
+ * Jogos (evita lesões de última hora, sem tempo de substituição). Fora da janela
+ * retorna null.
+ * @returns {Set<string>|null}
+ */
+export function olympicBlackoutIds(world, competition) {
+  if (isOlympics(competition) || isOlympicQualification(competition)) return null;
+  const date = competition.date;
+  const year = Number(date.slice(0, 4));
+  if (!isOlympicYear(year)) return null;
+  const games = findOlympicsGames(world, year);
+  if (!games) return null;
+  const deadline = addDays(games.date, -OLYMPIC_BLACKOUT_DAYS); // prazo da verificação (15 dias antes)
+  // Estritamente APÓS o prazo e antes dos Jogos.
+  if (date <= deadline || date >= games.date) return null;
+  const ids = new Set();
+  for (const bucket of Object.values(world.olympicQuotas?.[year] || {})) {
+    for (const q of bucket) ids.add(q.athleteId);
+  }
+  return ids.size ? ids : null;
 }
 
 // ---- Ledger de vagas ----------------------------------------------------------

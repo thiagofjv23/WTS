@@ -959,6 +959,11 @@ cruzados), substituição por lesão (perda + herança + notícias + campo dos J
 herança pela Seleção Nacional (Top-20). 3 ciclos mantêm 16/cat, 16 países e 2
 bronzes. Verificado por script (lesão de classificado → substituto entra).
 
+**Ajuste — blackout de 15 dias:** nos 15 dias entre a Confirmação e os Jogos
+(16–29/jul), os classificados são barrados de qualquer outra competição
+(`olympicBlackoutIds`), para não haver lesão de última hora sem tempo de
+substituição. Testado (nenhum classificado nas competições comuns da janela).
+
 ---
 
 ## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais + Grand Slam (Challenge+Finals+Mérito) + Mundial + JOGOS OLÍMPICOS (repescagem + lesões) ✅

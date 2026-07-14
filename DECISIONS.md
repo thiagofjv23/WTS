@@ -647,3 +647,13 @@ congelado em `world.olympicRankingSnapshot` no evento de ranking. Rodar a checag
 na data-prazo (15/jul) é necessário: como a recuperação reativa o atleta na data
 de volta, ler o status depois perderia a informação; no dia 15/jul, todo
 lesionado tem `injuredUntil` > prazo.
+
+## [2026-07-14] Olimpíadas — blackout de 15 dias antes dos Jogos
+Para evitar lesões de última hora sem tempo de substituição (a verificação de
+lesões roda 15 dias antes), nos 15 dias entre a Confirmação e os Jogos (16–29/jul)
+os classificados são barrados de qualquer outra competição. Implementado como
+`olympicBlackoutIds(world, competition)` (olympics.js): se o evento comum cai
+estritamente após o prazo e antes dos Jogos de um ano olímpico, remove os
+detentores de vaga daquele ano do campo (aplicado no Simulation Director e no
+campo projetado da interface). Não afeta os próprios Jogos nem as etapas
+classificatórias.

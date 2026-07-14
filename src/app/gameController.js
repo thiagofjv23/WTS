@@ -47,6 +47,7 @@ import {
   quotaMethodOf,
   resolveOlympicEntrants,
   continentalQualParticipants,
+  olympicBlackoutIds,
 } from "../engine/olympics.js";
 import { athletesInCategory } from "../core/world.js";
 
@@ -562,6 +563,10 @@ export class GameController {
       isEligible(a, this.world, rules)
     );
     if (rules.nationalLimit) pool = applyNationalLimit(pool, this.world, rules.nationalLimit);
+    // Blackout olímpico: nos 15 dias antes dos Jogos, os classificados não
+    // aparecem no campo de outras competições.
+    const blackout = olympicBlackoutIds(this.world, competition);
+    if (blackout) pool = pool.filter((a) => !blackout.has(a.id));
     // Wildcards da President's Cup: agraciados entram além do 1 por país.
     // (evento concluído: usa o registro salvo; futuro: resolve pelo estado atual)
     const wildcardIds = new Set(

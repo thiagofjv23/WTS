@@ -114,9 +114,15 @@ verificado:
 - O substituto gera notícia (por Seleção Nacional ou por ranking).
 
 Como a verificação precisa da Seleção Nacional definida (seletivas de janeiro) e
-das vagas fechadas, ela roda depois de tudo, na Confirmação. Lesões após a
-Confirmação (últimos 15 dias) não têm substituição — o atleta apenas não entra na
-chave.
+das vagas fechadas, ela roda depois de tudo, na Confirmação.
+
+### Blackout de 15 dias
+
+Para não haver lesões de última hora **sem tempo de substituição**, nos **15 dias
+entre a Confirmação e os Jogos** (16–29/jul) nenhum classificado disputa outra
+competição: os classificados são removidos do campo de qualquer evento comum
+nessa janela (`olympicBlackoutIds`). Assim, o único risco de lesão nesse período
+seria fora de competição — e o campo dos Jogos chega intacto.
 
 ## Parâmetros (`src/config/olympics.js`)
 

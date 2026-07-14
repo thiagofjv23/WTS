@@ -62,6 +62,7 @@ import {
   runOlympicInjuryReplacement,
   findOlympicsGames,
   resolveOlympicEntrants,
+  olympicBlackoutIds,
 } from "./olympics.js";
 import { COMPETITION_STATUS } from "../entities/competition.js";
 import { addDays } from "../utils/dates.js";
@@ -192,6 +193,10 @@ export class SimulationDirector {
     // Campo por tipo de evento: Seletiva (país), Grand Slam Finals (10 válidos),
     // Jogos (16 classificados), torneio continental olímpico (continente, não
     // classificados, 1/país) ou seleção normal.
+    // Blackout olímpico: nos 15 dias antes dos Jogos (após a verificação de
+    // lesões), os classificados não disputam mais nada — evita lesão sem tempo
+    // de substituição.
+    const blackout = olympicBlackoutIds(world, competition);
     const participantsFor = isSelective(competition)
       ? (categoryId) => selectiveParticipants(world, competition, categoryId)
       : isGrandSlamFinals(competition)
@@ -200,7 +205,10 @@ export class SimulationDirector {
       ? (categoryId) => resolveOlympicEntrants(world, competition, categoryId)
       : isOlympicContinentalQual(competition)
       ? (categoryId) => continentalQualParticipants(world, competition, categoryId)
-      : (categoryId) => selectParticipants(world, competition, categoryId, this.random);
+      : (categoryId) => {
+          const field = selectParticipants(world, competition, categoryId, this.random);
+          return blackout ? field.filter((a) => !blackout.has(a.id)) : field;
+        };
 
     const onMatch = (match) =>
       this._emit("FightFinished", {
