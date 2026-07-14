@@ -1,7 +1,7 @@
 # Jogos Olímpicos – Diretriz Oficial do Sistema
 
 > **Versão:** 1.1  
-> **Implementação Base:** Paris 2024  
+> **Implementação Base:** Los Angeles 2028  
 > **Objetivo:** Definir o funcionamento dos Jogos Olímpicos dentro do simulador e estabelecer uma arquitetura flexível para futuros ciclos olímpicos.
 
 ---
@@ -28,8 +28,8 @@ O torneio encerra oficialmente um ciclo olímpico e inicia o planejamento do cic
 
 Exemplo:
 
-- 2028 - Los Angeles-USA
-- 2032
+- 2028 - Los Angeles-United States of America
+- 2032 - Brisbane-Australia
 - 2036
 - 2040
 
@@ -122,14 +122,14 @@ No ciclo de Paris 2024 classificaram-se diretamente:
 
 - os 5 melhores atletas do Ranking Olímpico em cada categoria.
 
-Foi considerada a publicação oficial do Ranking Olímpico publicado em janeiro de 2024 (ano da Olimpíada, no jogo será o ranking que será publicado na virada do ano Olímpico).
+Será considerada a publicação oficial do Ranking Olímpico de dezembro do ano anterior (fazer a verificação do ranking sempre dia 3 de dezembro do ano anterior a Olimpíada e já classificar os 5 primeiros de cada ranking como inscritos na próxima Olimpíada e eliminá-los das próximas etapas classificatórias).
 
 Após garantir vaga:
 
 - o atleta deixa imediatamente o processo classificatório;
 - não participa de seletivas continentais;
 - não disputa novas vagas olímpicas.
-
+- o atleta ainda pode participar do Grand Slam Finals se ele se qualificou pra isso, porém se ele for o maior pontuador do ranking e garantir qualificação por lá, o primeiro atleta em classificação mais alta que não se classificou ainda (2°, 3°, 4° e assim por diante) se classifica para as Olimpíadas.
 ---
 
 # Etapa 2 — Torneios Classificatórios Continentais
@@ -142,8 +142,9 @@ No modelo de Paris 2024:
 - Ásia
 - Europa
 - Pan-América
-
-Cada continente distribuiu a quantidade de vagas definida pela World Taekwondo para aquela edição.
+- Oceania
+  
+África, Ásia, Europa e Pan-América ganham 2 vagas para as Olimpíadas (os dois finalistas se classificam), Oceania ganha 1 vaga (apenas o campeão do Torneio Classificatório se classifica para as Olimpíadas)
 
 Os atletas já classificados anteriormente não podem participar.
 
@@ -155,11 +156,13 @@ Assim que um atleta conquista sua vaga:
 
 # Etapa 3 — País-Sede
 
-No ciclo de Paris 2024, a França possuía vagas reservadas como país-sede, respeitando as regras estabelecidas pelo Comitê Olímpico Internacional e pela World Taekwondo.
+O país sede possui 2 vagas reservadas como país-sede, essas duas vagas serão preenchidas automaticamente com os dois atletas melhores rankeados que forem da nacionalidade do país e estiverem em uma faixa de peso que não tenha algum atleta da mesma nacionalidade já classificado.
 
 Essas vagas eram utilizadas apenas nas categorias em que o país ainda não tivesse conseguido classificação por outro critério.
 
-O limite de um atleta por categoria permaneceu válido.
+O limite de um atleta por nacionalidade em cada categoria permaneceu válido.
+
+Caso o país-sede já tenha vaga em todas as categorias de peso, essas duas vagas de país-sede passarão para vagas da # Etapa 4 designadas abaixo.
 
 ---
 
@@ -169,7 +172,7 @@ As últimas vagas foram distribuídas pela Comissão Tripartite.
 
 O objetivo foi ampliar a participação de países com menor tradição olímpica e fortalecer a universalidade do esporte.
 
-Essas vagas seguiram critérios específicos definidos para Paris 2024.
+As vagas restantes até completar 16 atletas por faixa de peso serão distribuídas entre no máximo 1 para o melhor rankeado naquela faixa de peso que não conseguiu classificação e não tem outro atleta da mesma nacionalidade já classificado naquela faixa de peso, 1 vaga para atleta melhor rankeado do mesmo continente de onde está sendo realizado os Jogos Olímpicos daquele ano e 1 vaga para o melhor rankeado de um país aleatório que esteja abaixo da posição 20 do ranking de países. 
 
 ---
 
