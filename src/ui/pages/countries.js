@@ -6,7 +6,7 @@ import { el, mount } from "../dom.js";
 import { sectionTitle } from "../components.js";
 
 export function renderCountries(container, game, onCountry) {
-  const table = game.getCountryTable(60);
+  const table = game.getCountryTable(); // todos os países da database
   const rows = table.map((c, i) =>
     el(
       "button.row.country-row",

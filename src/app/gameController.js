@@ -622,8 +622,8 @@ export class GameController {
     return out;
   }
 
-  getCountryTable(limit = 30) {
-    return Object.values(this.world.countries)
+  getCountryTable(limit = null) {
+    const table = Object.values(this.world.countries)
       .map((c) => ({
         code: c.code,
         name: c.name,
@@ -635,9 +635,8 @@ export class GameController {
         points: c.statistics.rankingPoints,
         athletes: c.athleteIds.length,
       }))
-      .filter((c) => c.athletes > 0)
-      .sort((a, b) => b.points - a.points || b.golds - a.golds)
-      .slice(0, limit);
+      .sort((a, b) => b.points - a.points || b.golds - a.golds);
+    return limit ? table.slice(0, limit) : table; // sem limite = todos os países da database
   }
 
   getUpcomingEvents(limit = 20) {
