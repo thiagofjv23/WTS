@@ -36,18 +36,60 @@ export function profileForRank(position) {
 
 /**
  * Parâmetros por perfil:
- *  - quarterQuota: máximo de Opens por TRIMESTRE;
- *  - baseInterest: propensão-base a entrar num Open elegível;
  *  - penaltyPerLevel: penalidade por nível de distância continental (ver matriz).
  * Calibração: Local praticamente não cruza continente (100/nível); Agressivo/
  * Escalador conseguem ir a um continente vizinho quando precisam de pontos.
  */
 export const PROFILE_PARAMS = {
-  [AthleteProfile.ELITE]: { quarterQuota: 1, baseInterest: 0.15, penaltyPerLevel: 14 },
-  [AthleteProfile.AGGRESSIVE]: { quarterQuota: 4, baseInterest: 0.9, penaltyPerLevel: 5 },
-  [AthleteProfile.CLIMBER]: { quarterQuota: 3, baseInterest: 0.7, penaltyPerLevel: 8 },
-  [AthleteProfile.LOCAL]: { quarterQuota: 2, baseInterest: 0.5, penaltyPerLevel: 100 },
+  [AthleteProfile.ELITE]: { penaltyPerLevel: 14 },
+  [AthleteProfile.AGGRESSIVE]: { penaltyPerLevel: 5 },
+  [AthleteProfile.CLIMBER]: { penaltyPerLevel: 8 },
+  [AthleteProfile.LOCAL]: { penaltyPerLevel: 100 },
 };
+
+/**
+ * Planejamento anual de Opens por perfil (nº-alvo de Opens no ano):
+ *  - base: quantos faria num ano tranquilo;
+ *  - max: teto quando está "desesperado" por pontos (muito decaimento a repor).
+ * A pressão de decaimento (pontos que o atleta vai perder no ano) empurra do
+ * base ao max. O teto de 40 pontos de Open ainda corta em tempo de execução.
+ */
+export const PROFILE_SEASON = {
+  [AthleteProfile.ELITE]: { base: 1, max: 3 },
+  [AthleteProfile.AGGRESSIVE]: { base: 6, max: 12 },
+  [AthleteProfile.CLIMBER]: { base: 4, max: 9 },
+  [AthleteProfile.LOCAL]: { base: 3, max: 6 },
+};
+
+/** Perda de pontos no ano que satura a agressividade (base → max). */
+export const DECAY_AGGRESSION_REF = 50;
+
+/**
+ * Fadiga / espaçamento do calendário de Opens:
+ *  - minRestDays: intervalo mínimo entre dois Opens do mesmo atleta (evita
+ *    mesmo-dia e sobrecarga);
+ *  - maxPerMonth: máximo de Opens por mês.
+ */
+export const FATIGUE = { minRestDays: 12, maxPerMonth: 2 };
+
+/** Perfis que, ao perder um Open por lesão, buscam um substituto (vs. só perder a vaga). */
+export function seeksReplacement(profile) {
+  return profile === AthleteProfile.AGGRESSIVE || profile === AthleteProfile.CLIMBER;
+}
+
+/**
+ * É um Open comum (G-1/G-2) sujeito ao planejamento por perfil? Exclui eventos
+ * por convite, o Grand Slam Challenge (G-2 especial) e eventos de tipo especial
+ * (Seletiva Nacional, etapas olímpicas — que usam G-1/G-2 apenas como dummy).
+ */
+export function isRegularOpen(competition, rules) {
+  const g = competition.gRank;
+  if (g !== "G-1" && g !== "G-2") return false;
+  if (competition.type && competition.type !== "official") return false;
+  if (rules?.invitational) return false;
+  if (/grand slam challenge/i.test(competition.name || "")) return false;
+  return true;
+}
 
 /**
  * Distância entre continentes (0 mesmo, 1 vizinho, 2 médio, 3 longe).
@@ -78,14 +120,7 @@ export function openScore(profile, tournamentPts, athleteContinent, tournamentCo
   return tournamentPts - distancePenalty(profile, athleteContinent, tournamentContinent);
 }
 
-// ---- Rastreio anual/trimestral de Opens (no próprio atleta) -------------------
-
-/** Chave de trimestre "AAAA-Qn" a partir de uma data ISO. */
-export function quarterKey(dateISO) {
-  const year = dateISO.slice(0, 4);
-  const month = Number(dateISO.slice(5, 7));
-  return `${year}-Q${Math.floor((month - 1) / 3) + 1}`;
-}
+// ---- Contador anual de pontos de Opens (no próprio atleta) --------------------
 
 /** Pontos de Opens (G-1/G-2) do atleta no ano (0 se virou o ano). */
 export function openPointsThisYear(athlete, year) {
@@ -99,20 +134,4 @@ export function addOpenPoints(athlete, year, pts) {
     athlete.openPoints = { season: year, value: 0 };
   }
   athlete.openPoints.value += pts;
-}
-
-/** Nº de Opens que o atleta já disputou no trimestre da data. */
-export function openEntriesThisQuarter(athlete, dateISO) {
-  const q = quarterKey(dateISO);
-  const oe = athlete.openEntries;
-  return oe && oe.quarter === q ? oe.count : 0;
-}
-
-/** Registra a disputa de um Open no trimestre da data (zera na virada de trimestre). */
-export function recordOpenEntry(athlete, dateISO) {
-  const q = quarterKey(dateISO);
-  if (!athlete.openEntries || athlete.openEntries.quarter !== q) {
-    athlete.openEntries = { quarter: q, count: 0 };
-  }
-  athlete.openEntries.count += 1;
 }

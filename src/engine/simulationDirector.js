@@ -64,9 +64,19 @@ import {
   resolveOlympicEntrants,
   olympicBlackoutIds,
 } from "./olympics.js";
-import { COMPETITION_STATUS } from "../entities/competition.js";
+import { COMPETITION_STATUS, championPointsFor } from "../entities/competition.js";
 import { addDays } from "../utils/dates.js";
 import { RandomSystem } from "../services/random.js";
+import { planOpenSeason, adjustPlansForInjuries } from "./openPlanner.js";
+
+/** Valor do grau de uma competição (para ordenar eventos do mesmo dia). */
+function gradeValue(competition) {
+  try {
+    return championPointsFor(competition?.gRank);
+  } catch {
+    return 0;
+  }
+}
 
 export class SimulationDirector {
   /**
@@ -101,14 +111,22 @@ export class SimulationDirector {
     // que o ranking do 1º do mês seguinte ao aniversário é calculado.
     this._monthlyRankingUpdate(date);
 
+    // Reajuste mensal (dia 2): quem perdeu um Open (lesão) reajusta o calendário.
+    if (date.slice(8, 10) === "02") adjustPlansForInjuries(world, date);
+
     // Recovery System (§4): reativa atletas que voltaram de lesão.
     for (const rec of processRecovery(world, date)) {
       newsRecovery(world, date, rec.athleteId);
       this._emit("AthleteRecovered", { athleteId: rec.athleteId });
     }
 
-    // Calendar → competições do dia.
-    const events = eventsForDate(world, date);
+    // Calendar → competições do dia. Processa o de MAIOR grau primeiro: assim o
+    // atleta que disputaria dois eventos no mesmo dia fica no mais importante (o
+    // bloqueio de mesmo-dia remove-o dos demais).
+    const events = eventsForDate(world, date).sort(
+      (a, b) =>
+        gradeValue(world.competitions[b.competitionId]) - gradeValue(world.competitions[a.competitionId])
+    );
     for (const event of events) {
       const competition = world.competitions[event.competitionId];
       if (!competition) continue;
@@ -197,7 +215,7 @@ export class SimulationDirector {
     // lesões), os classificados não disputam mais nada — evita lesão sem tempo
     // de substituição.
     const blackout = olympicBlackoutIds(world, competition);
-    const participantsFor = isSelective(competition)
+    const rawParticipantsFor = isSelective(competition)
       ? (categoryId) => selectiveParticipants(world, competition, categoryId)
       : isGrandSlamFinals(competition)
       ? (categoryId) => resolveGrandSlamFinalists(world, competition, categoryId)
@@ -209,6 +227,15 @@ export class SimulationDirector {
           const field = selectParticipants(world, competition, categoryId, this.random);
           return blackout ? field.filter((a) => !blackout.has(a.id)) : field;
         };
+    // Bloqueio de MESMO-DIA (fadiga): nenhum atleta disputa dois campeonatos no
+    // mesmo dia. Os do maior grau já rodaram antes e marcaram a data; aqui os
+    // removemos dos demais. (Seletivas de janeiro não colidem; deixa como está.)
+    const participantsFor = isSelective(competition)
+      ? rawParticipantsFor
+      : (categoryId) =>
+          rawParticipantsFor(categoryId).filter(
+            (a) => a.condition?.lastCompetitionDate !== competition.date
+          );
 
     const onMatch = (match) =>
       this._emit("FightFinished", {
@@ -240,6 +267,15 @@ export class SimulationDirector {
       participantsFor,
       combatOpts
     );
+
+    // Marca a data como "já competiu hoje" para todos os participantes — assim os
+    // eventos seguintes do mesmo dia (menor grau) não os reconvocam (fadiga).
+    for (const placements of Object.values(byCategory)) {
+      for (const p of placements) {
+        const at = world.athletes[p.athleteId];
+        if (at) (at.condition ||= {}).lastCompetitionDate = competition.date;
+      }
+    }
 
     // Persiste as lutas (compacto) para consulta na interface. O ranking só é
     // recalculado no dia 1 de cada mês, então athlete.ranking.position é o
@@ -366,8 +402,13 @@ export class SimulationDirector {
     if (date.slice(8, 10) !== "01") return;
     recomputeRankings(this.world, date);
     recomputeCountryStatistics(this.world);
-    // Em janeiro, guarda o ranking de início do ano (para a tela de fim de ano).
-    if (date.slice(5, 7) === "01") captureYearStartRanks(this.world);
+    // Em janeiro, guarda o ranking de início do ano (para a tela de fim de ano)
+    // e planeja o calendário de Opens do ano para todos os atletas (com o ranking
+    // recém-materializado e a temporada já agendada).
+    if (date.slice(5, 7) === "01") {
+      captureYearStartRanks(this.world);
+      planOpenSeason(this.world, date.slice(0, 4));
+    }
     this._emit("RankingUpdated", { date });
   }
 

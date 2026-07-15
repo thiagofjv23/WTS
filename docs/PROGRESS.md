@@ -993,7 +993,34 @@ continente-sede; elite quase ausente dos Opens; teto de 40 engata. Docs:
 
 ---
 
-## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais + Grand Slam (Challenge+Finals+Mérito) + Mundial + JOGOS OLÍMPICOS (repescagem + lesões) + PERFIL/CALENDÁRIO DE OPENS ✅
+## Passo 29 — Opens: planejamento anual, prioridade local, fadiga e reagendamento
+
+**Pedido:** corrigir a escolha de Opens — prioridade ao campeonato local, decidir
+o calendário no início do ano, considerar o decaimento (mais agressivo quem vai
+perder pontos), reagendar por lesão (check dia 2), e matar o bug de mesmo-dia.
+
+**Feito:**
+- `engine/openPlanner.js` (novo): `planOpenSeason` (plano anual por atleta em
+  1º/jan — alvo por perfil + agressividade por decaimento; escolha CASA→Score→data;
+  fadiga `minRestDays`/`maxPerMonth`), `adjustPlansForInjuries` (dia 2: reagenda
+  quem perdeu Open — Agressivo/Escalador buscam substituto), `plannedOpenField`
+  (campo = quem planejou; prioridade nacional/continental; campo mínimo).
+- `simulationDirector`: eventos do dia processados do MAIOR grau ao menor +
+  `condition.lastCompetitionDate` → **fim do bug de mesmo-dia**; hooks 1º/jan
+  (planejar) e dia 2 (reajuste).
+- `participation.js`: Opens roteados ao plano (removido o modelo evento a
+  evento/forma/cota). `athleteProfile.js`: `PROFILE_SEASON`, `FATIGUE`,
+  `DECAY_AGGRESSION_REF`, `isRegularOpen` exclui tipos especiais. `ranking.js`:
+  mantém `openPoints` (X/40). `gameController.projectedField`: preview pelo plano.
+
+**Observado (script):** 3 anos em ~5,4 s; **0 conflitos de mesmo-dia**; **0 casos**
+do bug (G-1 fora ignorando G-2 em casa); planos por perfil (Agressivo ~12, Elite/
+Local ~3, Escalador ~6); reagendamento por lesão adiciona substituto real. Docs:
+`docs/ATHLETE_PROFILE.md`.
+
+---
+
+## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais + Grand Slam (Challenge+Finals+Mérito) + Mundial + JOGOS OLÍMPICOS (repescagem + lesões) + CALENDÁRIO DE OPENS (plano anual + fadiga) ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por

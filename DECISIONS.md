@@ -684,3 +684,33 @@ Contador `openPoints` (X/40) e `openEntries` (trimestre) creditados em
 `applyCompetitionPoints`; seguem o teto de 40 já existente e zeram na virada de
 ano/trimestre (reset preguiçoso por período). Exibido na tela do atleta (fonte
 menor, ao lado dos pontos de ranking).
+
+## [2026-07-14] Opens — planejamento anual (substitui a decisão evento a evento)
+Correções pedidas: (1) prioridade local (não trocar um G-2 em casa por um G-1 fora
+no mesmo mês); (2) considerar o decaimento anual (quem perde muito ponto vira mais
+agressivo); (3) reagendar por lesão; (4) fim do bug de mesmo-dia.
+
+Decisão: a escolha de Opens deixou de ser evento a evento (probabilidade + forma)
+e passou a ser um PLANO ANUAL por atleta, montado em 1º/jan (após materializar o
+ranking), em `engine/openPlanner.js`:
+- alvo de Opens = base do perfil + bônus por decaimento (`effectivePoints` início
+  vs. fim do ano, satura em `DECAY_AGGRESSION_REF`);
+- candidatos por Score (pts − penalidade de distância), escolhidos na ordem CASA →
+  maior Score → data (garante a prioridade local);
+- fadiga: `minRestDays`/`maxPerMonth`, nunca dois no mesmo dia.
+O campo de um Open passa a ser quem o PLANEJOU (`plannedOpenField`), com campo
+mínimo e prioridade nacional/continental (G-1 nação; G-2 50% nação + 15%
+continente). `isRegularOpen` agora exclui tipos especiais (Seletiva, etapas
+olímpicas com G-1/G-2 dummy).
+
+Reajuste mensal (dia 2, `adjustPlansForInjuries`): quem perdeu um Open planejado
+solta a vaga; Agressivo/Escalador buscam substituto futuro; Elite/Local ficam com
+um a menos.
+
+Bug de mesmo-dia (voltou com o sistema anterior): resolvido no Simulation Director
+processando os eventos do dia do MAIOR grau para o menor e marcando
+`condition.lastCompetitionDate` — quem já competiu hoje é removido dos demais
+eventos do dia (fica no mais importante). Removido o modelo antigo de
+probabilidade/forma/cota trimestral para Opens (o plano o substitui). Verificado
+por script: 0 conflitos de mesmo-dia em 3 anos; 0 casos do bug local; planos por
+perfil (Agressivo ~12, Elite/Local ~3, Escalador ~6).

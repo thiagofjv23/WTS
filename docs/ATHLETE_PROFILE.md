@@ -18,31 +18,63 @@ O perfil NÃO é guardado no atleta — deriva da **posição atual no ranking**
 
 Sem posição (não ranqueado) → **Local**.
 
-## A decisão (só para Opens comuns G-1/G-2)
+## Planejamento anual (início do ano)
 
-Aplica-se a G-1/G-2 que **não** sejam por convite nem o Grand Slam Challenge
-(`isRegularOpen`). Para cada atleta elegível:
+**No dia 1º de janeiro** (após materializar o ranking), cada atleta planeja de uma
+vez os Opens do ano (`openPlanner.planOpenSeason`) — não decide mais evento a
+evento. Isso corrige a prioridade local e permite respeitar fadiga e decaimento.
 
-1. **Teto:** se `openPoints` do ano ≥ **40**, não entra (já farmou o teto).
-2. **Cota trimestral:** se já disputou o máximo do trimestre para o seu perfil,
-   não entra (Elite 1, Agressivo 4, Escalador 3, Local 2).
-3. **Score = PtsDoTorneio − DistancePenalty.** PtsDoTorneio = grau (G-1=10,
-   G-2=20). Se `Score ≤ 0`, não entra. O atleta prefere o maior Score.
-4. **Forma do dia:** a entrada é sorteada com probabilidade que cresce com a
-   forma — assim os fortes se **espalham** pelos Opens do ano em vez de lotarem os
-   primeiros (e cada um decide fazer vários ou só 1–2 no trimestre).
+Aplica-se a G-1/G-2 que **não** sejam por convite, o Grand Slam Challenge, nem
+eventos de tipo especial (Seletiva, etapas olímpicas) — `isRegularOpen`.
+
+Para cada atleta:
+
+1. **Nº-alvo de Opens no ano** = base do perfil + bônus de **decaimento** (ver
+   abaixo), limitado ao teto do perfil (`PROFILE_SEASON`).
+2. **Candidatos**: Opens elegíveis com **Score = PtsDoTorneio − DistancePenalty**
+   (G-1=10, G-2=20). Score ≤ 0 é descartado.
+3. **Ordem de escolha**: **CASA primeiro** (torneio no país do atleta), depois
+   maior **Score**, depois data mais cedo. → um G-2 em casa nunca é trocado por um
+   G-1 fora.
+4. **Fadiga**: só adiciona um Open se respeitar o intervalo mínimo entre eventos
+   (`minRestDays`) e o teto por mês (`maxPerMonth`) — nunca dois no mesmo dia.
+
+O plano fica em `athlete.openPlan = { season, ids }`. Quando o Open roda, o campo
+são os atletas que o planejaram (ativos e sob o teto de 40), com um campo mínimo
+garantido e a prioridade nacional/continental abaixo.
+
+### Agressividade por decaimento
+
+Ao planejar, o atleta estima quantos pontos vai **perder no ano** pelo decaimento
+do ranking (`effectivePoints` no início vs. fim do ano). Quanto maior a perda,
+mais Opens ele mira (do `base` ao `max` do perfil, saturando em
+`DECAY_AGGRESSION_REF`) — para tentar repor os pontos e se manter no nível.
+
+### Reajuste mensal (dia 2)
+
+`adjustPlansForInjuries` roda **no dia 2 de cada mês**: se o atleta perdeu um Open
+planejado (lesão o tirou, ou não entrou no campo), solta a vaga e — se for
+**Agressivo/Escalador** — busca um **substituto** futuro (respeitando a fadiga).
+**Elite/Local** apenas ficam com um Open a menos.
+
+### Fadiga e o bug de mesmo-dia
+
+Ninguém disputa **dois campeonatos no mesmo dia**. Além do espaçamento no plano, o
+Simulation Director processa os eventos do dia do **maior grau para o menor** e
+marca quem já competiu (`condition.lastCompetitionDate`), removendo-o dos demais
+eventos daquele dia — então, num conflito, o atleta fica no evento mais importante.
 
 ### DistancePenalty (por proximidade e por perfil)
 
 `penalidade = nível_de_distância × penaltyPerLevel(perfil)`. O nível vem da
 matriz de continentes (0 mesmo, 1 vizinho, 2 médio, 3 longe; Ásia↔América = 3):
 
-| Perfil | penaltyPerLevel | Efeito |
-|---|---|---|
-| Local | 100 | Só o **próprio continente** (qualquer viagem inviabiliza) |
-| Escalador | 8 | Mesmo + **vizinho** (G-2 vizinho = 20−8=12) |
-| Agressivo | 5 | Alcança **médio/longe** quando precisa (G-2 vizinho = 15) |
-| Elite | 14 | Praticamente só em casa (e raramente, pela urgência baixa) |
+| Perfil | penaltyPerLevel | nº-alvo Opens/ano (base–max) | Efeito |
+|---|---|---|---|
+| Local | 100 | 3–6 | Só o **próprio continente** (qualquer viagem inviabiliza) |
+| Escalador | 8 | 4–9 | Mesmo + **vizinho** (G-2 vizinho = 20−8=12) |
+| Agressivo | 5 | 6–12 | Alcança **médio/longe** quando precisa (G-2 vizinho = 15) |
+| Elite | 14 | 1–3 | Praticamente só em casa (aquecimento) |
 
 Assim um **Local** nunca vai da Ásia para a América, mas um **Agressivo/Escalador**
 consegue ir a um continente vizinho se precisar de pontos.
@@ -63,11 +95,10 @@ Um campo mínimo é garantido (completa com quem passou nas travas, por Score).
 
 ## Contador de Opens (X/40)
 
-Cada atleta acumula `openPoints` (pontos ganhos em G-1/G-2 no ano) e `openEntries`
-(disputas no trimestre) — creditados em `applyCompetitionPoints`. Seguem o **teto
-de 40** já existente e **zeram na virada de ano** (openPoints) / de trimestre
-(openEntries), de forma preguiçosa (resetam ao serem lidos/escritos num período
-novo).
+Cada atleta acumula `openPoints` (pontos ganhos em G-1/G-2 no ano), creditados em
+`applyCompetitionPoints`. Segue o **teto de 40** já existente (trava o farm ao
+chegar em 40) e **zera na virada de ano**, de forma preguiçosa (reseta ao ser
+lido/escrito num ano novo).
 
 Na interface, a tela do atleta mostra **X/40** ao lado dos pontos de ranking, em
 fonte menor (contador de Opens do ano).
@@ -78,12 +109,18 @@ fonte menor (contador de Opens do ano).
 |---|---|
 | `AthleteProfile` | enum Elite/Aggressive/Climber/Local |
 | `profileForRank(pos)` | perfil pela posição |
-| `PROFILE_PARAMS` | cota trimestral, interesse-base e penaltyPerLevel por perfil |
+| `PROFILE_PARAMS` | `penaltyPerLevel` por perfil (tolerância a viagem) |
+| `PROFILE_SEASON` | nº-alvo de Opens no ano (base/max) por perfil |
+| `DECAY_AGGRESSION_REF` | perda de pontos que satura a agressividade |
+| `FATIGUE` | `minRestDays` e `maxPerMonth` (espaçamento do calendário) |
 | `CONTINENT_DISTANCE` | matriz de distância entre continentes |
 | `OPEN_POINTS_CAP` | 40 (teto anual de Opens) |
+
+Planejamento e reajuste ficam em `src/engine/openPlanner.js`
+(`planOpenSeason`, `adjustPlansForInjuries`, `plannedOpenField`).
 
 ## Pendente / futuro
 
 - O perfil hoje dita só a lógica de Opens; pode dirigir o calendário inteiro
   (quais G-events priorizar) numa evolução futura.
-- Ajuste fino das penalidades/cotas após observar várias temporadas.
+- Ajuste fino das penalidades/cotas/fadiga após observar várias temporadas.

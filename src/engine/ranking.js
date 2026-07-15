@@ -20,7 +20,7 @@
 import { championPointsFor } from "../entities/competition.js";
 import { combatRating } from "./combat/probability.js";
 import { monthsBetween } from "../utils/dates.js";
-import { addOpenPoints, recordOpenEntry } from "./athleteProfile.js";
+import { addOpenPoints } from "./athleteProfile.js";
 
 function round2(v) {
   return Math.round(v * 100) / 100;
@@ -119,7 +119,7 @@ export function pointsForPlacement(gRankKey, placement) {
 export function applyCompetitionPoints(world, competition, byCategory) {
   let distributed = 0;
   // Opens (G-1/G-2): também alimentam o contador anual de pontos de Open (teto de
-  // 40, exibido como X/40) e a cota trimestral de participações.
+  // 40, exibido como X/40) — trava o farm quando o atleta chega a 40.
   const isOpen = competition.gRank === "G-1" || competition.gRank === "G-2";
   const year = competition.date.slice(0, 4);
   for (const [categoryId, placements] of Object.entries(byCategory)) {
@@ -135,10 +135,7 @@ export function applyCompetitionPoints(world, competition, byCategory) {
           competitionId: competition.id,
         });
         distributed += pts;
-        if (isOpen) {
-          addOpenPoints(athlete, year, pts);
-          recordOpenEntry(athlete, competition.date);
-        }
+        if (isOpen) addOpenPoints(athlete, year, pts);
       }
     }
     // Guarda os resultados oficiais na competição (permanentes).

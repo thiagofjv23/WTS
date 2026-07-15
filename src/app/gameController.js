@@ -53,7 +53,9 @@ import {
   profileForRank,
   openPointsThisYear,
   OPEN_POINTS_CAP,
+  isRegularOpen,
 } from "../engine/athleteProfile.js";
+import { plannedOpenField } from "../engine/openPlanner.js";
 import { athletesInCategory } from "../core/world.js";
 
 const SAVE_KEY = "world";
@@ -576,6 +578,20 @@ export class GameController {
     // aparecem no campo de outras competições.
     const blackout = olympicBlackoutIds(this.world, competition);
     if (blackout) pool = pool.filter((a) => !blackout.has(a.id));
+    // Opens comuns (G-1/G-2): o campo previsto é o do PLANO anual dos atletas.
+    if (isRegularOpen(competition, rules)) {
+      const field = plannedOpenField(this.world, competition, pool, competition.fieldSize ?? 32, 8);
+      const out = field.map((a, i) => {
+        const cc = this._countryOf(a);
+        return {
+          id: a.id, seed: i + 1, name: a.fullName, ioc: cc.code, flag: flagEmoji(cc.code),
+          position: a.ranking.position, points: a.ranking.points,
+          wildcard: false, nationalTeam: a.nationalTeam || null,
+        };
+      });
+      this._fieldCache.set(cacheKey, out);
+      return out;
+    }
     // Wildcards da President's Cup: agraciados entram além do 1 por país.
     // (evento concluído: usa o registro salvo; futuro: resolve pelo estado atual)
     const wildcardIds = new Set(
