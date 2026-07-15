@@ -49,6 +49,11 @@ import {
   continentalQualParticipants,
   olympicBlackoutIds,
 } from "../engine/olympics.js";
+import {
+  profileForRank,
+  openPointsThisYear,
+  OPEN_POINTS_CAP,
+} from "../engine/athleteProfile.js";
 import { athletesInCategory } from "../core/world.js";
 
 const SAVE_KEY = "world";
@@ -431,6 +436,10 @@ export class GameController {
       nationalTeam: a.nationalTeam || null,
       position: a.ranking.position,
       points: a.ranking.points,
+      // Pontos ganhos em Opens (G-1/G-2) neste ano, com o teto de 40 (X/40).
+      openPoints: Math.min(openPointsThisYear(a, this.world.state.currentDate.slice(0, 4)), OPEN_POINTS_CAP),
+      openCap: OPEN_POINTS_CAP,
+      profile: profileForRank(a.ranking.position),
       favorite: this.isFavoriteAthlete(a.id),
       attributes: visible,
       form: a.attributes.formaAtual,

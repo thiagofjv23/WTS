@@ -657,3 +657,30 @@ estritamente após o prazo e antes dos Jogos de um ano olímpico, remove os
 detentores de vaga daquele ano do campo (aplicado no Simulation Director e no
 campo projetado da interface). Não afeta os próprios Jogos nem as etapas
 classificatórias.
+
+## [2026-07-14] Perfil do atleta e decisão de calendário para Opens (G-1/G-2)
+Sistema de decisão dos NPCs para o calendário de Opens, dirigido por um perfil
+ATRELADO À POSIÇÃO no ranking (não guardado no atleta): Elite(1-5), Agressivo
+(6-32), Escalador(33-100), Local(101+). Ver `athleteProfile.js` e
+docs/ATHLETE_PROFILE.md.
+
+Decisão (só Opens comuns G-1/G-2, exclui Grand Slam Challenge e convites): trava
+por `openPoints<40` (teto anual) e por cota trimestral do perfil; Score =
+PtsDoTorneio − DistancePenalty (prefere o maior, mas a FORMA do dia sorteia quem
+entra — espalha os fortes pelos Opens do ano em vez de lotar os primeiros).
+
+DistancePenalty = nível_de_distância_continental × penaltyPerLevel(perfil).
+Calibrado para: Local nunca cruza continente (100/nível); Agressivo(5)/Escalador
+(8) alcançam um vizinho quando precisam; Elite(14) quase só em casa. Matriz de
+distância entre os 5 continentes (Ásia↔América = 3 = extremo). A região do
+torneio vem do país do `location` casado ao roster (`tournamentRegion.js`, ~96%
+do calendário resolve; não resolvido = Open genérico).
+
+Composição do campo com prioridade: G-1 nacionalidade primeiro; G-2 reserva 50%
+nacionalidade + 15% continente, liberando o resto (cotas não usadas passam aos
+demais). Campo mínimo garantido por Score.
+
+Contador `openPoints` (X/40) e `openEntries` (trimestre) creditados em
+`applyCompetitionPoints`; seguem o teto de 40 já existente e zeram na virada de
+ano/trimestre (reset preguiçoso por período). Exibido na tela do atleta (fonte
+menor, ao lado dos pontos de ranking).

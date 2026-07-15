@@ -114,7 +114,11 @@ test("feed de notícias inclui campeões e lesões/recuperações", () => {
   for (let i = 0; i < 80; i++) {
     g.advanceToNextEvent();
     feed = g.getNews(50);
-    if (feed.some((n) => n.type === "champion")) break;
+    // Espera surgirem AMBOS os tipos (campeão e lesão/recuperação) — a ordem em
+    // que aparecem depende do sorteio, então não paramos no 1º campeão.
+    const hasChamp = feed.some((n) => n.type === "champion");
+    const hasInjRec = feed.some((n) => n.type === "injury" || n.type === "recovery");
+    if (hasChamp && hasInjRec) break;
   }
   assert(feed.length > 0, "feed não vazio");
   assert(feed.some((n) => n.type === "champion"), "deveria ter campeões");

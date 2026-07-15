@@ -92,6 +92,12 @@ será retomado. Atualizado a cada passo do desenvolvimento.
 - ✅ **Modelo de participação dos atletas** — feito (participation.js): atletas
   escolhem eventos por grau/ranking + fadiga. Sugestão #1 e #4 do documento de
   diretrizes.
+- ✅ **Perfil do atleta + decisão de Opens (G-1/G-2)** — feito
+  (`engine/athleteProfile.js` + `docs/ATHLETE_PROFILE.md`): perfil pela posição
+  (Elite/Agressivo/Escalador/Local) dita a urgência; Score = pontos − penalidade
+  de distância (por perfil), forma espalha os inscritos, prioridade nacional/
+  continental no campo, contador X/40. 🟡 Futuro: perfil dirigir o calendário
+  inteiro (G-events), não só Opens.
 - ✅ **Teto de pontos G-1/G-2 (40/ano)** — feito (ranking.js). Substituiu o
   best-N (aproximação) pelo mecanismo real da WT.
 - ✅ **Travas de elegibilidade** — feito (eligibility.js + continents.js): lock

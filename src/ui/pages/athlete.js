@@ -40,7 +40,11 @@ export function athleteModal(view, { onClose, onToggleFavorite, onCompetition, o
   const stats = el(
     "div.stat-grid",
     statBox("Ranking", view.position ? `#${view.position}` : "—"),
-    statBox("Pontos", view.points),
+    // Pontos de ranking + contador de Opens do ano (X/40, fonte menor).
+    el("div.stat-box",
+      el("span.stat-val", String(view.points),
+        el("span.open-cap", { title: "Pontos de Opens (G-1/G-2) neste ano — teto de 40" }, `${view.openPoints}/${view.openCap}`)),
+      el("span.stat-label", "Pontos")),
     statBox("Idade", view.age),
     statBox("Lutas", st.fights),
     statBox("Vitórias", st.wins),

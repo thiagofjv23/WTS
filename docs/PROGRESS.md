@@ -966,7 +966,34 @@ substituição. Testado (nenhum classificado nas competições comuns da janela)
 
 ---
 
-## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais + Grand Slam (Challenge+Finals+Mérito) + Mundial + JOGOS OLÍMPICOS (repescagem + lesões) ✅
+## Passo 28 — Perfil do atleta e decisão de calendário (Opens G-1/G-2)
+
+**Pedido:** um sistema de decisão trimestral: um enum `AthleteProfile` (Elite
+1-5, Agressivo 6-32, Escalador 33-100, Local 101+, atrelado à posição) que dita
+se/como o atleta farma Opens, usando Score = pontos − penalidade de distância;
+contador X/40 na tela do atleta; a forma espalha os fortes pelos Opens; prioridade
+nacional/continental nos G-1/G-2.
+
+**Feito:**
+- `engine/athleteProfile.js`: enum + `profileForRank`, `PROFILE_PARAMS`
+  (cota trimestral/interesse/penaltyPerLevel), matriz de distância continental,
+  `openScore`, rastreio `openPoints`/`openEntries` (reset por ano/trimestre).
+- `engine/tournamentRegion.js`: país-sede/continente do torneio pelo `location`
+  (casa o nome ao roster; ~96% do calendário resolve).
+- `engine/participation.js`: `isRegularOpen` → `selectOpenField` (interesse por
+  perfil+Score+forma, teto 40, cota trimestral) + `composeOpenField` (G-1
+  nacionalidade primeiro; G-2 50% nação + 15% continente + aberto).
+- `engine/ranking.js`: credita `openPoints`/`openEntries` nos G-1/G-2.
+- UI: tela do atleta mostra **X/40** ao lado dos pontos (fonte menor); view expõe
+  `openPoints`/`openCap`/`profile`.
+
+**Observado (1 temporada, script):** roda em ~1,1 s; G-2 ~57% do campo do
+continente-sede; elite quase ausente dos Opens; teto de 40 engata. Docs:
+`docs/ATHLETE_PROFILE.md`.
+
+---
+
+## Estado: núcleo + dados reais + temporadas + participação + travas + forma/lesões + INTERFACE rica + rivalidades + roster completo + IndexedDB + wildcards + avanço mensal/anual + seleções nacionais + Grand Slam (Challenge+Finals+Mérito) + Mundial + JOGOS OLÍMPICOS (repescagem + lesões) + PERFIL/CALENDÁRIO DE OPENS ✅
 
 O motor roda um campeonato completo sem interface, de forma determinística e
 seguindo os documentos de arquitetura. A partir daqui, expansões entram por
