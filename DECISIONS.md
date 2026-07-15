@@ -714,3 +714,11 @@ eventos do dia (fica no mais importante). Removido o modelo antigo de
 probabilidade/forma/cota trimestral para Opens (o plano o substitui). Verificado
 por script: 0 conflitos de mesmo-dia em 3 anos; 0 casos do bug local; planos por
 perfil (Agressivo ~12, Elite/Local ~3, Escalador ~6).
+
+## [2026-07-14] Opens — Seleção Nacional viaja mais fácil (só a penalidade)
+Ajuste isolado: atletas de Seleção Nacional pagam menos penalidade de distância,
+para poderem disputar Opens fora do continente. `NATIONAL_TEAM_PENALTY_FACTOR` em
+athleteProfile.js: titular ×0.5, reserva ×0.75, demais ×1 (titular < reserva <
+não-seleção). `distancePenalty`/`openScore` recebem o `nationalTeam` (opcional);
+sem seleção → fator 1 (comportamento inalterado). Aplicado nos 2 pontos de chamada
+do openPlanner. Nada mais foi tocado.

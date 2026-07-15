@@ -72,7 +72,7 @@ function openCandidates(world, athlete, opens, profile) {
   for (const c of opens) {
     if (!isEligible(athlete, world, classifyEvent(c))) continue;
     const host = resolveHostRegion(world, c);
-    const score = openScore(profile, championPointsFor(c.gRank), aCont, host?.continent);
+    const score = openScore(profile, championPointsFor(c.gRank), aCont, host?.continent, athlete.nationalTeam);
     if (score <= 0) continue;
     out.push({ c, date: c.date, score, isHome: !!host && host.code === aCode });
   }
@@ -210,7 +210,7 @@ export function plannedOpenField(world, competition, eligible, fieldSize, minFie
       .filter((a) => !inField.has(a.id) && openPointsThisYear(a, year) < OPEN_POINTS_CAP)
       .map((a) => ({
         a,
-        score: openScore(profileForRank(a.ranking?.position), pts, continentOf(codeOf(world, a)), host?.continent),
+        score: openScore(profileForRank(a.ranking?.position), pts, continentOf(codeOf(world, a)), host?.continent, a.nationalTeam),
       }))
       .filter((x) => x.score > 0)
       .sort((x, y) => y.score - x.score);

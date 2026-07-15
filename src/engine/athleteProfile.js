@@ -109,15 +109,26 @@ export function continentDistance(a, b) {
   return CONTINENT_DISTANCE[a]?.[b] ?? 3;
 }
 
-/** Penalidade de distância para um perfil (região do atleta × região do torneio). */
-export function distancePenalty(profile, athleteContinent, tournamentContinent) {
+/**
+ * Redutor da penalidade de viagem para atletas de Seleção Nacional: titulares
+ * viajam mais fácil que reservas, e ambos mais fácil que quem NÃO é de seleção.
+ * Fora de seleção (null/undefined) → fator 1 (comportamento inalterado).
+ */
+export const NATIONAL_TEAM_PENALTY_FACTOR = { titular: 0.5, reserva: 0.75 };
+
+/**
+ * Penalidade de distância para um perfil (região do atleta × região do torneio).
+ * Atletas de Seleção Nacional pagam menos (ver NATIONAL_TEAM_PENALTY_FACTOR).
+ */
+export function distancePenalty(profile, athleteContinent, tournamentContinent, nationalTeam) {
   const level = continentDistance(athleteContinent, tournamentContinent);
-  return level * (PROFILE_PARAMS[profile]?.penaltyPerLevel ?? 100);
+  const factor = NATIONAL_TEAM_PENALTY_FACTOR[nationalTeam] ?? 1;
+  return level * (PROFILE_PARAMS[profile]?.penaltyPerLevel ?? 100) * factor;
 }
 
 /** Score de um Open: pontos do torneio menos a penalidade de distância. */
-export function openScore(profile, tournamentPts, athleteContinent, tournamentContinent) {
-  return tournamentPts - distancePenalty(profile, athleteContinent, tournamentContinent);
+export function openScore(profile, tournamentPts, athleteContinent, tournamentContinent, nationalTeam) {
+  return tournamentPts - distancePenalty(profile, athleteContinent, tournamentContinent, nationalTeam);
 }
 
 // ---- Contador anual de pontos de Opens (no próprio atleta) --------------------

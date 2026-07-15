@@ -83,6 +83,12 @@ A **região do torneio** vem do país do local (`tournamentRegion.js`, casando o
 nome do país do `location` ao roster). Local não resolvido → sem penalidade e sem
 prioridade (Open genérico).
 
+**Seleção Nacional — viagem facilitada.** Atletas de Seleção Nacional pagam MENOS
+penalidade de distância, então têm chance de disputar Opens fora do continente:
+**titular** paga metade (`×0.5`) e **reserva** três quartos (`×0.75`); quem não é
+de seleção paga cheio (`×1`). Ou seja, titular < reserva < demais
+(`NATIONAL_TEAM_PENALTY_FACTOR`).
+
 ## Composição do campo (prioridade nacional/continental)
 
 Entre os interessados, o campo é montado com prioridade:
