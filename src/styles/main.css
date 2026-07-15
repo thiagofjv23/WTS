@@ -29,6 +29,16 @@ body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   overscroll-behavior: none;
 }
+/* Plano de fundo de TODAS as telas: imagem fixa cobrindo a viewport, atrás de
+   todo o conteúdo. Coloque o arquivo em src/assets/taekwondo-bg.jpg. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: url("../assets/taekwondo-bg.jpg") center center / cover no-repeat;
+  pointer-events: none;
+}
 #app { min-height: 100%; display: flex; flex-direction: column; }
 h1, h2, h3, h4 { margin: 0; font-weight: 700; }
 button { font-family: inherit; cursor: pointer; }
